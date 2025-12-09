@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Shield } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Shield, Loader2, AlertCircle } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +13,8 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { loginAdmin, isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
 
@@ -21,10 +24,19 @@ const AdminLogin = () => {
     return null;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    loginAdmin(email, password);
-    navigate("/admin/organizations");
+    setError(null);
+    setIsSubmitting(true);
+
+    const result = await loginAdmin(email, password);
+    
+    if (result.success) {
+      navigate("/admin/organizations");
+    } else {
+      setError(result.error || "Login failed. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -55,6 +67,13 @@ const AdminLogin = () => {
               <CardDescription>Sign in with your administrator credentials</CardDescription>
             </CardHeader>
             <CardContent>
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <div className="space-y-2">
                   <Label htmlFor="email">Admin Email</Label>
@@ -64,6 +83,7 @@ const AdminLogin = () => {
                     placeholder="admin@syntine.io"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={isSubmitting}
                     required
                   />
                 </div>
@@ -75,11 +95,23 @@ const AdminLogin = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={isSubmitting}
                     required
                   />
                 </div>
-                <Button className="w-full bg-admin-accent hover:bg-admin-accent/90" type="submit">
-                  Enter Admin Console
+                <Button 
+                  className="w-full bg-admin-accent hover:bg-admin-accent/90" 
+                  type="submit"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    "Enter Admin Console"
+                  )}
                 </Button>
               </form>
             </CardContent>
