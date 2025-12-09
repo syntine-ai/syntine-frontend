@@ -26,15 +26,16 @@ interface AgentSelectorProps {
   value?: string;
   onChange: (value: string) => void;
   className?: string;
+  disabled?: boolean;
 }
 
-export function AgentSelector({ value, onChange, className }: AgentSelectorProps) {
+export function AgentSelector({ value, onChange, className, disabled }: AgentSelectorProps) {
   const selectedAgent = mockAgents.find((a) => a.id === value);
 
   return (
     <div className={cn("space-y-2", className)}>
       <Label className="text-sm font-medium text-foreground">Assigned Agent</Label>
-      <Select value={value} onValueChange={onChange}>
+      <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select an agent">
             {selectedAgent && (
