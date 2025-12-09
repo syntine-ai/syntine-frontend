@@ -19,6 +19,7 @@ import AgentDetail from "./pages/AgentDetail";
 import Contacts from "./pages/Contacts";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import SystemStatus from "./pages/SystemStatus";
 
 // Admin Pages
 import AdminDashboard from "./pages/AdminDashboard";
@@ -85,6 +86,11 @@ const App = () => (
             <Route path="/settings" element={
               <ProtectedRoute requiredRole="org">
                 <Settings />
+              </ProtectedRoute>
+            } />
+            <Route path="/system-status" element={
+              <ProtectedRoute requiredRole="org">
+                <SystemStatus />
               </ProtectedRoute>
             } />
             
