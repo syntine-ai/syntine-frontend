@@ -167,6 +167,17 @@
   }
 }
 
+/* Focus styles for accessibility */
+:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+}
+
+button:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible {
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background rounded-md;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
