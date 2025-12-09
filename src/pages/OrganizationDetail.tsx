@@ -76,7 +76,7 @@ const OrganizationDetail = () => {
       title: "Impersonating Organization",
       description: `Opening ${mockOrgData.name} workspace in a new tab (mock).`,
     });
-    window.open("/dashboard", "_blank");
+    window.open("/app/dashboard", "_blank");
   };
 
   const handleSuspend = () => {

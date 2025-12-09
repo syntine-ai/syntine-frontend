@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
@@ -17,17 +17,15 @@ import Campaigns from "./pages/Campaigns";
 import CampaignDetail from "./pages/CampaignDetail";
 import Agents from "./pages/Agents";
 import AgentDetail from "./pages/AgentDetail";
-import Contacts from "./pages/Contacts";
-import Analytics from "./pages/Analytics";
+import Calls from "./pages/Calls";
 import Settings from "./pages/Settings";
-import SystemStatus from "./pages/SystemStatus";
 
 // Admin Pages
-import AdminDashboard from "./pages/AdminDashboard";
 import Organizations from "./pages/Organizations";
 import OrganizationDetail from "./pages/OrganizationDetail";
-import SystemLogs from "./pages/SystemLogs";
-import AdminSettings from "./pages/AdminSettings";
+import Subscriptions from "./pages/Subscriptions";
+import Sessions from "./pages/Sessions";
+import System from "./pages/System";
 
 import NotFound from "./pages/NotFound";
 
@@ -46,57 +44,52 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             
-            {/* Protected Organization Routes */}
-            <Route path="/dashboard" element={
+            {/* Protected Organization Routes - /app/* */}
+            <Route path="/app" element={
+              <ProtectedRoute requiredRole="org">
+                <Navigate to="/app/dashboard" replace />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/dashboard" element={
               <ProtectedRoute requiredRole="org">
                 <Dashboard />
               </ProtectedRoute>
             } />
-            <Route path="/campaigns" element={
+            <Route path="/app/campaigns" element={
               <ProtectedRoute requiredRole="org">
                 <Campaigns />
               </ProtectedRoute>
             } />
-            <Route path="/campaigns/:id" element={
+            <Route path="/app/campaigns/:id" element={
               <ProtectedRoute requiredRole="org">
                 <CampaignDetail />
               </ProtectedRoute>
             } />
-            <Route path="/agents" element={
+            <Route path="/app/agents" element={
               <ProtectedRoute requiredRole="org">
                 <Agents />
               </ProtectedRoute>
             } />
-            <Route path="/agents/:id" element={
+            <Route path="/app/agents/:id" element={
               <ProtectedRoute requiredRole="org">
                 <AgentDetail />
               </ProtectedRoute>
             } />
-            <Route path="/contacts" element={
+            <Route path="/app/calls" element={
               <ProtectedRoute requiredRole="org">
-                <Contacts />
+                <Calls />
               </ProtectedRoute>
             } />
-            <Route path="/analytics" element={
-              <ProtectedRoute requiredRole="org">
-                <Analytics />
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
+            <Route path="/app/settings" element={
               <ProtectedRoute requiredRole="org">
                 <Settings />
               </ProtectedRoute>
             } />
-            <Route path="/system-status" element={
-              <ProtectedRoute requiredRole="org">
-                <SystemStatus />
-              </ProtectedRoute>
-            } />
             
-            {/* Protected Admin Routes */}
+            {/* Protected Admin Routes - /admin/* */}
             <Route path="/admin" element={
               <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
+                <Navigate to="/admin/organizations" replace />
               </ProtectedRoute>
             } />
             <Route path="/admin/organizations" element={
@@ -109,14 +102,19 @@ const App = () => (
                 <OrganizationDetail />
               </ProtectedRoute>
             } />
-            <Route path="/admin/logs" element={
+            <Route path="/admin/subscriptions" element={
               <ProtectedRoute requiredRole="admin">
-                <SystemLogs />
+                <Subscriptions />
               </ProtectedRoute>
             } />
-            <Route path="/admin/settings" element={
+            <Route path="/admin/sessions" element={
               <ProtectedRoute requiredRole="admin">
-                <AdminSettings />
+                <Sessions />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/system" element={
+              <ProtectedRoute requiredRole="admin">
+                <System />
               </ProtectedRoute>
             } />
             
