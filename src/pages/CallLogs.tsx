@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { SkeletonTable } from "@/components/shared/SkeletonTable";
 import {
   Select,
   SelectContent,
@@ -27,7 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, FileText, ArrowLeft, Download } from "lucide-react";
+import { Search, FileText, ArrowLeft, Download, PhoneOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
@@ -73,6 +75,12 @@ const CallLogs = () => {
   const [outcomeFilter, setOutcomeFilter] = useState("all");
   const [campaignFilter, setCampaignFilter] = useState("all");
   const [selectedLog, setSelectedLog] = useState<CallLog | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 800);
+    return () => clearTimeout(timer);
+  }, []);
 
   const filteredLogs = mockLogs.filter((log) => {
     if (search && !log.caller.includes(search) && !log.id.includes(search)) return false;
@@ -81,6 +89,15 @@ const CallLogs = () => {
     if (campaignFilter !== "all" && !log.campaign.toLowerCase().includes(campaignFilter.toLowerCase())) return false;
     return true;
   });
+
+  const clearFilters = () => {
+    setSearch("");
+    setSentimentFilter("all");
+    setOutcomeFilter("all");
+    setCampaignFilter("all");
+  };
+
+  const hasActiveFilters = search || sentimentFilter !== "all" || outcomeFilter !== "all" || campaignFilter !== "all";
 
   return (
     <OrgAppShell>
@@ -154,66 +171,83 @@ const CallLogs = () => {
             </Select>
           </div>
 
-          {/* Table */}
-          <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border/50 hover:bg-transparent">
-                  <TableHead className="text-muted-foreground font-medium">Time</TableHead>
-                  <TableHead className="text-muted-foreground font-medium">Caller</TableHead>
-                  <TableHead className="text-muted-foreground font-medium">Campaign</TableHead>
-                  <TableHead className="text-muted-foreground font-medium">Agent</TableHead>
-                  <TableHead className="text-muted-foreground font-medium">Duration</TableHead>
-                  <TableHead className="text-muted-foreground font-medium">Outcome</TableHead>
-                  <TableHead className="text-muted-foreground font-medium">Sentiment</TableHead>
-                  <TableHead className="text-muted-foreground font-medium w-[100px]">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLogs.map((log, index) => (
-                  <motion.tr
-                    key={log.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                    className="border-border/50 hover:bg-muted/30"
-                  >
-                    <TableCell className="text-muted-foreground">{log.time}</TableCell>
-                    <TableCell className="font-medium text-foreground">{log.caller}</TableCell>
-                    <TableCell className="text-muted-foreground">{log.campaign}</TableCell>
-                    <TableCell className="text-muted-foreground">{log.agent}</TableCell>
-                    <TableCell className="text-foreground">{log.duration}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className={outcomeConfig[log.outcome].className}>
-                        {outcomeConfig[log.outcome].label}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {log.sentiment ? (
-                        <Badge variant="secondary" className={sentimentConfig[log.sentiment].className}>
-                          {sentimentConfig[log.sentiment].label}
+          {/* Content */}
+          {isLoading ? (
+            <SkeletonTable rows={8} columns={8} />
+          ) : filteredLogs.length === 0 ? (
+            <EmptyState
+              icon={PhoneOff}
+              title="No call logs found"
+              description={
+                hasActiveFilters
+                  ? "Try adjusting your filters to find what you're looking for."
+                  : "Call logs will appear here once your campaigns start making calls."
+              }
+              actionLabel={hasActiveFilters ? "Clear Filters" : undefined}
+              onAction={hasActiveFilters ? clearFilters : undefined}
+            />
+          ) : (
+            /* Table */
+            <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/50 hover:bg-transparent">
+                    <TableHead className="text-muted-foreground font-medium">Time</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Caller</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Campaign</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Agent</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Duration</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Outcome</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Sentiment</TableHead>
+                    <TableHead className="text-muted-foreground font-medium w-[100px]">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredLogs.map((log, index) => (
+                    <motion.tr
+                      key={log.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.03 }}
+                      className="border-border/50 hover:bg-muted/30"
+                    >
+                      <TableCell className="text-muted-foreground">{log.time}</TableCell>
+                      <TableCell className="font-medium text-foreground">{log.caller}</TableCell>
+                      <TableCell className="text-muted-foreground">{log.campaign}</TableCell>
+                      <TableCell className="text-muted-foreground">{log.agent}</TableCell>
+                      <TableCell className="text-foreground">{log.duration}</TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className={outcomeConfig[log.outcome].className}>
+                          {outcomeConfig[log.outcome].label}
                         </Badge>
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {log.transcript && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setSelectedLog(log)}
-                        >
-                          <FileText className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                      )}
-                    </TableCell>
-                  </motion.tr>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                      </TableCell>
+                      <TableCell>
+                        {log.sentiment ? (
+                          <Badge variant="secondary" className={sentimentConfig[log.sentiment].className}>
+                            {sentimentConfig[log.sentiment].label}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {log.transcript && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedLog(log)}
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                        )}
+                      </TableCell>
+                    </motion.tr>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </motion.div>
 
         {/* Transcript Dialog */}

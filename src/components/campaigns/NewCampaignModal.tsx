@@ -22,6 +22,7 @@ import { Slider } from "@/components/ui/slider";
 import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 interface NewCampaignModalProps {
   open: boolean;
@@ -37,6 +38,7 @@ const steps = [
 
 export function NewCampaignModal({ open, onOpenChange }: NewCampaignModalProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: "",
@@ -61,7 +63,11 @@ export function NewCampaignModal({ open, onOpenChange }: NewCampaignModalProps) 
   const handleSubmit = () => {
     // Mock submit - navigate to new campaign
     onOpenChange(false);
-    navigate("/campaigns/new-campaign");
+    toast({
+      title: "Campaign Created",
+      description: `"${formData.name || 'New Campaign'}" has been created successfully.`,
+    });
+    navigate("/app/campaigns/new-campaign");
   };
 
   const renderStepContent = () => {
