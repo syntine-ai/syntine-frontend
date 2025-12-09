@@ -11,6 +11,7 @@ import {
   Shield,
   Building,
   AlertCircle,
+  Activity,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -26,6 +27,7 @@ const orgNavItems: NavItem[] = [
   { icon: Bot, label: "Agents", route: "/agents" },
   { icon: Users, label: "Contacts", route: "/contacts" },
   { icon: BarChart2, label: "Analytics", route: "/analytics" },
+  { icon: Activity, label: "System Status", route: "/system-status" },
   { icon: Settings, label: "Settings", route: "/settings" },
 ];
 
