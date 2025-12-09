@@ -4,9 +4,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Zap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { loginOrg, isAuthenticated, role } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect if already authenticated as org
+  if (isAuthenticated && role === "org") {
+    navigate("/dashboard", { replace: true });
+    return null;
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    loginOrg(email, password);
+    navigate("/dashboard");
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <motion.div
@@ -25,14 +44,21 @@ const Login = () => {
 
         <Card className="shadow-elevated border-border/50">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Welcome back</CardTitle>
-            <CardDescription>Sign in to your workspace</CardDescription>
+            <CardTitle className="text-2xl">Sign in to your Syntine Workspace</CardTitle>
+            <CardDescription>Enter your credentials to continue</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="you@company.com" />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="you@company.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -41,10 +67,17 @@ const Login = () => {
                     Forgot password?
                   </Link>
                 </div>
-                <Input id="password" type="password" placeholder="••••••••" />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
               </div>
               <Button className="w-full" type="submit">
-                Sign in
+                Sign In
               </Button>
             </form>
 

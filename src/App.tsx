@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 // Auth Pages
 import Login from "./pages/Login";
@@ -35,34 +37,88 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          {/* Redirect root to dashboard */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          
-          {/* Auth Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/admin/login" element={<AdminLogin />} />
-          
-          {/* Organization Routes */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/campaigns" element={<Campaigns />} />
-          <Route path="/campaigns/:id" element={<CampaignDetail />} />
-          <Route path="/agents" element={<Agents />} />
-          <Route path="/agents/:id" element={<AgentDetail />} />
-          <Route path="/contacts" element={<Contacts />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/settings" element={<Settings />} />
-          
-          {/* Admin Routes */}
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/admin/organizations" element={<Organizations />} />
-          <Route path="/admin/organizations/:id" element={<OrganizationDetail />} />
-          <Route path="/admin/logs" element={<SystemLogs />} />
-          <Route path="/admin/settings" element={<AdminSettings />} />
-          
-          {/* Catch-all */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            {/* Redirect root to login */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+            
+            {/* Auth Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/admin/login" element={<AdminLogin />} />
+            
+            {/* Protected Organization Routes */}
+            <Route path="/dashboard" element={
+              <ProtectedRoute requiredRole="org">
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/campaigns" element={
+              <ProtectedRoute requiredRole="org">
+                <Campaigns />
+              </ProtectedRoute>
+            } />
+            <Route path="/campaigns/:id" element={
+              <ProtectedRoute requiredRole="org">
+                <CampaignDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/agents" element={
+              <ProtectedRoute requiredRole="org">
+                <Agents />
+              </ProtectedRoute>
+            } />
+            <Route path="/agents/:id" element={
+              <ProtectedRoute requiredRole="org">
+                <AgentDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/contacts" element={
+              <ProtectedRoute requiredRole="org">
+                <Contacts />
+              </ProtectedRoute>
+            } />
+            <Route path="/analytics" element={
+              <ProtectedRoute requiredRole="org">
+                <Analytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute requiredRole="org">
+                <Settings />
+              </ProtectedRoute>
+            } />
+            
+            {/* Protected Admin Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/organizations" element={
+              <ProtectedRoute requiredRole="admin">
+                <Organizations />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/organizations/:id" element={
+              <ProtectedRoute requiredRole="admin">
+                <OrganizationDetail />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/logs" element={
+              <ProtectedRoute requiredRole="admin">
+                <SystemLogs />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/settings" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminSettings />
+              </ProtectedRoute>
+            } />
+            
+            {/* Catch-all */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

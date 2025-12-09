@@ -4,8 +4,28 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Shield } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AdminLogin = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const { loginAdmin, isAuthenticated, role } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect if already authenticated as admin
+  if (isAuthenticated && role === "admin") {
+    navigate("/admin", { replace: true });
+    return null;
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    loginAdmin(email, password);
+    navigate("/admin");
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-sidebar p-4">
       <motion.div
@@ -29,25 +49,35 @@ const AdminLogin = () => {
 
         <Card className="shadow-elevated border-sidebar-border bg-card">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Admin Access</CardTitle>
+            <CardTitle className="text-2xl">Admin Console Login</CardTitle>
             <CardDescription>Sign in with your administrator credentials</CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div className="space-y-2">
                 <Label htmlFor="email">Admin Email</Label>
-                <Input id="email" type="email" placeholder="admin@syntine.io" />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="admin@syntine.io"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="otp">One-Time Password</Label>
-                <Input id="otp" type="text" placeholder="Enter 6-digit code" />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
               </div>
               <Button className="w-full bg-admin-accent hover:bg-admin-accent/90" type="submit">
-                Access Admin Panel
+                Enter Admin Console
               </Button>
             </form>
           </CardContent>
