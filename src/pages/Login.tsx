@@ -7,6 +7,7 @@ import { Zap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { PublicLayout } from "@/components/layout/PublicLayout";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -16,85 +17,87 @@ const Login = () => {
 
   // Redirect if already authenticated as org
   if (isAuthenticated && role === "org") {
-    navigate("/dashboard", { replace: true });
+    navigate("/app/dashboard", { replace: true });
     return null;
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     loginOrg(email, password);
-    navigate("/dashboard");
+    navigate("/app/dashboard");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-        className="w-full max-w-md"
-      >
-        {/* Logo */}
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center">
-            <Zap className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <span className="text-2xl font-bold text-foreground tracking-tight">Syntine</span>
-        </div>
-
-        <Card className="shadow-elevated border-border/50">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Sign in to your Syntine Workspace</CardTitle>
-            <CardDescription>Enter your credentials to continue</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4" onSubmit={handleSubmit}>
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  placeholder="you@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  <Link to="#" className="text-sm text-primary hover:underline">
-                    Forgot password?
-                  </Link>
-                </div>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button className="w-full" type="submit">
-                Sign In
-              </Button>
-            </form>
-
-            <div className="mt-6 text-center text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link to="#" className="text-primary hover:underline">
-                Get started
-              </Link>
+    <PublicLayout>
+      <div className="min-h-[calc(100vh-64px)] flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-md"
+        >
+          {/* Logo */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center">
+              <Zap className="h-6 w-6 text-primary-foreground" />
             </div>
-          </CardContent>
-        </Card>
+            <span className="text-2xl font-bold text-sidebar-foreground tracking-tight">Syntine</span>
+          </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-8">
-          By continuing, you agree to our Terms of Service and Privacy Policy.
-        </p>
-      </motion.div>
-    </div>
+          <Card className="shadow-elevated border-sidebar-border bg-card">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Sign in to your Workspace</CardTitle>
+              <CardDescription>Enter your credentials to continue</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4" onSubmit={handleSubmit}>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    placeholder="you@company.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    <Link to="#" className="text-sm text-primary hover:underline">
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button className="w-full" type="submit">
+                  Sign In
+                </Button>
+              </form>
+
+              <div className="mt-6 text-center text-sm text-muted-foreground">
+                Don't have an account?{" "}
+                <Link to="#" className="text-primary hover:underline">
+                  Get started
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+
+          <p className="text-center text-xs text-sidebar-muted mt-8">
+            By continuing, you agree to our Terms of Service and Privacy Policy.
+          </p>
+        </motion.div>
+      </div>
+    </PublicLayout>
   );
 };
 

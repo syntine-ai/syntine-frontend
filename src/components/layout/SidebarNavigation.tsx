@@ -5,12 +5,12 @@ import {
   Zap,
   LayoutGrid,
   Bot,
-  Users,
-  BarChart2,
+  Phone,
   Settings,
   Shield,
   Building,
-  AlertCircle,
+  CreditCard,
+  Users,
   Activity,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -22,20 +22,18 @@ interface NavItem {
 }
 
 const orgNavItems: NavItem[] = [
-  { icon: Zap, label: "Dashboard", route: "/dashboard" },
-  { icon: LayoutGrid, label: "Campaigns", route: "/campaigns" },
-  { icon: Bot, label: "Agents", route: "/agents" },
-  { icon: Users, label: "Contacts", route: "/contacts" },
-  { icon: BarChart2, label: "Analytics", route: "/analytics" },
-  { icon: Activity, label: "System Status", route: "/system-status" },
-  { icon: Settings, label: "Settings", route: "/settings" },
+  { icon: Zap, label: "Dashboard", route: "/app/dashboard" },
+  { icon: LayoutGrid, label: "Campaigns", route: "/app/campaigns" },
+  { icon: Bot, label: "Agents", route: "/app/agents" },
+  { icon: Phone, label: "Calls", route: "/app/calls" },
+  { icon: Settings, label: "Settings", route: "/app/settings" },
 ];
 
 const adminNavItems: NavItem[] = [
-  { icon: Shield, label: "Admin Dashboard", route: "/admin" },
   { icon: Building, label: "Organizations", route: "/admin/organizations" },
-  { icon: AlertCircle, label: "System Logs", route: "/admin/logs" },
-  { icon: Settings, label: "Admin Settings", route: "/admin/settings" },
+  { icon: CreditCard, label: "Subscriptions", route: "/admin/subscriptions" },
+  { icon: Users, label: "Sessions", route: "/admin/sessions" },
+  { icon: Activity, label: "System", route: "/admin/system" },
 ];
 
 interface SidebarNavigationProps {
@@ -47,15 +45,23 @@ export function SidebarNavigation({ variant }: SidebarNavigationProps) {
   const items = variant === "org" ? orgNavItems : adminNavItems;
   const isAdmin = variant === "admin";
 
+  const isActiveRoute = (route: string) => {
+    if (variant === "org") {
+      if (route === "/app/dashboard") {
+        return location.pathname === "/app" || location.pathname === "/app/dashboard";
+      }
+    }
+    return (
+      location.pathname === route ||
+      (route !== "/app/dashboard" && location.pathname.startsWith(route))
+    );
+  };
+
   return (
     <nav className="flex-1 px-3 py-4">
       <ul className="space-y-1">
         {items.map((item, index) => {
-          const isActive =
-            location.pathname === item.route ||
-            (item.route !== "/dashboard" &&
-              item.route !== "/admin" &&
-              location.pathname.startsWith(item.route));
+          const isActive = isActiveRoute(item.route);
 
           return (
             <motion.li
@@ -68,7 +74,8 @@ export function SidebarNavigation({ variant }: SidebarNavigationProps) {
                 to={item.route}
                 className={cn(
                   "sidebar-item group relative",
-                  isActive && (isAdmin ? "admin-sidebar-item-active" : "sidebar-item-active")
+                  isActive &&
+                    (isAdmin ? "admin-sidebar-item-active" : "sidebar-item-active")
                 )}
               >
                 {isActive && (
