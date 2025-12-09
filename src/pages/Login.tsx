@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Zap, Loader2, AlertCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,6 +13,8 @@ import { PublicLayout } from "@/components/layout/PublicLayout";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { loginOrg, isAuthenticated, role } = useAuth();
   const navigate = useNavigate();
 
@@ -21,10 +24,19 @@ const Login = () => {
     return null;
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    loginOrg(email, password);
-    navigate("/app/dashboard");
+    setError(null);
+    setIsSubmitting(true);
+
+    const result = await loginOrg(email, password);
+    
+    if (result.success) {
+      navigate("/app/dashboard");
+    } else {
+      setError(result.error || "Login failed. Please try again.");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -50,6 +62,13 @@ const Login = () => {
               <CardDescription>Enter your credentials to continue</CardDescription>
             </CardHeader>
             <CardContent>
+              {error && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+              
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
@@ -59,6 +78,7 @@ const Login = () => {
                     placeholder="you@company.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    disabled={isSubmitting}
                     required
                   />
                 </div>
@@ -75,11 +95,19 @@ const Login = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    disabled={isSubmitting}
                     required
                   />
                 </div>
-                <Button className="w-full" type="submit">
-                  Sign In
+                <Button className="w-full" type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    "Sign In"
+                  )}
                 </Button>
               </form>
 

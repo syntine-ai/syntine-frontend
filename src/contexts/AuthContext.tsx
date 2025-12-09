@@ -1,13 +1,13 @@
-import { createContext, useContext, useState, ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 type Role = "org" | "admin" | null;
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  isLoading: boolean;
   role: Role;
-  loginOrg: (email: string, password: string) => void;
-  loginAdmin: (email: string, password: string) => void;
+  loginOrg: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -15,18 +15,45 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [role, setRole] = useState<Role>(null);
 
-  const loginOrg = (email: string, password: string) => {
-    // Mock login - in production, validate credentials
+  // Simulate checking for existing session on mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      // Mock delay to simulate auth check
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      setIsLoading(false);
+    };
+    checkAuth();
+  }, []);
+
+  const loginOrg = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    // Mock login - simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    // Mock validation - accept any valid email format with password length > 5
+    if (!email.includes("@") || password.length < 6) {
+      return { success: false, error: "Invalid email or password" };
+    }
+    
     setIsAuthenticated(true);
     setRole("org");
+    return { success: true };
   };
 
-  const loginAdmin = (email: string, password: string) => {
-    // Mock login - in production, validate credentials
+  const loginAdmin = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    // Mock login - simulate network delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    // Mock validation - for demo, require @syntine.io domain
+    if (!email.endsWith("@syntine.io") || password.length < 6) {
+      return { success: false, error: "Invalid admin credentials" };
+    }
+    
     setIsAuthenticated(true);
     setRole("admin");
+    return { success: true };
   };
 
   const logout = () => {
@@ -35,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, role, loginOrg, loginAdmin, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, role, loginOrg, loginAdmin, logout }}>
       {children}
     </AuthContext.Provider>
   );
