@@ -17,8 +17,11 @@ import Campaigns from "./pages/Campaigns";
 import CampaignDetail from "./pages/CampaignDetail";
 import Agents from "./pages/Agents";
 import AgentDetail from "./pages/AgentDetail";
-import Calls from "./pages/Calls";
+import CallAnalytics from "./pages/CallAnalytics";
+import CallLogs from "./pages/CallLogs";
+import CallerList from "./pages/CallerList";
 import Settings from "./pages/Settings";
+import SystemLogs from "./pages/SystemLogs";
 
 // Admin Pages
 import Organizations from "./pages/Organizations";
@@ -77,12 +80,27 @@ const App = () => (
             } />
             <Route path="/app/calls" element={
               <ProtectedRoute requiredRole="org">
-                <Calls />
+                <CallAnalytics />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/calls/logs" element={
+              <ProtectedRoute requiredRole="org">
+                <CallLogs />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/calls/callers" element={
+              <ProtectedRoute requiredRole="org">
+                <CallerList />
               </ProtectedRoute>
             } />
             <Route path="/app/settings" element={
               <ProtectedRoute requiredRole="org">
                 <Settings />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/settings/system-logs" element={
+              <ProtectedRoute requiredRole="org">
+                <SystemLogs />
               </ProtectedRoute>
             } />
             
