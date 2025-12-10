@@ -24,11 +24,13 @@ import Settings from "./pages/Settings";
 import SystemLogs from "./pages/SystemLogs";
 
 // Admin Pages
+import AdminDashboard from "./pages/AdminDashboard";
 import Organizations from "./pages/Organizations";
 import OrganizationDetail from "./pages/OrganizationDetail";
 import Subscriptions from "./pages/Subscriptions";
 import Sessions from "./pages/Sessions";
 import System from "./pages/System";
+import AdminActivityLogs from "./pages/AdminActivityLogs";
 import AdminProfile from "./pages/AdminProfile";
 import AdminSettings from "./pages/AdminSettings";
 
@@ -124,7 +126,12 @@ const App = () => (
             {/* Protected Admin Routes - /admin/* */}
             <Route path="/admin" element={
               <ProtectedRoute requiredRole="admin">
-                <Navigate to="/admin/organizations" replace />
+                <Navigate to="/admin/dashboard" replace />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/dashboard" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminDashboard />
               </ProtectedRoute>
             } />
             <Route path="/admin/organizations" element={
@@ -150,6 +157,11 @@ const App = () => (
             <Route path="/admin/system" element={
               <ProtectedRoute requiredRole="admin">
                 <System />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/logs" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminActivityLogs />
               </ProtectedRoute>
             } />
             <Route path="/admin/profile" element={
