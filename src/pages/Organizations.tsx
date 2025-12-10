@@ -66,7 +66,7 @@ const mockOrganizations: Organization[] = [
 const planConfig = {
   starter: { label: "Starter", className: "bg-muted text-muted-foreground" },
   pro: { label: "Pro", className: "bg-primary/15 text-primary" },
-  enterprise: { label: "Enterprise", className: "bg-admin-accent/15 text-admin-accent" },
+  enterprise: { label: "Enterprise", className: "bg-primary/15 text-primary" },
 };
 
 const Organizations = () => {
@@ -105,7 +105,7 @@ const Organizations = () => {
         title="Organizations"
         subtitle="Manage all registered organizations"
         actions={
-          <Button className="gap-2 bg-admin-accent hover:bg-admin-accent/90">
+          <Button className="gap-2 bg-primary hover:bg-primary/90">
             <Plus className="h-4 w-4" />
             New Organization
           </Button>
@@ -161,8 +161,8 @@ const Organizations = () => {
                 >
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg bg-admin-accent/10 flex items-center justify-center">
-                        <Building2 className="h-4 w-4 text-admin-accent" />
+                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <Building2 className="h-4 w-4 text-primary" />
                       </div>
                       <span className="font-medium text-foreground">{org.name}</span>
                     </div>

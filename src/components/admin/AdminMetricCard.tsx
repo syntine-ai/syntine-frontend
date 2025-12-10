@@ -46,8 +46,8 @@ export const AdminMetricCard = ({
             </div>
           )}
         </div>
-        <div className="h-11 w-11 rounded-xl bg-admin-accent/10 flex items-center justify-center">
-          <Icon className="h-5 w-5 text-admin-accent" />
+        <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Icon className="h-5 w-5 text-primary" />
         </div>
       </div>
     </motion.div>
