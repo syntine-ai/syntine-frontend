@@ -34,6 +34,8 @@ import AdminSettings from "./pages/AdminSettings";
 
 // Account Pages
 import Account from "./pages/Account";
+import OrgNotifications from "./pages/OrgNotifications";
+import AdminNotifications from "./pages/AdminNotifications";
 
 import NotFound from "./pages/NotFound";
 
@@ -113,6 +115,11 @@ const App = () => (
                 <Account />
               </ProtectedRoute>
             } />
+            <Route path="/app/notifications" element={
+              <ProtectedRoute requiredRole="org">
+                <OrgNotifications />
+              </ProtectedRoute>
+            } />
             
             {/* Protected Admin Routes - /admin/* */}
             <Route path="/admin" element={
@@ -153,6 +160,11 @@ const App = () => (
             <Route path="/admin/settings" element={
               <ProtectedRoute requiredRole="admin">
                 <AdminSettings />
+              </ProtectedRoute>
+            } />
+            <Route path="/admin/notifications" element={
+              <ProtectedRoute requiredRole="admin">
+                <AdminNotifications />
               </ProtectedRoute>
             } />
             

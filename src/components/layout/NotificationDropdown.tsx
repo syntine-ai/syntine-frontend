@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Bell, Check, Info, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Bell, Check, Info, AlertTriangle, CheckCircle2, XCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,7 +19,7 @@ interface Notification {
   description: string;
   time: string;
   read: boolean;
-  type: "info" | "warning" | "success";
+  type: "info" | "warning" | "success" | "error";
 }
 
 interface NotificationDropdownProps {
@@ -75,7 +76,7 @@ const adminNotifications: Notification[] = [
     description: "Error rate exceeded 5% threshold",
     time: "12m ago",
     read: false,
-    type: "warning",
+    type: "error",
   },
   {
     id: 3,
@@ -99,15 +100,18 @@ const typeIcons = {
   info: Info,
   warning: AlertTriangle,
   success: CheckCircle2,
+  error: XCircle,
 };
 
 const typeColors = {
   info: "text-blue-500",
   warning: "text-warning",
   success: "text-success",
+  error: "text-destructive",
 };
 
 export function NotificationDropdown({ variant }: NotificationDropdownProps) {
+  const navigate = useNavigate();
   const initialNotifications = variant === "org" ? orgNotifications : adminNotifications;
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
   
@@ -121,6 +125,10 @@ export function NotificationDropdown({ variant }: NotificationDropdownProps) {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+  };
+
+  const viewAll = () => {
+    navigate(variant === "org" ? "/app/notifications" : "/admin/notifications");
   };
 
   return (
@@ -193,6 +201,14 @@ export function NotificationDropdown({ variant }: NotificationDropdownProps) {
             })
           )}
         </ScrollArea>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="justify-center text-sm text-primary cursor-pointer"
+          onClick={viewAll}
+        >
+          View all notifications
+          <ExternalLink className="h-3 w-3 ml-1" />
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
