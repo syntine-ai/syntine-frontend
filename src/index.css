@@ -6,107 +6,117 @@
 
 @layer base {
   :root {
-    /* Vercel-style True Black Dark Theme */
+    /* Vercel/Linear-style True Black Dark Theme */
+    
+    /* Core Backgrounds */
     --background: 0 0% 0%;
+    --background-secondary: 0 0% 4%;
+    --background-elevated: 0 0% 7%;
+    
     --foreground: 0 0% 100%;
     
-    --card: 0 0% 7%;
+    --card: 0 0% 8%;
     --card-foreground: 0 0% 100%;
     
-    --popover: 0 0% 7%;
+    --popover: 0 0% 8%;
     --popover-foreground: 0 0% 100%;
     
-    /* Primary - Syntine Indigo/Purple */
-    --primary: 239 84% 67%;
+    /* Primary/Accent - Premium Purple (Linear-like) */
+    --primary: 246 98% 68%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary - Charcoal */
-    --secondary: 0 0% 8%;
+    /* Secondary - Elevated surface */
+    --secondary: 0 0% 7%;
     --secondary-foreground: 0 0% 100%;
     
+    /* Muted */
     --muted: 0 0% 10%;
     --muted-foreground: 0 0% 61%;
     
-    --accent: 239 84% 67%;
+    /* Accent */
+    --accent: 246 98% 68%;
     --accent-foreground: 0 0% 100%;
+    --accent-hover: 246 100% 74%;
     
     /* Status colors */
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     
-    --warning: 48 96% 53%;
+    --warning: 48 96% 47%;
     --warning-foreground: 0 0% 0%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
+    /* Borders */
     --border: 0 0% 12%;
+    --border-subtle: 0 0% 15%;
     --input: 0 0% 12%;
-    --ring: 239 84% 67%;
+    --ring: 246 98% 68%;
     
-    --radius: 0.6rem;
+    /* Radius */
+    --radius: 0.625rem;
     
-    /* Sidebar - Dark theme */
-    --sidebar-background: 0 0% 6%;
+    /* Sidebar */
+    --sidebar-background: 0 0% 5%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary: 246 98% 68%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-ring: 246 98% 68%;
     --sidebar-muted: 0 0% 61%;
     
-    /* Admin accent - Red tint */
+    /* Admin accent - Red */
     --admin-accent: 0 84% 60%;
     --admin-accent-foreground: 0 0% 100%;
     
     /* Chart colors */
-    --chart-1: 239 84% 67%;
+    --chart-1: 246 98% 68%;
     --chart-2: 142 71% 45%;
-    --chart-3: 0 84% 60%;
-    --chart-4: 48 96% 53%;
-    --chart-5: 280 65% 60%;
+    --chart-3: 48 96% 47%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 0 0% 64%;
+    
+    /* Icon color */
+    --icon: 0 0% 82%;
+    
+    /* Text variants */
+    --text-muted: 0 0% 42%;
   }
 
-  /* Apply dark theme by default - no light mode */
+  /* Dark mode is the only mode */
   .dark {
     --background: 0 0% 0%;
+    --background-secondary: 0 0% 4%;
+    --background-elevated: 0 0% 7%;
     --foreground: 0 0% 100%;
-    
-    --card: 0 0% 7%;
+    --card: 0 0% 8%;
     --card-foreground: 0 0% 100%;
-    
-    --popover: 0 0% 7%;
+    --popover: 0 0% 8%;
     --popover-foreground: 0 0% 100%;
-    
-    --primary: 239 84% 67%;
+    --primary: 246 98% 68%;
     --primary-foreground: 0 0% 100%;
-    
-    --secondary: 0 0% 8%;
+    --secondary: 0 0% 7%;
     --secondary-foreground: 0 0% 100%;
-    
     --muted: 0 0% 10%;
     --muted-foreground: 0 0% 61%;
-    
-    --accent: 239 84% 67%;
+    --accent: 246 98% 68%;
     --accent-foreground: 0 0% 100%;
-    
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    
     --border: 0 0% 12%;
     --input: 0 0% 12%;
-    --ring: 239 84% 67%;
-    
-    --sidebar-background: 0 0% 6%;
+    --ring: 246 98% 68%;
+    --sidebar-background: 0 0% 5%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary: 246 98% 68%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-ring: 246 98% 68%;
   }
 }
 
@@ -126,9 +136,9 @@
 }
 
 @layer utilities {
-  /* Card hover effect - minimal for dark theme */
+  /* Card hover effect */
   .card-hover {
-    @apply transition-all duration-200 hover:bg-muted/50;
+    @apply transition-colors hover:bg-muted/30;
   }
   
   /* Sidebar item styles */
@@ -156,7 +166,7 @@
   
   .stat-card-glow::before {
     content: '';
-    @apply absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300;
+    @apply absolute inset-0 bg-primary/5 opacity-0 transition-opacity duration-300;
   }
   
   .stat-card-glow:hover::before {
@@ -165,12 +175,7 @@
 
   /* Table row hover */
   .table-row-hover {
-    @apply transition-colors hover:bg-muted/50;
-  }
-
-  /* Alternate row background */
-  .table-row-alt:nth-child(even) {
-    @apply bg-secondary/50;
+    @apply transition-colors hover:bg-muted/30;
   }
 }
 
@@ -206,7 +211,7 @@ a:focus-visible {
 /* Recharts overrides for dark theme */
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
-  stroke: hsl(0 0% 100% / 0.08);
+  stroke: rgba(255, 255, 255, 0.06);
 }
 
 .recharts-text {
@@ -214,7 +219,7 @@ a:focus-visible {
 }
 
 .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background-color: hsl(0 0% 7%) !important;
+  background-color: hsl(0 0% 8%) !important;
   border-color: hsl(0 0% 12%) !important;
-  border-radius: 0.5rem;
+  border-radius: 10px;
 }

@@ -13,9 +13,9 @@ import {
 import { cn } from "@/lib/utils";
 
 const campaignColors = {
-  "Renewal Follow-up": "hsl(239, 84%, 67%)",
+  "Renewal Follow-up": "hsl(246, 98%, 68%)",
   "Lead Qualification": "hsl(142, 71%, 45%)",
-  "Customer Feedback": "hsl(48, 96%, 53%)",
+  "Customer Feedback": "hsl(48, 96%, 47%)",
   "Product Launch": "hsl(280, 65%, 60%)",
   "Churn Prevention": "hsl(0, 84%, 60%)",
 };
