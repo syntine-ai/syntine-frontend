@@ -30,7 +30,7 @@ import OrganizationDetail from "./pages/OrganizationDetail";
 import Subscriptions from "./pages/Subscriptions";
 import Sessions from "./pages/Sessions";
 import System from "./pages/System";
-import AdminActivityLogs from "./pages/AdminActivityLogs";
+import AdminActivity from "./pages/AdminActivity";
 import AdminProfile from "./pages/AdminProfile";
 import AdminSettings from "./pages/AdminSettings";
 
@@ -159,9 +159,9 @@ const App = () => (
                 <System />
               </ProtectedRoute>
             } />
-            <Route path="/admin/logs" element={
+            <Route path="/admin/activity" element={
               <ProtectedRoute requiredRole="admin">
-                <AdminActivityLogs />
+                <AdminActivity />
               </ProtectedRoute>
             } />
             <Route path="/admin/profile" element={
