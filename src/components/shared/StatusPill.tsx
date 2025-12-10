@@ -1,36 +1,47 @@
 import { cn } from "@/lib/utils";
 
-type StatusType = "running" | "paused" | "draft" | "active" | "inactive" | "error";
+type StatusType = "running" | "paused" | "draft" | "active" | "inactive" | "error" | "completed";
 
 interface StatusPillProps {
   status: StatusType;
   className?: string;
 }
 
-const statusConfig: Record<StatusType, { label: string; className: string }> = {
+const statusConfig: Record<StatusType, { label: string; className: string; dotClass: string }> = {
   running: {
     label: "Running",
-    className: "bg-success/10 text-success border-success/20",
-  },
-  paused: {
-    label: "Paused",
-    className: "bg-warning/10 text-warning border-warning/20",
-  },
-  draft: {
-    label: "Draft",
-    className: "bg-muted text-muted-foreground border-border",
+    className: "bg-success/15 text-success border-success/40",
+    dotClass: "bg-success animate-pulse",
   },
   active: {
     label: "Active",
-    className: "bg-success/10 text-success border-success/20",
+    className: "bg-primary/15 text-primary border-primary/40",
+    dotClass: "bg-primary animate-pulse",
+  },
+  paused: {
+    label: "Paused",
+    className: "bg-warning/15 text-warning border-warning/40",
+    dotClass: "bg-warning",
+  },
+  draft: {
+    label: "Draft",
+    className: "bg-[rgba(255,255,255,0.06)] text-muted-foreground border-[rgba(255,255,255,0.12)]",
+    dotClass: "bg-muted-foreground",
   },
   inactive: {
     label: "Inactive",
-    className: "bg-muted text-muted-foreground border-border",
+    className: "bg-[rgba(255,255,255,0.06)] text-muted-foreground border-[rgba(255,255,255,0.12)]",
+    dotClass: "bg-muted-foreground",
   },
   error: {
     label: "Error",
-    className: "bg-destructive/10 text-destructive border-destructive/20",
+    className: "bg-destructive/15 text-destructive border-destructive/40",
+    dotClass: "bg-destructive",
+  },
+  completed: {
+    label: "Completed",
+    className: "bg-success/15 text-success border-success/40",
+    dotClass: "bg-success",
   },
 };
 
@@ -40,23 +51,12 @@ export function StatusPill({ status, className }: StatusPillProps) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border",
         config.className,
         className
       )}
     >
-      <span
-        className={cn(
-          "h-1.5 w-1.5 rounded-full",
-          status === "running" || status === "active"
-            ? "bg-success animate-pulse"
-            : status === "paused"
-            ? "bg-warning"
-            : status === "error"
-            ? "bg-destructive"
-            : "bg-muted-foreground"
-        )}
-      />
+      <span className={cn("h-1.5 w-1.5 rounded-full", config.dotClass)} />
       {config.label}
     </span>
   );

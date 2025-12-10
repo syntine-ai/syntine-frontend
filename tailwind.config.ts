@@ -7,7 +7,7 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: "1.25rem", // 20px global padding
+      padding: "1.25rem",
       screens: {
         "2xl": "1400px",
       },
@@ -45,6 +45,7 @@ export default {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
           hover: "hsl(var(--primary-hover))",
+          subtle: "hsl(var(--primary-subtle))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -53,18 +54,22 @@ export default {
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
+          subtle: "hsl(var(--destructive-subtle))",
         },
         success: {
           DEFAULT: "hsl(var(--success))",
           foreground: "hsl(var(--success-foreground))",
+          subtle: "hsl(var(--success-subtle))",
         },
         warning: {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
+          subtle: "hsl(var(--warning-subtle))",
         },
         info: {
           DEFAULT: "hsl(var(--info))",
           foreground: "hsl(var(--info-foreground))",
+          subtle: "hsl(var(--info-subtle))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -98,6 +103,22 @@ export default {
           accent: "hsl(var(--admin-accent))",
           "accent-foreground": "hsl(var(--admin-accent-foreground))",
         },
+        sentiment: {
+          positive: "hsl(var(--sentiment-positive))",
+          neutral: "hsl(var(--sentiment-neutral))",
+          negative: "hsl(var(--sentiment-negative))",
+        },
+        agent: {
+          online: "hsl(var(--agent-online))",
+          offline: "hsl(var(--agent-offline))",
+          busy: "hsl(var(--agent-busy))",
+        },
+        campaign: {
+          active: "hsl(var(--campaign-active))",
+          paused: "hsl(var(--campaign-paused))",
+          completed: "hsl(var(--campaign-completed))",
+          failed: "hsl(var(--campaign-failed))",
+        },
         chart: {
           "1": "hsl(var(--chart-1))",
           "2": "hsl(var(--chart-2))",
@@ -105,12 +126,20 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
-        icon: "hsl(var(--icon))",
+        icon: {
+          DEFAULT: "hsl(var(--icon))",
+          muted: "hsl(var(--icon-muted))",
+        },
       },
       borderRadius: {
-        lg: "var(--radius)",      // 10px
-        md: "calc(var(--radius) - 2px)", // 8px
-        sm: "calc(var(--radius) - 4px)", // 6px
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 2px)",
+        sm: "var(--radius-sm)",
+      },
+      boxShadow: {
+        none: "var(--shadow-none)",
+        low: "var(--shadow-low)",
+        medium: "var(--shadow-medium)",
       },
       keyframes: {
         "accordion-down": {
@@ -145,11 +174,16 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.3s ease-out",
-        "slide-up": "slide-up 0.35s ease-out",
-        "slide-in-left": "slide-in-left 0.3s ease-out",
+        "fade-in": "fade-in 0.25s ease-in-out",
+        "slide-up": "slide-up 0.25s ease-in-out",
+        "slide-in-left": "slide-in-left 0.25s ease-in-out",
         shimmer: "shimmer 2s infinite linear",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+      },
+      transitionDuration: {
+        DEFAULT: "200ms",
+        fast: "150ms",
+        slow: "300ms",
       },
     },
   },

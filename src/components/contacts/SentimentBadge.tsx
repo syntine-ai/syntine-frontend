@@ -12,17 +12,17 @@ interface SentimentBadgeProps {
 const sentimentConfig: Record<SentimentType, { label: string; className: string; icon: typeof Smile }> = {
   positive: {
     label: "Positive",
-    className: "bg-success/10 text-success border-success/20",
+    className: "bg-success/15 text-success border-success/40",
     icon: Smile,
   },
   neutral: {
     label: "Neutral",
-    className: "bg-muted text-muted-foreground border-border",
+    className: "bg-[rgba(255,255,255,0.06)] text-muted-foreground border-[rgba(255,255,255,0.12)]",
     icon: Meh,
   },
   negative: {
     label: "Negative",
-    className: "bg-destructive/10 text-destructive border-destructive/20",
+    className: "bg-destructive/15 text-destructive border-destructive/40",
     icon: Frown,
   },
 };
@@ -34,7 +34,7 @@ export function SentimentBadge({ sentiment, showIcon = true, className }: Sentim
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium border",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border",
         config.className,
         className
       )}

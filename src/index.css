@@ -6,95 +6,135 @@
 
 @layer base {
   :root {
-    /* Syntine Dark Theme - Premium SaaS */
+    /* ═══════════════════════════════════════════════════════════
+       SYNTINE BRAND IDENTITY SYSTEM
+       Futuristic, precise, professional AI-driven platform
+    ═══════════════════════════════════════════════════════════ */
     
-    /* Core Backgrounds */
-    --background: 0 0% 0%;           /* #000000 */
-    --background-secondary: 0 0% 4%; /* #0A0A0A */
-    --background-elevated: 0 0% 7%;  /* #111111 */
+    /* ─── Core Surfaces ─── */
+    --background: 0 0% 0%;              /* #000000 */
+    --background-secondary: 0 0% 4%;    /* #0A0A0A - layer1 */
+    --background-elevated: 0 0% 7%;     /* #111111 - layer2 */
     
-    --foreground: 0 0% 100%;         /* #FFFFFF */
+    --foreground: 0 0% 100%;            /* #FFFFFF */
     
-    /* Cards */
-    --card: 0 0% 7%;                 /* #111111 */
+    /* ─── Cards & Popovers ─── */
+    --card: 0 0% 7%;                    /* #111111 */
     --card-foreground: 0 0% 100%;
-    
-    /* Popovers */
-    --popover: 0 0% 7%;              /* #111111 */
+    --popover: 0 0% 7%;                 /* #111111 */
     --popover-foreground: 0 0% 100%;
     
-    /* Primary Accent - Premium Purple */
-    --primary: 246 79% 68%;          /* #6D5DFE */
+    /* ─── Syntine Brand - Premium Purple ─── */
+    --primary: 246 79% 68%;             /* #6D5DFE */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 246 100% 74%;   /* #867CFF */
+    --primary-hover: 246 100% 74%;      /* #867CFF */
+    --primary-subtle: 246 79% 68% / 0.15;
     
-    /* Secondary */
-    --secondary: 0 0% 7%;            /* #111111 */
+    /* ─── Secondary ─── */
+    --secondary: 0 0% 7%;               /* #111111 */
     --secondary-foreground: 0 0% 100%;
     
-    /* Muted */
-    --muted: 0 0% 10%;               /* #1A1A1A */
-    --muted-foreground: 0 0% 61%;    /* #9B9B9B */
+    /* ─── Muted ─── */
+    --muted: 0 0% 10%;                  /* #1A1A1A */
+    --muted-foreground: 0 0% 61%;       /* #9B9B9B */
     
-    /* Accent */
-    --accent: 246 79% 68%;           /* #6D5DFE */
+    /* ─── Accent (mirrors primary) ─── */
+    --accent: 246 79% 68%;              /* #6D5DFE */
     --accent-foreground: 0 0% 100%;
-    --accent-hover: 246 100% 74%;    /* #867CFF */
+    --accent-hover: 246 100% 74%;       /* #867CFF */
     
-    /* Status Colors */
-    --success: 142 71% 45%;          /* #22C55E */
+    /* ─── Status: Success ─── */
+    --success: 142 71% 45%;             /* #22C55E */
     --success-foreground: 0 0% 100%;
+    --success-subtle: 142 71% 45% / 0.15;
+    --success-border: 142 71% 45% / 0.4;
     
-    --warning: 48 96% 47%;           /* #EAB308 */
+    /* ─── Status: Warning ─── */
+    --warning: 48 96% 47%;              /* #EAB308 */
     --warning-foreground: 0 0% 0%;
+    --warning-subtle: 48 96% 47% / 0.15;
+    --warning-border: 48 96% 47% / 0.4;
     
-    --destructive: 0 84% 60%;        /* #EF4444 */
+    /* ─── Status: Error/Destructive ─── */
+    --destructive: 0 84% 60%;           /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
+    --destructive-subtle: 0 84% 60% / 0.15;
+    --destructive-border: 0 84% 60% / 0.4;
     
-    /* Info Color */
-    --info: 246 79% 68%;             /* Same as primary */
+    /* ─── Status: Info ─── */
+    --info: 246 79% 68%;                /* Same as primary */
     --info-foreground: 0 0% 100%;
+    --info-subtle: 246 79% 68% / 0.15;
     
-    /* Borders */
-    --border: 0 0% 12%;              /* #1F1F1F */
-    --border-subtle: 0 0% 15%;       /* #262626 */
-    --input: 0 0% 12%;               /* #1F1F1F */
+    /* ─── Neutral Badge ─── */
+    --neutral: 0 0% 100% / 0.06;
+    --neutral-foreground: 0 0% 61%;     /* #9B9B9B */
+    --neutral-border: 0 0% 100% / 0.12;
+    
+    /* ─── Borders ─── */
+    --border: 0 0% 12%;                 /* #1F1F1F */
+    --border-subtle: 0 0% 15%;          /* #262626 */
+    --input: 0 0% 12%;
     --ring: 246 79% 68%;
     
-    /* Radius */
-    --radius: 0.625rem;              /* 10px */
+    /* ─── Radius System ─── */
+    --radius-sm: 0.375rem;              /* 6px */
+    --radius: 0.625rem;                 /* 10px */
+    --radius-lg: 0.875rem;              /* 14px */
     
-    /* Sidebar */
-    --sidebar-background: 0 0% 5%;   /* #0D0D0D */
+    /* ─── Elevation/Shadows ─── */
+    --shadow-none: 0px 0px 0px rgba(0, 0, 0, 0);
+    --shadow-low: 0px 0px 10px rgba(0, 0, 0, 0.25);
+    --shadow-medium: 0px 0px 16px rgba(0, 0, 0, 0.35);
+    
+    /* ─── Sidebar ─── */
+    --sidebar-background: 0 0% 5%;      /* #0D0D0D */
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 246 79% 68%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 10%;      /* #1A1A1A */
+    --sidebar-accent: 0 0% 10%;         /* #1A1A1A */
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 12%;      /* #1F1F1F */
+    --sidebar-border: 0 0% 12%;         /* #1F1F1F */
     --sidebar-ring: 246 79% 68%;
-    --sidebar-muted: 0 0% 61%;       /* #9B9B9B */
+    --sidebar-muted: 0 0% 61%;          /* #9B9B9B */
     
-    /* Admin Accent */
-    --admin-accent: 0 84% 60%;       /* #EF4444 */
+    /* ─── Admin Accent ─── */
+    --admin-accent: 0 84% 60%;          /* #EF4444 */
     --admin-accent-foreground: 0 0% 100%;
     
-    /* Chart Colors */
-    --chart-1: 246 79% 68%;          /* Primary purple */
-    --chart-2: 142 71% 45%;          /* Success green */
-    --chart-3: 48 96% 47%;           /* Warning yellow */
-    --chart-4: 0 84% 60%;            /* Destructive red */
-    --chart-5: 0 0% 64%;             /* Neutral gray */
+    /* ─── Sentiment Colors ─── */
+    --sentiment-positive: 142 71% 45%;  /* #22C55E */
+    --sentiment-neutral: 0 0% 61%;      /* #9B9B9B */
+    --sentiment-negative: 0 84% 60%;    /* #EF4444 */
     
-    /* Icon Color */
-    --icon: 0 0% 82%;                /* #D0D0D0 */
+    /* ─── Agent Status ─── */
+    --agent-online: 246 79% 68%;        /* #6D5DFE */
+    --agent-offline: 0 0% 42%;          /* #6B6B6B */
+    --agent-busy: 48 96% 47%;           /* #EAB308 */
     
-    /* Text Variants */
-    --text-muted: 0 0% 42%;          /* #6B6B6B */
+    /* ─── Campaign States ─── */
+    --campaign-active: 246 79% 68%;     /* #6D5DFE */
+    --campaign-paused: 0 0% 63%;        /* #A1A1A1 */
+    --campaign-completed: 142 71% 45%;  /* #22C55E */
+    --campaign-failed: 0 84% 60%;       /* #EF4444 */
+    
+    /* ─── Chart Colors ─── */
+    --chart-1: 246 79% 68%;             /* Primary purple */
+    --chart-2: 142 71% 45%;             /* Success green */
+    --chart-3: 48 96% 47%;              /* Warning yellow */
+    --chart-4: 0 84% 60%;               /* Destructive red */
+    --chart-5: 0 0% 64%;                /* Neutral gray */
+    
+    /* ─── Icon Colors ─── */
+    --icon: 0 0% 82%;                   /* #D0D0D0 */
+    --icon-muted: 0 0% 61%;             /* #9B9B9B */
+    
+    /* ─── Text Variants ─── */
+    --text-muted: 0 0% 42%;             /* #6B6B6B */
   }
 
   .dark {
-    /* Dark mode uses same values */
+    /* Dark mode uses identical values - single dark theme */
     --background: 0 0% 0%;
     --background-secondary: 0 0% 4%;
     --background-elevated: 0 0% 7%;
@@ -157,12 +197,38 @@
 }
 
 @layer utilities {
-  /* Card hover effect */
-  .card-hover {
-    @apply transition-colors hover:bg-muted/30;
+  /* ─── Brand Gradient ─── */
+  .gradient-brand {
+    background: linear-gradient(135deg, hsl(246 79% 68%) 0%, hsl(246 100% 74%) 100%);
   }
   
-  /* Sidebar item styles */
+  .gradient-brand-text {
+    background: linear-gradient(135deg, hsl(246 79% 68%) 0%, hsl(246 100% 74%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  
+  /* ─── Card Utilities ─── */
+  .card-hover {
+    @apply transition-all duration-200 hover:bg-muted/30;
+  }
+  
+  .card-glow {
+    @apply relative overflow-hidden;
+  }
+  
+  .card-glow::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(135deg, hsl(246 79% 68% / 0.08) 0%, transparent 100%);
+  }
+  
+  .card-glow:hover::before {
+    @apply opacity-100;
+  }
+  
+  /* ─── Sidebar Styles ─── */
   .sidebar-item {
     @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sidebar-muted transition-all duration-200;
   }
@@ -175,33 +241,54 @@
     @apply bg-sidebar-accent text-sidebar-foreground font-medium;
   }
   
-  /* Admin sidebar accent */
   .admin-sidebar-item-active {
     @apply bg-admin-accent/15 text-admin-accent-foreground;
   }
   
-  /* Stat card with subtle glow */
-  .stat-card-glow {
-    @apply relative overflow-hidden;
+  /* ─── Badge/Pill Variants ─── */
+  .badge-success {
+    @apply bg-success/15 text-success border-success/40;
   }
   
-  .stat-card-glow::before {
-    content: '';
-    @apply absolute inset-0 bg-primary/5 opacity-0 transition-opacity duration-300;
+  .badge-warning {
+    @apply bg-warning/15 text-warning border-warning/40;
   }
   
-  .stat-card-glow:hover::before {
-    @apply opacity-100;
+  .badge-error {
+    @apply bg-destructive/15 text-destructive border-destructive/40;
   }
-
-  /* Table row hover */
+  
+  .badge-neutral {
+    background: rgba(255, 255, 255, 0.06);
+    @apply text-muted-foreground;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  
+  .badge-accent {
+    @apply bg-primary/15 text-primary border-primary/40;
+  }
+  
+  /* ─── Sentiment Highlights ─── */
+  .sentiment-positive {
+    background: hsl(142 71% 45% / 0.12);
+  }
+  
+  .sentiment-neutral {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  
+  .sentiment-negative {
+    background: hsl(0 84% 60% / 0.12);
+  }
+  
+  /* ─── Table Row Hover ─── */
   .table-row-hover {
     @apply transition-colors hover:bg-muted/30;
   }
   
-  /* Icon standard sizes */
+  /* ─── Icon Sizes ─── */
   .icon-sm {
-    @apply h-4 w-4;
+    @apply h-3 w-3;
   }
   
   .icon-md {
@@ -210,6 +297,40 @@
   
   .icon-lg {
     @apply h-5 w-5;
+  }
+  
+  /* ─── Status Dot ─── */
+  .status-dot {
+    @apply h-2 w-2 rounded-full;
+  }
+  
+  .status-dot-online {
+    @apply bg-success animate-pulse;
+  }
+  
+  .status-dot-offline {
+    @apply bg-muted-foreground;
+  }
+  
+  .status-dot-warning {
+    @apply bg-warning;
+  }
+  
+  .status-dot-error {
+    @apply bg-destructive;
+  }
+  
+  /* ─── Elevation ─── */
+  .elevation-none {
+    box-shadow: var(--shadow-none);
+  }
+  
+  .elevation-low {
+    box-shadow: var(--shadow-low);
+  }
+  
+  .elevation-medium {
+    box-shadow: var(--shadow-medium);
   }
 }
 
