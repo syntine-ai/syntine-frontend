@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { User, Settings, LogOut, Shield } from "lucide-react";
+import { User, Settings, LogOut, Shield, Moon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -10,6 +10,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/contexts/AuthContext";
+import { Switch } from "@/components/ui/switch";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface UserMenuProps {
   variant: "org" | "admin";
@@ -18,6 +20,7 @@ interface UserMenuProps {
 export function UserMenu({ variant }: UserMenuProps) {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { theme } = useTheme();
 
   const handleLogout = () => {
     logout();
@@ -25,6 +28,7 @@ export function UserMenu({ variant }: UserMenuProps) {
   };
 
   const isAdmin = variant === "admin";
+  const isDark = theme === "dark";
 
   const menuItems = isAdmin
     ? [
@@ -92,6 +96,24 @@ export function UserMenu({ variant }: UserMenuProps) {
             <span>{item.label}</span>
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer flex items-center justify-between"
+          onSelect={(e) => e.preventDefault()}
+        >
+          <div className="flex items-center">
+            <Moon className="mr-2 h-4 w-4" />
+            <span>Dark Mode</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Switch
+              checked={isDark}
+              disabled
+              className="scale-75"
+              aria-label="Toggle theme"
+            />
+          </div>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
