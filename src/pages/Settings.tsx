@@ -17,6 +17,7 @@ import { IntegrationCard } from "@/components/settings/IntegrationCard";
 import { UsageMeter } from "@/components/settings/UsageMeter";
 import { LogsTable, LogEntry } from "@/components/settings/LogsTable";
 import { LogDetailsDrawer } from "@/components/settings/LogDetailsDrawer";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Building2,
@@ -25,6 +26,7 @@ import {
   CreditCard,
   Zap,
   ArrowUpRight,
+  Palette,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -89,6 +91,7 @@ const Settings = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6 bg-muted/50">
             <TabsTrigger value="general">General</TabsTrigger>
+            <TabsTrigger value="appearance">Appearance</TabsTrigger>
             <TabsTrigger value="integrations">Integrations</TabsTrigger>
             <TabsTrigger value="plan">Plan & Usage</TabsTrigger>
             <TabsTrigger value="logs">System Logs</TabsTrigger>
@@ -220,7 +223,31 @@ const Settings = () => {
               </motion.div>
             </TabsContent>
 
-            {/* Integrations Tab */}
+            {/* Appearance Tab */}
+            <TabsContent value="appearance" className="mt-0">
+              <motion.div
+                key="appearance"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="max-w-3xl space-y-6"
+              >
+                <SettingsCard
+                  title="Theme"
+                  description="Customize the visual appearance of the interface"
+                  icon={Palette}
+                  delay={0}
+                >
+                  <div className="space-y-4">
+                    <ThemeToggle />
+                    <p className="text-xs text-muted-foreground">
+                      Light mode is coming soon. Currently, only dark mode is available.
+                    </p>
+                  </div>
+                </SettingsCard>
+              </motion.div>
+            </TabsContent>
             <TabsContent value="integrations" className="mt-0">
               <motion.div
                 key="integrations"
