@@ -68,7 +68,7 @@ export function TopBar({ workspaceName = "Syntine Workspace", variant }: TopBarP
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="h-16 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-6"
+        className="h-16 border-b border-border bg-background flex items-center justify-between px-6"
       >
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-foreground">{workspaceName}</span>

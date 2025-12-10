@@ -111,10 +111,10 @@ export function CampaignsTable() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-card rounded-xl border border-border/50 shadow-card overflow-hidden">
+    <div className="bg-card rounded-lg border border-border overflow-hidden">
       <Table>
         <TableHeader>
-          <TableRow className="border-border/50 hover:bg-transparent">
+          <TableRow className="border-border hover:bg-transparent">
             <TableHead className="text-muted-foreground font-medium">Campaign</TableHead>
             <TableHead className="text-muted-foreground font-medium">Status</TableHead>
             <TableHead className="text-muted-foreground font-medium text-right">Calls</TableHead>
@@ -134,7 +134,7 @@ export function CampaignsTable() {
               transition={{ delay: index * 0.05, duration: 0.3 }}
               onClick={() => navigate(`/app/campaigns/${campaign.id}`)}
               className={cn(
-                "border-border/50 cursor-pointer transition-colors",
+                "border-border cursor-pointer transition-colors",
                 "hover:bg-muted/30"
               )}
             >
@@ -169,7 +169,7 @@ export function CampaignsTable() {
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center justify-end gap-2">
-                  <div className="w-16 h-2 bg-secondary rounded-full overflow-hidden">
+                  <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
                     <div
                       className={cn(
                         "h-full rounded-full",

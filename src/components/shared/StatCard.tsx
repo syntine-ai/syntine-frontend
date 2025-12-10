@@ -35,7 +35,7 @@ export function StatCard({
       whileHover={{ scale: 1.02, y: -2 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "bg-card rounded-lg p-5 shadow-card stat-card-gradient border border-border/50",
+        "bg-card rounded-lg p-5 border border-border transition-colors hover:bg-muted/20",
         className
       )}
     >

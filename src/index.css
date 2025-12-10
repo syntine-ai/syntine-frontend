@@ -6,110 +6,117 @@
 
 @layer base {
   :root {
-    /* Core Syntine palette */
-    --background: 228 15% 97%;
-    --foreground: 222 47% 11%;
+    /* Vercel-style True Black Dark Theme */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
     
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 100%;
     
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
     
-    /* Primary - Syntine Purple */
-    --primary: 244 94% 69%;
+    /* Primary - Syntine Indigo/Purple */
+    --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
     
-    /* Secondary - Muted surface */
-    --secondary: 228 15% 94%;
-    --secondary-foreground: 222 47% 11%;
+    /* Secondary - Charcoal */
+    --secondary: 0 0% 8%;
+    --secondary-foreground: 0 0% 100%;
     
-    --muted: 228 15% 94%;
-    --muted-foreground: 222 10% 45%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 61%;
     
-    --accent: 244 94% 69%;
+    --accent: 239 84% 67%;
     --accent-foreground: 0 0% 100%;
     
     /* Status colors */
-    --success: 145 63% 42%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
     
-    --warning: 40 91% 64%;
-    --warning-foreground: 222 47% 11%;
+    --warning: 48 96% 53%;
+    --warning-foreground: 0 0% 0%;
     
-    --destructive: 0 72% 67%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 228 15% 90%;
-    --input: 228 15% 90%;
-    --ring: 244 94% 69%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 239 84% 67%;
     
-    --radius: 1.125rem;
+    --radius: 0.6rem;
     
     /* Sidebar - Dark theme */
-    --sidebar-background: 216 18% 6%;
+    --sidebar-background: 0 0% 6%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 244 94% 69%;
+    --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 100% / 0.1;
+    --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 100% / 0.1;
-    --sidebar-ring: 244 94% 69%;
-    --sidebar-muted: 0 0% 100% / 0.6;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 239 84% 67%;
+    --sidebar-muted: 0 0% 61%;
     
     /* Admin accent - Red tint */
-    --admin-accent: 0 72% 55%;
+    --admin-accent: 0 84% 60%;
     --admin-accent-foreground: 0 0% 100%;
     
-    /* Custom shadows */
-    --shadow-card: 0px 4px 12px rgba(0, 0, 0, 0.08);
-    --shadow-elevated: 0px 8px 24px rgba(0, 0, 0, 0.12);
-    --shadow-glow: 0px 0px 20px rgba(108, 99, 255, 0.3);
+    /* Chart colors */
+    --chart-1: 239 84% 67%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 0 84% 60%;
+    --chart-4: 48 96% 53%;
+    --chart-5: 280 65% 60%;
   }
 
+  /* Apply dark theme by default - no light mode */
   .dark {
-    --background: 216 18% 6%;
-    --foreground: 0 0% 98%;
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
     
-    --card: 222 20% 10%;
-    --card-foreground: 0 0% 98%;
+    --card: 0 0% 7%;
+    --card-foreground: 0 0% 100%;
     
-    --popover: 222 20% 10%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
     
-    --primary: 244 94% 69%;
+    --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 222 20% 15%;
-    --secondary-foreground: 0 0% 98%;
+    --secondary: 0 0% 8%;
+    --secondary-foreground: 0 0% 100%;
     
-    --muted: 222 20% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 61%;
     
-    --accent: 244 94% 69%;
+    --accent: 239 84% 67%;
     --accent-foreground: 0 0% 100%;
     
-    --destructive: 0 72% 55%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    --border: 222 20% 18%;
-    --input: 222 20% 18%;
-    --ring: 244 94% 69%;
+    --border: 0 0% 12%;
+    --input: 0 0% 12%;
+    --ring: 239 84% 67%;
     
-    --sidebar-background: 222 25% 8%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 244 94% 69%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 239 84% 67%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 100% / 0.08;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 0 0% 100% / 0.08;
-    --sidebar-ring: 244 94% 69%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 0 0% 12%;
+    --sidebar-ring: 239 84% 67%;
   }
 }
 
 @layer base {
   * {
     @apply border-border;
+  }
+
+  html {
+    color-scheme: dark;
   }
 
   body {
@@ -119,19 +126,9 @@
 }
 
 @layer utilities {
-  /* Glassmorphism effect */
-  .glass {
-    @apply bg-card/80 backdrop-blur-xl;
-  }
-  
-  /* Gradient text */
-  .gradient-text {
-    @apply bg-gradient-to-r from-primary to-[hsl(280,80%,65%)] bg-clip-text text-transparent;
-  }
-  
-  /* Card hover effect */
+  /* Card hover effect - minimal for dark theme */
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-elevated hover:-translate-y-0.5;
+    @apply transition-all duration-200 hover:bg-muted/50;
   }
   
   /* Sidebar item styles */
@@ -149,21 +146,31 @@
   
   /* Admin sidebar accent */
   .admin-sidebar-item-active {
-    @apply bg-admin-accent/20 text-admin-accent-foreground border-l-2 border-admin-accent;
+    @apply bg-admin-accent/15 text-admin-accent-foreground;
   }
   
-  /* Stat card gradient border */
-  .stat-card-gradient {
+  /* Stat card with subtle glow */
+  .stat-card-glow {
     @apply relative overflow-hidden;
   }
   
-  .stat-card-gradient::before {
+  .stat-card-glow::before {
     content: '';
-    @apply absolute inset-0 bg-gradient-to-br from-primary/10 to-transparent opacity-0 transition-opacity duration-300;
+    @apply absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300;
   }
   
-  .stat-card-gradient:hover::before {
+  .stat-card-glow:hover::before {
     @apply opacity-100;
+  }
+
+  /* Table row hover */
+  .table-row-hover {
+    @apply transition-colors hover:bg-muted/50;
+  }
+
+  /* Alternate row background */
+  .table-row-alt:nth-child(even) {
+    @apply bg-secondary/50;
   }
 }
 
@@ -178,7 +185,7 @@ a:focus-visible {
   @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background rounded-md;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbar - dark theme */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -194,4 +201,20 @@ a:focus-visible {
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/30;
+}
+
+/* Recharts overrides for dark theme */
+.recharts-cartesian-grid-horizontal line,
+.recharts-cartesian-grid-vertical line {
+  stroke: hsl(0 0% 100% / 0.08);
+}
+
+.recharts-text {
+  fill: hsl(0 0% 61%);
+}
+
+.recharts-tooltip-wrapper .recharts-default-tooltip {
+  background-color: hsl(0 0% 7%) !important;
+  border-color: hsl(0 0% 12%) !important;
+  border-radius: 0.5rem;
 }

@@ -9,8 +9,8 @@ export function SkeletonCard({ className }: SkeletonCardProps) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl p-5",
-        "bg-card border border-border/50 shadow-card",
+        "relative overflow-hidden rounded-lg p-5",
+        "bg-card border border-border",
         className
       )}
     >

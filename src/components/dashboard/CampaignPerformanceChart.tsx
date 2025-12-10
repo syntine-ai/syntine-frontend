@@ -13,11 +13,11 @@ import {
 import { cn } from "@/lib/utils";
 
 const campaignColors = {
-  "Renewal Follow-up": "hsl(244, 94%, 69%)",
-  "Lead Qualification": "hsl(145, 63%, 42%)",
-  "Customer Feedback": "hsl(40, 91%, 64%)",
-  "Product Launch": "hsl(280, 80%, 65%)",
-  "Churn Prevention": "hsl(200, 80%, 55%)",
+  "Renewal Follow-up": "hsl(239, 84%, 67%)",
+  "Lead Qualification": "hsl(142, 71%, 45%)",
+  "Customer Feedback": "hsl(48, 96%, 53%)",
+  "Product Launch": "hsl(280, 65%, 60%)",
+  "Churn Prevention": "hsl(0, 84%, 60%)",
 };
 
 const mockData = [
@@ -54,7 +54,7 @@ export function CampaignPerformanceChart() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      className="bg-card rounded-xl border border-border/50 shadow-card p-6"
+      className="bg-card rounded-lg border border-border p-6"
     >
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -76,8 +76,8 @@ export function CampaignPerformanceChart() {
             className={cn(
               "flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all",
               visibleCampaigns.has(campaign)
-                ? "bg-card border border-border/50 text-foreground"
-                : "bg-muted/50 text-muted-foreground opacity-60"
+                ? "bg-muted border border-border text-foreground"
+                : "bg-muted/30 text-muted-foreground opacity-60"
             )}
           >
             <div
@@ -113,7 +113,7 @@ export function CampaignPerformanceChart() {
             </defs>
             <CartesianGrid
               strokeDasharray="3 3"
-              stroke="hsl(var(--border))"
+              stroke="rgba(255, 255, 255, 0.08)"
               vertical={false}
             />
             <XAxis

@@ -10,8 +10,8 @@ export function SkeletonChart({ className, height = "h-[300px]" }: SkeletonChart
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl p-6",
-        "bg-card border border-border/50 shadow-card",
+        "relative overflow-hidden rounded-lg p-6",
+        "bg-card border border-border",
         className
       )}
     >
