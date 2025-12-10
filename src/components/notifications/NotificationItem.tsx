@@ -19,8 +19,8 @@ interface NotificationItemProps {
 const typeConfig = {
   info: {
     icon: Info,
-    color: "text-blue-500",
-    bg: "bg-blue-500/10",
+    color: "text-primary",
+    bg: "bg-primary/10",
   },
   warning: {
     icon: AlertTriangle,
@@ -48,13 +48,13 @@ export function NotificationItem({ notification, onMarkAsRead }: NotificationIte
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       className={cn(
-        "flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-colors hover:bg-accent/50",
-        notification.read ? "bg-background border-border" : "bg-accent/30 border-primary/20"
+        "flex items-start gap-4 p-4 rounded-lg border cursor-pointer transition-colors hover:bg-muted/30",
+        notification.read ? "bg-card border-border" : "bg-muted/20 border-primary/20"
       )}
       onClick={() => onMarkAsRead(notification.id)}
     >
       <div className={cn("p-2 rounded-lg shrink-0", bg)}>
-        <Icon className={cn("h-5 w-5", color)} />
+        <Icon className={cn("h-[18px] w-[18px]", color)} />
       </div>
       
       <div className="flex-1 min-w-0">

@@ -7,7 +7,7 @@ export default {
   theme: {
     container: {
       center: true,
-      padding: "2rem",
+      padding: "1.25rem", // 20px global padding
       screens: {
         "2xl": "1400px",
       },
@@ -15,6 +15,22 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      fontSize: {
+        'xs': ['13px', { lineHeight: '1.4' }],
+        'sm': ['14px', { lineHeight: '1.5' }],
+        'base': ['15px', { lineHeight: '1.6' }],
+        'lg': ['18px', { lineHeight: '1.6' }],
+        'xl': ['20px', { lineHeight: '1.5' }],
+        '2xl': ['22px', { lineHeight: '1.4' }],
+        '3xl': ['26px', { lineHeight: '1.3' }],
+        '4xl': ['32px', { lineHeight: '1.2' }],
+      },
+      spacing: {
+        '4.5': '18px',
+        '5.5': '22px',
+        '18': '72px',
+        '60': '240px',
       },
       colors: {
         border: "hsl(var(--border))",
@@ -28,6 +44,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          hover: "hsl(var(--primary-hover))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -44,6 +61,10 @@ export default {
         warning: {
           DEFAULT: "hsl(var(--warning))",
           foreground: "hsl(var(--warning-foreground))",
+        },
+        info: {
+          DEFAULT: "hsl(var(--info))",
+          foreground: "hsl(var(--info-foreground))",
         },
         muted: {
           DEFAULT: "hsl(var(--muted))",
@@ -87,9 +108,9 @@ export default {
         icon: "hsl(var(--icon))",
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "var(--radius)",      // 10px
+        md: "calc(var(--radius) - 2px)", // 8px
+        sm: "calc(var(--radius) - 4px)", // 6px
       },
       keyframes: {
         "accordion-down": {

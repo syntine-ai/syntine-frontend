@@ -6,117 +6,124 @@
 
 @layer base {
   :root {
-    /* Vercel/Linear-style True Black Dark Theme */
+    /* Syntine Dark Theme - Premium SaaS */
     
     /* Core Backgrounds */
-    --background: 0 0% 0%;
-    --background-secondary: 0 0% 4%;
-    --background-elevated: 0 0% 7%;
+    --background: 0 0% 0%;           /* #000000 */
+    --background-secondary: 0 0% 4%; /* #0A0A0A */
+    --background-elevated: 0 0% 7%;  /* #111111 */
     
-    --foreground: 0 0% 100%;
+    --foreground: 0 0% 100%;         /* #FFFFFF */
     
-    --card: 0 0% 8%;
+    /* Cards */
+    --card: 0 0% 7%;                 /* #111111 */
     --card-foreground: 0 0% 100%;
     
-    --popover: 0 0% 8%;
+    /* Popovers */
+    --popover: 0 0% 7%;              /* #111111 */
     --popover-foreground: 0 0% 100%;
     
-    /* Primary/Accent - Premium Purple (Linear-like) */
-    --primary: 246 98% 68%;
+    /* Primary Accent - Premium Purple */
+    --primary: 246 79% 68%;          /* #6D5DFE */
     --primary-foreground: 0 0% 100%;
+    --primary-hover: 246 100% 74%;   /* #867CFF */
     
-    /* Secondary - Elevated surface */
-    --secondary: 0 0% 7%;
+    /* Secondary */
+    --secondary: 0 0% 7%;            /* #111111 */
     --secondary-foreground: 0 0% 100%;
     
     /* Muted */
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 61%;
+    --muted: 0 0% 10%;               /* #1A1A1A */
+    --muted-foreground: 0 0% 61%;    /* #9B9B9B */
     
     /* Accent */
-    --accent: 246 98% 68%;
+    --accent: 246 79% 68%;           /* #6D5DFE */
     --accent-foreground: 0 0% 100%;
-    --accent-hover: 246 100% 74%;
+    --accent-hover: 246 100% 74%;    /* #867CFF */
     
-    /* Status colors */
-    --success: 142 71% 45%;
+    /* Status Colors */
+    --success: 142 71% 45%;          /* #22C55E */
     --success-foreground: 0 0% 100%;
     
-    --warning: 48 96% 47%;
+    --warning: 48 96% 47%;           /* #EAB308 */
     --warning-foreground: 0 0% 0%;
     
-    --destructive: 0 84% 60%;
+    --destructive: 0 84% 60%;        /* #EF4444 */
     --destructive-foreground: 0 0% 100%;
     
+    /* Info Color */
+    --info: 246 79% 68%;             /* Same as primary */
+    --info-foreground: 0 0% 100%;
+    
     /* Borders */
-    --border: 0 0% 12%;
-    --border-subtle: 0 0% 15%;
-    --input: 0 0% 12%;
-    --ring: 246 98% 68%;
+    --border: 0 0% 12%;              /* #1F1F1F */
+    --border-subtle: 0 0% 15%;       /* #262626 */
+    --input: 0 0% 12%;               /* #1F1F1F */
+    --ring: 246 79% 68%;
     
     /* Radius */
-    --radius: 0.625rem;
+    --radius: 0.625rem;              /* 10px */
     
     /* Sidebar */
-    --sidebar-background: 0 0% 5%;
+    --sidebar-background: 0 0% 5%;   /* #0D0D0D */
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 246 98% 68%;
+    --sidebar-primary: 246 79% 68%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent: 0 0% 10%;      /* #1A1A1A */
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 246 98% 68%;
-    --sidebar-muted: 0 0% 61%;
+    --sidebar-border: 0 0% 12%;      /* #1F1F1F */
+    --sidebar-ring: 246 79% 68%;
+    --sidebar-muted: 0 0% 61%;       /* #9B9B9B */
     
-    /* Admin accent - Red */
-    --admin-accent: 0 84% 60%;
+    /* Admin Accent */
+    --admin-accent: 0 84% 60%;       /* #EF4444 */
     --admin-accent-foreground: 0 0% 100%;
     
-    /* Chart colors */
-    --chart-1: 246 98% 68%;
-    --chart-2: 142 71% 45%;
-    --chart-3: 48 96% 47%;
-    --chart-4: 0 84% 60%;
-    --chart-5: 0 0% 64%;
+    /* Chart Colors */
+    --chart-1: 246 79% 68%;          /* Primary purple */
+    --chart-2: 142 71% 45%;          /* Success green */
+    --chart-3: 48 96% 47%;           /* Warning yellow */
+    --chart-4: 0 84% 60%;            /* Destructive red */
+    --chart-5: 0 0% 64%;             /* Neutral gray */
     
-    /* Icon color */
-    --icon: 0 0% 82%;
+    /* Icon Color */
+    --icon: 0 0% 82%;                /* #D0D0D0 */
     
-    /* Text variants */
-    --text-muted: 0 0% 42%;
+    /* Text Variants */
+    --text-muted: 0 0% 42%;          /* #6B6B6B */
   }
 
-  /* Dark mode is the only mode */
   .dark {
+    /* Dark mode uses same values */
     --background: 0 0% 0%;
     --background-secondary: 0 0% 4%;
     --background-elevated: 0 0% 7%;
     --foreground: 0 0% 100%;
-    --card: 0 0% 8%;
+    --card: 0 0% 7%;
     --card-foreground: 0 0% 100%;
-    --popover: 0 0% 8%;
+    --popover: 0 0% 7%;
     --popover-foreground: 0 0% 100%;
-    --primary: 246 98% 68%;
+    --primary: 246 79% 68%;
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 7%;
     --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 10%;
     --muted-foreground: 0 0% 61%;
-    --accent: 246 98% 68%;
+    --accent: 246 79% 68%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 12%;
     --input: 0 0% 12%;
-    --ring: 246 98% 68%;
+    --ring: 246 79% 68%;
     --sidebar-background: 0 0% 5%;
     --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 246 98% 68%;
+    --sidebar-primary: 246 79% 68%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 0 0% 12%;
-    --sidebar-ring: 246 98% 68%;
+    --sidebar-ring: 246 79% 68%;
   }
 }
 
@@ -131,7 +138,21 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 15px;
+  }
+  
+  /* Typography Scale */
+  h1 {
+    @apply text-[32px] font-semibold tracking-tight;
+  }
+  
+  h2 {
+    @apply text-[26px] font-semibold tracking-tight;
+  }
+  
+  h3 {
+    @apply text-[22px] font-semibold tracking-tight;
   }
 }
 
@@ -143,7 +164,7 @@
   
   /* Sidebar item styles */
   .sidebar-item {
-    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sidebar-muted transition-all duration-200;
+    @apply flex items-center gap-3 px-4 py-2.5 rounded-lg text-sidebar-muted transition-all duration-200;
   }
   
   .sidebar-item:hover {
@@ -177,6 +198,19 @@
   .table-row-hover {
     @apply transition-colors hover:bg-muted/30;
   }
+  
+  /* Icon standard sizes */
+  .icon-sm {
+    @apply h-4 w-4;
+  }
+  
+  .icon-md {
+    @apply h-[18px] w-[18px];
+  }
+  
+  .icon-lg {
+    @apply h-5 w-5;
+  }
 }
 
 /* Focus styles for accessibility */
@@ -187,7 +221,7 @@
 button:focus-visible,
 [role="button"]:focus-visible,
 a:focus-visible {
-  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background rounded-md;
+  @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background rounded-lg;
 }
 
 /* Custom scrollbar - dark theme */
@@ -211,7 +245,7 @@ a:focus-visible {
 /* Recharts overrides for dark theme */
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
-  stroke: rgba(255, 255, 255, 0.06);
+  stroke: rgba(255, 255, 255, 0.08);
 }
 
 .recharts-text {
@@ -219,7 +253,7 @@ a:focus-visible {
 }
 
 .recharts-tooltip-wrapper .recharts-default-tooltip {
-  background-color: hsl(0 0% 8%) !important;
+  background-color: hsl(0 0% 7%) !important;
   border-color: hsl(0 0% 12%) !important;
   border-radius: 10px;
 }
