@@ -32,18 +32,14 @@ export function MetricCard({
       whileHover={{ scale: 1.02, y: -2 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "relative group overflow-hidden rounded-xl p-5",
-        "bg-gradient-to-br from-card via-card to-card/80",
-        "border border-border/50 shadow-card",
-        "backdrop-blur-sm",
+        "relative group overflow-hidden rounded-lg p-5",
+        "bg-card border border-border",
+        "transition-colors hover:bg-muted/30",
         className
       )}
     >
-      {/* Gradient overlay on hover */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      
-      {/* Glow effect */}
-      <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+      {/* Subtle accent glow on hover */}
+      <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-3">

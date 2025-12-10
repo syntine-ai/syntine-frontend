@@ -11,14 +11,14 @@ export function SkeletonTable({ rows = 5, columns = 6, className }: SkeletonTabl
   return (
     <div
       className={cn(
-        "bg-card rounded-lg shadow-card border border-border/50 overflow-hidden",
+        "bg-card rounded-lg border border-border overflow-hidden",
         className
       )}
     >
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-border bg-secondary/30">
+            <tr className="border-b border-border bg-muted/30">
               {Array.from({ length: columns }).map((_, i) => (
                 <th key={i} className="text-left p-4">
                   <Skeleton className="h-4 w-20" />
@@ -28,7 +28,7 @@ export function SkeletonTable({ rows = 5, columns = 6, className }: SkeletonTabl
           </thead>
           <tbody>
             {Array.from({ length: rows }).map((_, rowIndex) => (
-              <tr key={rowIndex} className="border-b border-border/50 last:border-0">
+              <tr key={rowIndex} className="border-b border-border last:border-0">
                 {Array.from({ length: columns }).map((_, colIndex) => (
                   <td key={colIndex} className="p-4">
                     <Skeleton 
