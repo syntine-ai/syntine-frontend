@@ -66,8 +66,8 @@ export function StatCard({
           )}
         </div>
         {Icon && (
-          <div className={cn("h-10 w-10 rounded-xl flex items-center justify-center", iconColorClasses[iconColor])}>
-            <Icon className="h-5 w-5" />
+          <div className={cn("h-10 w-10 rounded-lg flex items-center justify-center", iconColorClasses[iconColor])}>
+            <Icon className="h-[18px] w-[18px]" />
           </div>
         )}
       </div>

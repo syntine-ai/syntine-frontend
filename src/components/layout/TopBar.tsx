@@ -68,7 +68,7 @@ export function TopBar({ workspaceName = "Syntine Workspace", variant }: TopBarP
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="h-16 border-b border-border bg-background flex items-center justify-between px-6"
+        className="h-16 border-b border-border bg-background flex items-center justify-between px-5"
       >
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-foreground">{workspaceName}</span>
@@ -94,10 +94,10 @@ export function TopBar({ workspaceName = "Syntine Workspace", variant }: TopBarP
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-muted-foreground hover:text-foreground"
+                className="h-9 w-9 text-icon hover:text-foreground"
                 onClick={() => setCommandOpen(true)}
               >
-                <Search className="h-5 w-5" />
+                <Search className="h-[18px] w-[18px]" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>

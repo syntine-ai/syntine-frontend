@@ -46,7 +46,7 @@ export function MetricCard({
           <span className="text-sm font-medium text-muted-foreground">{label}</span>
           {Icon && (
             <div className="p-2 rounded-lg bg-primary/10">
-              <Icon className="h-4 w-4 text-primary" />
+              <Icon className="h-[18px] w-[18px] text-primary" />
             </div>
           )}
         </div>

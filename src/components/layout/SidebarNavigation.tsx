@@ -89,7 +89,7 @@ export function SidebarNavigation({ variant }: SidebarNavigationProps) {
                 />
               )}
               <motion.div
-                animate={{ scale: isCollapsed ? 1.1 : 1 }}
+                animate={{ scale: isCollapsed ? 1.05 : 1 }}
                 transition={{ duration: 0.2 }}
               >
                 <item.icon
@@ -99,7 +99,7 @@ export function SidebarNavigation({ variant }: SidebarNavigationProps) {
                       ? isAdmin
                         ? "text-admin-accent"
                         : "text-primary"
-                      : "text-sidebar-muted group-hover:text-sidebar-foreground"
+                      : "text-icon group-hover:text-sidebar-foreground"
                   )}
                 />
               </motion.div>
