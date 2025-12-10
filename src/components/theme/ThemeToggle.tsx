@@ -12,14 +12,9 @@ export function ThemeToggle({ showLabel = true, disabled = false }: ThemeToggleP
   const { theme, setTheme } = useTheme();
   
   const isDark = theme === "dark";
-  
-  // Light mode is coming soon - currently disabled
-  const isLightModeDisabled = true;
 
   const handleToggle = (checked: boolean) => {
-    if (!isLightModeDisabled) {
-      setTheme(checked ? "dark" : "light");
-    }
+    setTheme(checked ? "dark" : "light");
   };
 
   return (
@@ -32,24 +27,17 @@ export function ThemeToggle({ showLabel = true, disabled = false }: ThemeToggleP
             <Sun className="h-4 w-4 text-icon" />
           )}
           <Label htmlFor="theme-toggle" className="text-sm font-medium cursor-pointer">
-            Dark Mode
+            {isDark ? "Dark Mode" : "Light Mode"}
           </Label>
         </div>
       )}
-      <div className="flex items-center gap-2">
-        <Switch
-          id="theme-toggle"
-          checked={isDark}
-          onCheckedChange={handleToggle}
-          disabled={disabled || isLightModeDisabled}
-          aria-label="Toggle theme"
-        />
-        {isLightModeDisabled && (
-          <span className="text-xs text-muted-foreground">
-            Light mode coming soon
-          </span>
-        )}
-      </div>
+      <Switch
+        id="theme-toggle"
+        checked={isDark}
+        onCheckedChange={handleToggle}
+        disabled={disabled}
+        aria-label="Toggle theme"
+      />
     </div>
   );
 }

@@ -176,52 +176,112 @@
 
   .light {
     /* ═══════════════════════════════════════════════════════════
-       LIGHT THEME (Future - Placeholder tokens)
-       Structure ready, will be refined when light mode is enabled
+       LIGHT THEME - Refined & Production Ready
     ═══════════════════════════════════════════════════════════ */
-    --background: 0 0% 100%;              /* #FFFFFF */
-    --background-secondary: 0 0% 98%;     /* #FAFAFA */
+    --background: 0 0% 98%;               /* #FAFAFA - Soft off-white */
+    --background-secondary: 0 0% 100%;    /* #FFFFFF */
     --background-elevated: 0 0% 100%;     /* #FFFFFF */
     --foreground: 0 0% 9%;                /* #171717 */
-    --card: 0 0% 100%;
+    
+    --card: 0 0% 100%;                    /* #FFFFFF */
     --card-foreground: 0 0% 9%;
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 9%;
-    --primary: 246 79% 58%;               /* Slightly darker purple for contrast */
+    
+    /* Primary - Deeper purple for better contrast on light */
+    --primary: 246 65% 55%;               /* #5B4CD4 */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 246 79% 52%;
-    --secondary: 0 0% 96%;
+    --primary-hover: 246 65% 48%;         /* Darker on hover */
+    --primary-subtle: 246 65% 55% / 0.12;
+    
+    --secondary: 0 0% 96%;                /* #F5F5F5 */
     --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 246 79% 58%;
+    
+    --muted: 0 0% 96%;                    /* #F5F5F5 */
+    --muted-foreground: 0 0% 40%;         /* #666666 */
+    
+    --accent: 246 65% 55%;
     --accent-foreground: 0 0% 100%;
-    --destructive: 0 84% 55%;
+    --accent-hover: 246 65% 48%;
+    
+    /* Status Colors - Adjusted for light backgrounds */
+    --success: 142 71% 35%;               /* Deeper green */
+    --success-foreground: 0 0% 100%;
+    --success-subtle: 142 71% 35% / 0.12;
+    --success-border: 142 71% 35% / 0.3;
+    
+    --warning: 48 96% 38%;                /* Deeper yellow/orange */
+    --warning-foreground: 0 0% 9%;
+    --warning-subtle: 48 96% 38% / 0.12;
+    --warning-border: 48 96% 38% / 0.3;
+    
+    --destructive: 0 72% 51%;             /* Deeper red */
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 90%;
-    --border-subtle: 0 0% 85%;
-    --input: 0 0% 90%;
-    --ring: 246 79% 58%;
-    --sidebar-background: 0 0% 98%;
+    --destructive-subtle: 0 72% 51% / 0.12;
+    --destructive-border: 0 72% 51% / 0.3;
+    
+    --info: 246 65% 55%;
+    --info-foreground: 0 0% 100%;
+    --info-subtle: 246 65% 55% / 0.12;
+    
+    /* Neutral Badge */
+    --neutral: 0 0% 0% / 0.05;
+    --neutral-foreground: 0 0% 40%;
+    --neutral-border: 0 0% 0% / 0.1;
+    
+    /* Borders */
+    --border: 0 0% 89%;                   /* #E3E3E3 */
+    --border-subtle: 0 0% 92%;            /* #EBEBEB */
+    --input: 0 0% 89%;
+    --ring: 246 65% 55%;
+    
+    /* Sidebar - Slightly tinted for distinction */
+    --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 0 0% 9%;
-    --sidebar-primary: 246 79% 58%;
+    --sidebar-primary: 246 65% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 94%;
+    --sidebar-accent: 0 0% 96%;
     --sidebar-accent-foreground: 0 0% 9%;
-    --sidebar-border: 0 0% 90%;
-    --sidebar-ring: 246 79% 58%;
+    --sidebar-border: 0 0% 89%;
+    --sidebar-ring: 246 65% 55%;
     --sidebar-muted: 0 0% 45%;
-    --icon: 0 0% 35%;
-    --icon-muted: 0 0% 50%;
-    --text-muted: 0 0% 55%;
     
-    /* Status colors adjusted for light backgrounds */
-    --success: 142 71% 38%;
-    --warning: 48 96% 40%;
+    /* Admin Accent */
+    --admin-accent: 0 72% 51%;
+    --admin-accent-foreground: 0 0% 100%;
     
-    /* Shadows for light mode */
-    --shadow-low: 0px 1px 3px rgba(0, 0, 0, 0.08);
-    --shadow-medium: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    /* Icons */
+    --icon: 0 0% 30%;                     /* #4D4D4D */
+    --icon-muted: 0 0% 50%;               /* #808080 */
+    --text-muted: 0 0% 45%;
+    
+    /* Sentiment Colors */
+    --sentiment-positive: 142 71% 35%;
+    --sentiment-neutral: 0 0% 45%;
+    --sentiment-negative: 0 72% 51%;
+    
+    /* Agent Status */
+    --agent-online: 246 65% 55%;
+    --agent-offline: 0 0% 55%;
+    --agent-busy: 48 96% 38%;
+    
+    /* Campaign States */
+    --campaign-active: 246 65% 55%;
+    --campaign-paused: 0 0% 55%;
+    --campaign-completed: 142 71% 35%;
+    --campaign-failed: 0 72% 51%;
+    
+    /* Chart Colors */
+    --chart-1: 246 65% 55%;
+    --chart-2: 142 71% 35%;
+    --chart-3: 48 96% 38%;
+    --chart-4: 0 72% 51%;
+    --chart-5: 0 0% 50%;
+    
+    /* Elevation/Shadows - Subtle for light mode */
+    --shadow-none: 0px 0px 0px rgba(0, 0, 0, 0);
+    --shadow-low: 0px 1px 3px rgba(0, 0, 0, 0.06), 0px 1px 2px rgba(0, 0, 0, 0.04);
+    --shadow-medium: 0px 4px 12px rgba(0, 0, 0, 0.08), 0px 2px 4px rgba(0, 0, 0, 0.04);
   }
 }
 
