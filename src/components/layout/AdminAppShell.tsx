@@ -44,7 +44,7 @@ function AdminAppShellContent({ children }: AdminAppShellProps) {
                   <span className="text-lg font-semibold text-sidebar-foreground tracking-tight whitespace-nowrap">
                     Syntine
                   </span>
-                  <span className="text-[10px] uppercase tracking-wider text-admin-accent font-medium -mt-0.5 whitespace-nowrap">
+                  <span className="text-[10px] uppercase tracking-wider text-primary font-medium -mt-0.5 whitespace-nowrap">
                     Admin Panel
                   </span>
                 </motion.div>
@@ -94,8 +94,8 @@ function AdminAppShellContent({ children }: AdminAppShellProps) {
               isCollapsed && "justify-center px-0"
             )}
           >
-            <div className="h-8 w-8 rounded-full bg-admin-accent/20 flex items-center justify-center ring-2 ring-admin-accent/30 shrink-0">
-              <span className="text-xs font-medium text-admin-accent">SA</span>
+            <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center ring-2 ring-primary/30 shrink-0">
+              <span className="text-xs font-medium text-primary">SA</span>
             </div>
             <AnimatePresence mode="wait">
               {!isCollapsed && (
@@ -109,7 +109,7 @@ function AdminAppShellContent({ children }: AdminAppShellProps) {
                   <p className="text-sm font-medium text-sidebar-foreground truncate">
                     Super Admin
                   </p>
-                  <p className="text-xs text-admin-accent truncate">Full Access</p>
+                  <p className="text-xs text-primary truncate">Full Access</p>
                 </motion.div>
               )}
             </AnimatePresence>

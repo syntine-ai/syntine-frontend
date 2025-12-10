@@ -39,7 +39,7 @@ const mockSubscriptions: Subscription[] = [
 const planConfig = {
   starter: { label: "Starter", className: "bg-muted text-muted-foreground" },
   pro: { label: "Pro", className: "bg-primary/15 text-primary" },
-  enterprise: { label: "Enterprise", className: "bg-admin-accent/15 text-admin-accent" },
+  enterprise: { label: "Enterprise", className: "bg-primary/15 text-primary" },
 };
 
 const statusConfig = {
@@ -112,8 +112,8 @@ const Subscriptions = () => {
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-lg bg-admin-accent/10 flex items-center justify-center">
-                          <Building2 className="h-4 w-4 text-admin-accent" />
+                        <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <Building2 className="h-4 w-4 text-primary" />
                         </div>
                         <span className="font-medium text-foreground">{sub.organization}</span>
                       </div>

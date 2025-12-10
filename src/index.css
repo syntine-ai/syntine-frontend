@@ -98,8 +98,8 @@
     --sidebar-ring: 246 79% 68%;
     --sidebar-muted: 0 0% 61%;          /* #9B9B9B */
     
-    /* ─── Admin Accent ─── */
-    --admin-accent: 0 84% 60%;          /* #EF4444 */
+    /* ─── Admin Accent (unified with brand) ─── */
+    --admin-accent: 246 79% 68%;        /* #6D5DFE - same as primary */
     --admin-accent-foreground: 0 0% 100%;
     
     /* ─── Sentiment Colors ─── */
@@ -246,8 +246,8 @@
     --sidebar-ring: 246 65% 55%;
     --sidebar-muted: 0 0% 45%;
     
-    /* Admin Accent */
-    --admin-accent: 0 72% 51%;
+    /* Admin Accent (unified with brand) */
+    --admin-accent: 246 65% 55%;
     --admin-accent-foreground: 0 0% 100%;
     
     /* Icons */
