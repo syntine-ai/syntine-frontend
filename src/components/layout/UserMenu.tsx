@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { User, Settings, LogOut, Shield, Moon } from "lucide-react";
+import { User, Settings, LogOut, Shield, Moon, Sun } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -20,7 +20,7 @@ interface UserMenuProps {
 export function UserMenu({ variant }: UserMenuProps) {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { theme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   const handleLogout = () => {
     logout();
@@ -102,17 +102,19 @@ export function UserMenu({ variant }: UserMenuProps) {
           onSelect={(e) => e.preventDefault()}
         >
           <div className="flex items-center">
-            <Moon className="mr-2 h-4 w-4" />
-            <span>Dark Mode</span>
+            {isDark ? (
+              <Moon className="mr-2 h-4 w-4" />
+            ) : (
+              <Sun className="mr-2 h-4 w-4" />
+            )}
+            <span>{isDark ? "Dark Mode" : "Light Mode"}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Switch
-              checked={isDark}
-              disabled
-              className="scale-75"
-              aria-label="Toggle theme"
-            />
-          </div>
+          <Switch
+            checked={isDark}
+            onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+            className="scale-75"
+            aria-label="Toggle theme"
+          />
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

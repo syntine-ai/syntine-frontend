@@ -242,7 +242,7 @@ const Settings = () => {
                   <div className="space-y-4">
                     <ThemeToggle />
                     <p className="text-xs text-muted-foreground">
-                      Light mode is coming soon. Currently, only dark mode is available.
+                      Choose your preferred color scheme. Your preference is saved automatically.
                     </p>
                   </div>
                 </SettingsCard>
