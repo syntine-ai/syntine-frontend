@@ -4,6 +4,7 @@ import { Search, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "react-router-dom";
 import { CommandPalette } from "./CommandPalette";
+import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { UserMenu } from "./UserMenu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -20,10 +21,12 @@ const routeLabels: Record<string, string> = {
   "/app/calls": "Call Analytics",
   "/app/settings": "Settings",
   "/app/account": "Account",
+  "/admin/dashboard": "Dashboard",
   "/admin/organizations": "Organizations",
   "/admin/subscriptions": "Subscriptions",
   "/admin/sessions": "Sessions",
   "/admin/system": "System Health",
+  "/admin/activity": "Activity Logs",
   "/admin/profile": "Profile",
   "/admin/settings": "Settings",
 };
@@ -63,7 +66,11 @@ export function TopBar({ workspaceName = "Syntine Workspace", variant }: TopBarP
 
   return (
     <>
-      <CommandPalette variant={variant} />
+      {variant === "admin" ? (
+        <AdminCommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
+      ) : (
+        <CommandPalette variant={variant} />
+      )}
       <motion.header
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
