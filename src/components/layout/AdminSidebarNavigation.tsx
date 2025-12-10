@@ -52,7 +52,7 @@ const adminNavGroups: NavGroup[] = [
     collapsible: true,
     items: [
       { icon: Server, label: "System Status", route: "/admin/system" },
-      { icon: ListOrdered, label: "Activity Logs", route: "/admin/logs" },
+      { icon: ListOrdered, label: "Activity Logs", route: "/admin/activity" },
     ],
   },
 ];
