@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SidebarNavigation } from "./SidebarNavigation";
+import { AdminSidebarNavigation } from "./AdminSidebarNavigation";
 import { TopBar } from "./TopBar";
 import { Shield, Menu, PanelLeftClose } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -84,7 +84,7 @@ function AdminAppShellContent({ children }: AdminAppShellProps) {
         )}
 
         {/* Navigation */}
-        <SidebarNavigation variant="admin" />
+        <AdminSidebarNavigation />
 
         {/* Admin Footer */}
         <div className="p-3 border-t border-sidebar-border">
