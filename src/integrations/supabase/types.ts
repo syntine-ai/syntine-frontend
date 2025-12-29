@@ -67,6 +67,320 @@ export type Database = {
           },
         ]
       }
+      call_recordings: {
+        Row: {
+          call_id: string
+          created_at: string | null
+          duration_seconds: number | null
+          file_size_bytes: number | null
+          id: string
+          mime_type: string | null
+          storage_path: string
+        }
+        Insert: {
+          call_id: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          id?: string
+          mime_type?: string | null
+          storage_path: string
+        }
+        Update: {
+          call_id?: string
+          created_at?: string | null
+          duration_seconds?: number | null
+          file_size_bytes?: number | null
+          id?: string
+          mime_type?: string | null
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_recordings_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: true
+            referencedRelation: "calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_transcripts: {
+        Row: {
+          call_id: string
+          confidence: number | null
+          content: string
+          id: string
+          latency_ms: number | null
+          sequence: number
+          speaker: Database["public"]["Enums"]["transcript_speaker"]
+          timestamp: string | null
+        }
+        Insert: {
+          call_id: string
+          confidence?: number | null
+          content: string
+          id?: string
+          latency_ms?: number | null
+          sequence: number
+          speaker: Database["public"]["Enums"]["transcript_speaker"]
+          timestamp?: string | null
+        }
+        Update: {
+          call_id?: string
+          confidence?: number | null
+          content?: string
+          id?: string
+          latency_ms?: number | null
+          sequence?: number
+          speaker?: Database["public"]["Enums"]["transcript_speaker"]
+          timestamp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_transcripts_call_id_fkey"
+            columns: ["call_id"]
+            isOneToOne: false
+            referencedRelation: "calls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calls: {
+        Row: {
+          agent_id: string | null
+          attempt_number: number | null
+          campaign_id: string | null
+          contact_id: string | null
+          created_at: string | null
+          direction: Database["public"]["Enums"]["call_direction"] | null
+          duration_seconds: number | null
+          ended_at: string | null
+          error_message: string | null
+          external_call_id: string | null
+          id: string
+          metadata: Json | null
+          organization_id: string
+          outcome: Database["public"]["Enums"]["call_outcome"] | null
+          phone_number: string
+          sentiment: Database["public"]["Enums"]["call_sentiment"] | null
+          sentiment_score: number | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["call_status"] | null
+          summary: string | null
+          tags: Json | null
+        }
+        Insert: {
+          agent_id?: string | null
+          attempt_number?: number | null
+          campaign_id?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          direction?: Database["public"]["Enums"]["call_direction"] | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          error_message?: string | null
+          external_call_id?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id: string
+          outcome?: Database["public"]["Enums"]["call_outcome"] | null
+          phone_number: string
+          sentiment?: Database["public"]["Enums"]["call_sentiment"] | null
+          sentiment_score?: number | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["call_status"] | null
+          summary?: string | null
+          tags?: Json | null
+        }
+        Update: {
+          agent_id?: string | null
+          attempt_number?: number | null
+          campaign_id?: string | null
+          contact_id?: string | null
+          created_at?: string | null
+          direction?: Database["public"]["Enums"]["call_direction"] | null
+          duration_seconds?: number | null
+          ended_at?: string | null
+          error_message?: string | null
+          external_call_id?: string | null
+          id?: string
+          metadata?: Json | null
+          organization_id?: string
+          outcome?: Database["public"]["Enums"]["call_outcome"] | null
+          phone_number?: string
+          sentiment?: Database["public"]["Enums"]["call_sentiment"] | null
+          sentiment_score?: number | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["call_status"] | null
+          summary?: string | null
+          tags?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calls_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_agents: {
+        Row: {
+          agent_id: string
+          campaign_id: string
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+        }
+        Insert: {
+          agent_id: string
+          campaign_id: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+        }
+        Update: {
+          agent_id?: string
+          campaign_id?: string
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_agents_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_agents_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_contact_lists: {
+        Row: {
+          campaign_id: string
+          contact_list_id: string
+          created_at: string | null
+          id: string
+          priority: number | null
+        }
+        Insert: {
+          campaign_id: string
+          contact_list_id: string
+          created_at?: string | null
+          id?: string
+          priority?: number | null
+        }
+        Update: {
+          campaign_id?: string
+          contact_list_id?: string
+          created_at?: string | null
+          id?: string
+          priority?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_contact_lists_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_contact_lists_contact_list_id_fkey"
+            columns: ["contact_list_id"]
+            isOneToOne: false
+            referencedRelation: "contact_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          completed_at: string | null
+          concurrency: number | null
+          created_at: string | null
+          deleted_at: string | null
+          description: string | null
+          id: string
+          name: string
+          organization_id: string
+          schedule: Json | null
+          settings: Json | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["campaign_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          concurrency?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          schedule?: Json | null
+          settings?: Json | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["campaign_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          concurrency?: number | null
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          schedule?: Json | null
+          settings?: Json | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["campaign_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_call_stats: {
         Row: {
           answered_calls: number | null
@@ -384,11 +698,22 @@ export type Database = {
         | "formal"
         | "empathetic"
       app_role: "admin" | "org_owner" | "org_admin" | "org_member"
+      call_direction: "inbound" | "outbound"
       call_outcome: "answered" | "no_answer" | "busy" | "failed" | "voicemail"
+      call_sentiment: "positive" | "neutral" | "negative"
+      call_status: "queued" | "ringing" | "in_progress" | "ended"
+      campaign_status:
+        | "draft"
+        | "scheduled"
+        | "running"
+        | "paused"
+        | "completed"
+        | "cancelled"
       contact_status: "active" | "inactive"
       list_type: "static" | "dynamic"
       organization_plan: "starter" | "pro" | "enterprise"
       organization_status: "active" | "trial" | "suspended" | "cancelled"
+      transcript_speaker: "agent" | "caller" | "system"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -525,11 +850,23 @@ export const Constants = {
         "empathetic",
       ],
       app_role: ["admin", "org_owner", "org_admin", "org_member"],
+      call_direction: ["inbound", "outbound"],
       call_outcome: ["answered", "no_answer", "busy", "failed", "voicemail"],
+      call_sentiment: ["positive", "neutral", "negative"],
+      call_status: ["queued", "ringing", "in_progress", "ended"],
+      campaign_status: [
+        "draft",
+        "scheduled",
+        "running",
+        "paused",
+        "completed",
+        "cancelled",
+      ],
       contact_status: ["active", "inactive"],
       list_type: ["static", "dynamic"],
       organization_plan: ["starter", "pro", "enterprise"],
       organization_status: ["active", "trial", "suspended", "cancelled"],
+      transcript_speaker: ["agent", "caller", "system"],
     },
   },
 } as const
