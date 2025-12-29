@@ -2,6 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -11,21 +12,16 @@ interface ProtectedRouteProps {
 function AuthLoadingSkeleton() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
-      <div className="w-full max-w-md space-y-4 p-8">
-        <Skeleton className="h-12 w-12 rounded-xl mx-auto" />
-        <Skeleton className="h-6 w-32 mx-auto" />
-        <div className="space-y-3 mt-8">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </div>
+      <div className="flex flex-col items-center gap-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     </div>
   );
 }
 
 export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, role } = useAuth();
+  const { user, isLoading, isAdmin, isOrgMember, profile } = useAuth();
 
   // Show loading skeleton while checking auth
   if (isLoading) {
@@ -33,22 +29,31 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   }
 
   // Not authenticated at all
-  if (!isAuthenticated) {
+  if (!user) {
     if (requiredRole === "admin") {
       return <Navigate to="/admin/login" replace />;
     }
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth" replace />;
   }
 
-  // Authenticated but wrong role - redirect to their dashboard
-  if (role !== requiredRole) {
-    if (role === "admin") {
-      return <Navigate to="/admin/organizations" replace />;
-    }
-    if (role === "org") {
+  // User exists but no profile yet (still being created by trigger)
+  // Give a brief moment for profile to be fetched
+  if (!profile && requiredRole === "org") {
+    return <AuthLoadingSkeleton />;
+  }
+
+  // Check role access
+  if (requiredRole === "admin" && !isAdmin) {
+    // Not an admin, redirect to org dashboard if they have org role
+    if (isOrgMember) {
       return <Navigate to="/app/dashboard" replace />;
     }
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/auth" replace />;
+  }
+
+  if (requiredRole === "org" && !isOrgMember && !isAdmin) {
+    // Not an org member and not an admin
+    return <Navigate to="/auth" replace />;
   }
 
   return <>{children}</>;

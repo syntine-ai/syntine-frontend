@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Shield, Loader2, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { PublicLayout } from "@/components/layout/PublicLayout";
@@ -15,29 +15,39 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { loginAdmin, isAuthenticated, role } = useAuth();
+  const { signIn, user, isLoading, isAdmin } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already authenticated as admin
-  if (isAuthenticated && role === "admin") {
-    navigate("/admin/organizations", { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (user && isAdmin && !isLoading) {
+      navigate("/admin/organizations", { replace: true });
+    }
+  }, [user, isAdmin, isLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
 
-    const result = await loginAdmin(email, password);
+    const { error: signInError } = await signIn(email, password);
     
-    if (result.success) {
-      navigate("/admin/organizations");
-    } else {
-      setError(result.error || "Login failed. Please try again.");
+    if (signInError) {
+      setError(signInError);
       setIsSubmitting(false);
     }
+    // Navigation handled by useEffect when isAdmin becomes true
   };
+
+  if (isLoading) {
+    return (
+      <PublicLayout>
+        <div className="min-h-[calc(100vh-64px)] flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      </PublicLayout>
+    );
+  }
 
   return (
     <PublicLayout>
@@ -54,14 +64,14 @@ const AdminLogin = () => {
               <Shield className="h-6 w-6 text-admin-accent-foreground" />
             </div>
             <div className="flex flex-col">
-              <span className="text-2xl font-bold text-sidebar-foreground tracking-tight">Syntine</span>
+              <span className="text-2xl font-bold text-foreground tracking-tight">Syntine</span>
               <span className="text-xs uppercase tracking-wider text-admin-accent font-medium -mt-0.5">
                 Admin Panel
               </span>
             </div>
           </div>
 
-          <Card className="shadow-elevated border-sidebar-border bg-card">
+          <Card className="shadow-elevated border-border bg-card">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Admin Console Login</CardTitle>
               <CardDescription>Sign in with your administrator credentials</CardDescription>
@@ -117,7 +127,7 @@ const AdminLogin = () => {
             </CardContent>
           </Card>
 
-          <p className="text-center text-xs text-sidebar-muted mt-8">
+          <p className="text-center text-xs text-muted-foreground mt-8">
             Admin access is logged and monitored. Unauthorized access is prohibited.
           </p>
         </motion.div>
