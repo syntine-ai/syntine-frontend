@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
@@ -23,99 +23,58 @@ import {
 import { Plus, Search, MoreVertical, Play, Pause, Settings, Trash2, Megaphone } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-
-const campaigns = [
-  {
-    id: "1",
-    name: "Renewal Follow-up",
-    status: "running" as const,
-    agent: "Sales Assistant",
-    concurrency: 5,
-    callsToday: 134,
-    successRate: 82.5,
-    lastRun: "2 min ago",
-  },
-  {
-    id: "2",
-    name: "Customer Feedback",
-    status: "running" as const,
-    agent: "Feedback Collector",
-    concurrency: 3,
-    callsToday: 89,
-    successRate: 91.2,
-    lastRun: "5 min ago",
-  },
-  {
-    id: "3",
-    name: "Lead Qualification",
-    status: "paused" as const,
-    agent: "Lead Qualifier",
-    concurrency: 4,
-    callsToday: 0,
-    successRate: 76.8,
-    lastRun: "2 hours ago",
-  },
-  {
-    id: "4",
-    name: "Onboarding Calls",
-    status: "draft" as const,
-    agent: "Support Bot",
-    concurrency: 2,
-    callsToday: 0,
-    successRate: 0,
-    lastRun: "Never",
-  },
-  {
-    id: "5",
-    name: "Subscription Upgrade",
-    status: "running" as const,
-    agent: "Sales Assistant",
-    concurrency: 6,
-    callsToday: 67,
-    successRate: 85.3,
-    lastRun: "1 min ago",
-  },
-];
+import { useCampaigns, type CampaignWithDetails } from "@/hooks/useCampaigns";
+import { formatDistanceToNow } from "date-fns";
 
 const Campaigns = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewModal, setShowNewModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [campaignList, setCampaignList] = useState(campaigns);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+  const { campaigns, isLoading, updateCampaignStatus, deleteCampaign, createCampaign } = useCampaigns();
 
-  const filteredCampaigns = campaignList.filter((campaign) => {
+  const filteredCampaigns = campaigns.filter((campaign) => {
     const matchesStatus = statusFilter === "all" || campaign.status === statusFilter;
     const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
-  const handleToggleCampaign = (id: string, currentStatus: string) => {
+  const handleToggleCampaign = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === "running" ? "paused" : "running";
-    setCampaignList(prev => 
-      prev.map(c => c.id === id ? { ...c, status: newStatus as any } : c)
-    );
-    toast({
-      title: newStatus === "running" ? "Campaign Started" : "Campaign Paused",
-      description: `Campaign has been ${newStatus === "running" ? "started" : "paused"} successfully.`,
-    });
+    await updateCampaignStatus(id, newStatus as any);
   };
 
-  const handleDeleteCampaign = (id: string) => {
-    setCampaignList(prev => prev.filter(c => c.id !== id));
-    toast({
-      title: "Campaign Deleted",
-      description: "The campaign has been removed.",
-      variant: "destructive",
-    });
+  const handleDeleteCampaign = async (id: string) => {
+    await deleteCampaign(id);
+  };
+
+  const handleCreateCampaign = async (data: {
+    name: string;
+    description?: string;
+    concurrency?: number;
+    agentIds?: string[];
+    contactListIds?: string[];
+  }) => {
+    const newCampaign = await createCampaign(data);
+    if (newCampaign) {
+      setShowNewModal(false);
+      navigate(`/app/campaigns/${newCampaign.id}`);
+    }
+  };
+
+  const getLastRunText = (campaign: CampaignWithDetails) => {
+    if (campaign.started_at) {
+      return formatDistanceToNow(new Date(campaign.started_at), { addSuffix: true });
+    }
+    return "Never";
+  };
+
+  const getPrimaryAgentName = (campaign: CampaignWithDetails) => {
+    const primary = campaign.agents.find((a) => a.is_primary);
+    if (primary) return primary.name;
+    if (campaign.agents.length > 0) return campaign.agents[0].name;
+    return "No agent";
   };
 
   return (
@@ -150,6 +109,8 @@ const Campaigns = () => {
               <SelectItem value="running">Running</SelectItem>
               <SelectItem value="paused">Paused</SelectItem>
               <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
           </Select>
           <div className="relative flex-1 max-w-sm">
@@ -217,12 +178,12 @@ const Campaigns = () => {
                         <span className="font-medium text-foreground">{campaign.name}</span>
                       </td>
                       <td className="p-4">
-                        <StatusPill status={campaign.status} />
+                        <StatusPill status={campaign.status || "draft"} />
                       </td>
-                      <td className="p-4 text-foreground">{campaign.agent}</td>
+                      <td className="p-4 text-foreground">{getPrimaryAgentName(campaign)}</td>
                       <td className="p-4">
                         <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                          {campaign.concurrency}x
+                          {campaign.concurrency || 1}x
                         </span>
                       </td>
                       <td className="p-4 text-foreground font-medium">{campaign.callsToday}</td>
@@ -233,13 +194,15 @@ const Campaigns = () => {
                               ? "text-success font-medium"
                               : campaign.successRate >= 60
                               ? "text-warning font-medium"
-                              : "text-destructive font-medium"
+                              : campaign.successRate > 0
+                              ? "text-destructive font-medium"
+                              : "text-muted-foreground"
                           }
                         >
-                          {campaign.successRate}%
+                          {campaign.successRate > 0 ? `${campaign.successRate.toFixed(1)}%` : "-"}
                         </span>
                       </td>
-                      <td className="p-4 text-muted-foreground text-sm">{campaign.lastRun}</td>
+                      <td className="p-4 text-muted-foreground text-sm">{getLastRunText(campaign)}</td>
                       <td className="p-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -252,7 +215,7 @@ const Campaigns = () => {
                               className="gap-2"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleToggleCampaign(campaign.id, campaign.status);
+                                handleToggleCampaign(campaign.id, campaign.status || "draft");
                               }}
                             >
                               {campaign.status === "running" ? (
@@ -265,7 +228,13 @@ const Campaigns = () => {
                                 </>
                               )}
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem 
+                              className="gap-2" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/app/campaigns/${campaign.id}`);
+                              }}
+                            >
                               <Settings className="h-4 w-4" /> Settings
                             </DropdownMenuItem>
                             <DropdownMenuItem 
@@ -289,7 +258,11 @@ const Campaigns = () => {
         )}
 
         {/* New Campaign Modal */}
-        <NewCampaignModal open={showNewModal} onOpenChange={setShowNewModal} />
+        <NewCampaignModal 
+          open={showNewModal} 
+          onOpenChange={setShowNewModal}
+          onSubmit={handleCreateCampaign}
+        />
       </PageContainer>
     </OrgAppShell>
   );
