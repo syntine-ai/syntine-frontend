@@ -19,6 +19,8 @@ import Agents from "./pages/Agents";
 import AgentDetail from "./pages/AgentDetail";
 import CallAnalytics from "./pages/CallAnalytics";
 import CallLogs from "./pages/CallLogs";
+import RecentCalls from "./pages/RecentCalls";
+import CallDetails from "./pages/CallDetails";
 import CallerList from "./pages/CallerList";
 import Contacts from "./pages/Contacts";
 import ContactLists from "./pages/ContactLists";
@@ -91,7 +93,12 @@ const App = () => (
             } />
             <Route path="/app/calls" element={
               <ProtectedRoute requiredRole="org">
-                <CallAnalytics />
+                <RecentCalls />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/calls/:callId" element={
+              <ProtectedRoute requiredRole="org">
+                <CallDetails />
               </ProtectedRoute>
             } />
             <Route path="/app/calls/logs" element={
