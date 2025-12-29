@@ -8,29 +8,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import type { ContactListWithCount } from "@/hooks/useContacts";
 
 interface ContactListSelectorBarProps {
   selectedList: string;
   onListChange: (value: string) => void;
   onImportClick: () => void;
   onCreateListClick: () => void;
+  contactLists?: ContactListWithCount[];
+  totalCount?: number;
 }
-
-const contactLists = [
-  { value: "all", label: "All Contacts", count: 12480 },
-  { value: "leads-jan", label: "Leads - Jan", count: 2340 },
-  { value: "hot-prospects", label: "Hot Prospects", count: 856 },
-  { value: "re-engagement", label: "Re-engagement", count: 1245 },
-  { value: "vip-customers", label: "VIP Customers", count: 432 },
-];
 
 export function ContactListSelectorBar({
   selectedList,
   onListChange,
   onImportClick,
   onCreateListClick,
+  contactLists = [],
+  totalCount = 0,
 }: ContactListSelectorBarProps) {
-  const selectedListData = contactLists.find((l) => l.value === selectedList);
+  // Build options with "All Contacts" at the top
+  const allContactsOption = { value: "all", label: "All Contacts", count: totalCount };
+  const listOptions = contactLists.map((list) => ({
+    value: list.id,
+    label: list.name,
+    count: list.contactCount,
+  }));
+  const options = [allContactsOption, ...listOptions];
+
+  const selectedOption = options.find((o) => o.value === selectedList);
 
   return (
     <motion.div
@@ -45,7 +51,7 @@ export function ContactListSelectorBar({
             <SelectValue placeholder="Select a list" />
           </SelectTrigger>
           <SelectContent className="bg-popover border-border z-50">
-            {contactLists.map((list) => (
+            {options.map((list) => (
               <SelectItem key={list.value} value={list.value}>
                 <div className="flex items-center justify-between gap-4 w-full">
                   <span>{list.label}</span>
@@ -57,9 +63,9 @@ export function ContactListSelectorBar({
             ))}
           </SelectContent>
         </Select>
-        {selectedListData && (
+        {selectedOption && (
           <span className="text-sm text-muted-foreground">
-            {selectedListData.count.toLocaleString()} contacts
+            {selectedOption.count.toLocaleString()} contacts
           </span>
         )}
       </div>

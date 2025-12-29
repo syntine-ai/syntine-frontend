@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { X, UserPlus } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import { UserPlus, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { toast } from "sonner";
+import type { ContactListWithCount } from "@/hooks/useContacts";
 
 interface AddEditContactModalProps {
   open: boolean;
@@ -34,6 +34,16 @@ interface AddEditContactModalProps {
     doNotCall?: boolean;
   };
   mode?: "add" | "edit";
+  contactLists?: ContactListWithCount[];
+  onSubmit?: (data: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string;
+    tags?: string;
+    contactListId?: string;
+    doNotCall?: boolean;
+  }) => Promise<void>;
 }
 
 export function AddEditContactModal({
@@ -41,26 +51,66 @@ export function AddEditContactModal({
   onOpenChange,
   contact,
   mode = "add",
+  contactLists = [],
+  onSubmit,
 }: AddEditContactModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    firstName: contact?.firstName || "",
-    lastName: contact?.lastName || "",
-    phone: contact?.phone || "",
-    email: contact?.email || "",
-    tags: contact?.tags || "",
-    contactList: contact?.contactList || "",
-    doNotCall: contact?.doNotCall || false,
+    firstName: "",
+    lastName: "",
+    phone: "",
+    email: "",
+    tags: "",
+    contactList: "",
+    doNotCall: false,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Reset form when contact changes
+  useEffect(() => {
+    if (contact) {
+      setFormData({
+        firstName: contact.firstName || "",
+        lastName: contact.lastName || "",
+        phone: contact.phone || "",
+        email: contact.email || "",
+        tags: contact.tags || "",
+        contactList: contact.contactList || "",
+        doNotCall: contact.doNotCall || false,
+      });
+    } else {
+      setFormData({
+        firstName: "",
+        lastName: "",
+        phone: "",
+        email: "",
+        tags: "",
+        contactList: "",
+        doNotCall: false,
+      });
+    }
+  }, [contact, open]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success(
-      mode === "add" ? "Contact added successfully" : "Contact updated successfully",
-      {
-        description: `${formData.firstName} ${formData.lastName} has been ${mode === "add" ? "added" : "updated"}.`,
+    if (!formData.firstName || !formData.lastName || !formData.phone) return;
+
+    setIsSubmitting(true);
+    try {
+      if (onSubmit) {
+        await onSubmit({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          phone: formData.phone,
+          email: formData.email || undefined,
+          tags: formData.tags || undefined,
+          contactListId: formData.contactList || undefined,
+          doNotCall: formData.doNotCall,
+        });
       }
-    );
-    onOpenChange(false);
+      onOpenChange(false);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isEditing = mode === "edit";
@@ -161,27 +211,30 @@ export function AddEditContactModal({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="contactList" className="text-sm font-medium">
-              Initial Contact List
-            </Label>
-            <Select
-              value={formData.contactList}
-              onValueChange={(value) =>
-                setFormData({ ...formData, contactList: value })
-              }
-            >
-              <SelectTrigger className="bg-background">
-                <SelectValue placeholder="Select a list" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border z-50">
-                <SelectItem value="leads-jan">Leads - Jan</SelectItem>
-                <SelectItem value="hot-prospects">Hot Prospects</SelectItem>
-                <SelectItem value="re-engagement">Re-engagement</SelectItem>
-                <SelectItem value="new-signups">New Signups</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {!isEditing && (
+            <div className="space-y-2">
+              <Label htmlFor="contactList" className="text-sm font-medium">
+                Initial Contact List
+              </Label>
+              <Select
+                value={formData.contactList}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, contactList: value })
+                }
+              >
+                <SelectTrigger className="bg-background">
+                  <SelectValue placeholder="Select a list" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border z-50">
+                  {contactLists.map((list) => (
+                    <SelectItem key={list.id} value={list.id}>
+                      {list.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <div className="flex items-center gap-2 pt-2">
             <Checkbox
@@ -204,11 +257,21 @@ export function AddEditContactModal({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
             >
               Cancel
             </Button>
-            <Button type="submit">
-              {isEditing ? "Save Changes" : "Save Contact"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Saving...
+                </>
+              ) : isEditing ? (
+                "Save Changes"
+              ) : (
+                "Save Contact"
+              )}
             </Button>
           </div>
         </motion.form>

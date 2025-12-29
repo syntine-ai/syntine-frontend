@@ -23,25 +23,39 @@ import { toast } from "sonner";
 interface CreateContactListModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit?: (name: string, description?: string) => Promise<void>;
 }
 
 export function CreateContactListModal({
   open,
   onOpenChange,
+  onSubmit,
 }: CreateContactListModalProps) {
   const [formData, setFormData] = useState({
     name: "",
     type: "static",
     description: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Contact list created", {
-      description: `"${formData.name}" has been created successfully.`,
-    });
-    onOpenChange(false);
-    setFormData({ name: "", type: "static", description: "" });
+    if (!formData.name) return;
+
+    setIsSubmitting(true);
+    try {
+      if (onSubmit) {
+        await onSubmit(formData.name, formData.description || undefined);
+      } else {
+        toast.success("Contact list created", {
+          description: `"${formData.name}" has been created successfully.`,
+        });
+        onOpenChange(false);
+      }
+      setFormData({ name: "", type: "static", description: "" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
