@@ -11,6 +11,7 @@ import {
   CreditCard,
   Users,
   Activity,
+  Contact,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -26,6 +27,7 @@ const orgNavItems: NavItem[] = [
   { icon: Zap, label: "Dashboard", route: "/app/dashboard" },
   { icon: LayoutGrid, label: "Campaigns", route: "/app/campaigns" },
   { icon: Bot, label: "Agents", route: "/app/agents" },
+  { icon: Contact, label: "Contacts", route: "/app/contacts" },
   { icon: Phone, label: "Calls", route: "/app/calls" },
   { icon: Settings, label: "Settings", route: "/app/settings" },
 ];
