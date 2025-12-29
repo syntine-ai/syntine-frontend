@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          id: string
+          ip_address: unknown
+          level: Database["public"]["Enums"]["log_level"] | null
+          message: string | null
+          organization_id: string | null
+          resource_id: string | null
+          resource_type: string | null
+          service: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          level?: Database["public"]["Enums"]["log_level"] | null
+          message?: string | null
+          organization_id?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          service?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          id?: string
+          ip_address?: unknown
+          level?: Database["public"]["Enums"]["log_level"] | null
+          message?: string | null
+          organization_id?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          service?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       agents: {
         Row: {
           created_at: string | null
@@ -564,6 +620,56 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          action_url: string | null
+          created_at: string | null
+          id: string
+          message: string | null
+          organization_id: string | null
+          read_at: string | null
+          resource_id: string | null
+          resource_type: string | null
+          title: string
+          type: Database["public"]["Enums"]["notification_type"] | null
+          user_id: string
+        }
+        Insert: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          organization_id?: string | null
+          read_at?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          title: string
+          type?: Database["public"]["Enums"]["notification_type"] | null
+          user_id: string
+        }
+        Update: {
+          action_url?: string | null
+          created_at?: string | null
+          id?: string
+          message?: string | null
+          organization_id?: string | null
+          read_at?: string | null
+          resource_id?: string | null
+          resource_type?: string | null
+          title?: string
+          type?: Database["public"]["Enums"]["notification_type"] | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string | null
@@ -679,6 +785,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_unread_notification_count: { Args: never; Returns: number }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -688,6 +795,23 @@ export type Database = {
         Returns: boolean
       }
       is_org_admin: { Args: { _user_id: string }; Returns: boolean }
+      log_activity: {
+        Args: {
+          _action: string
+          _details?: Json
+          _level?: Database["public"]["Enums"]["log_level"]
+          _message?: string
+          _resource_id?: string
+          _resource_type?: string
+          _service?: string
+        }
+        Returns: string
+      }
+      mark_all_notifications_read: { Args: never; Returns: number }
+      mark_notification_read: {
+        Args: { _notification_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       agent_status: "active" | "inactive" | "draft"
@@ -711,6 +835,8 @@ export type Database = {
         | "cancelled"
       contact_status: "active" | "inactive"
       list_type: "static" | "dynamic"
+      log_level: "info" | "warning" | "error" | "success"
+      notification_type: "info" | "success" | "warning" | "error"
       organization_plan: "starter" | "pro" | "enterprise"
       organization_status: "active" | "trial" | "suspended" | "cancelled"
       transcript_speaker: "agent" | "caller" | "system"
@@ -864,6 +990,8 @@ export const Constants = {
       ],
       contact_status: ["active", "inactive"],
       list_type: ["static", "dynamic"],
+      log_level: ["info", "warning", "error", "success"],
+      notification_type: ["info", "success", "warning", "error"],
       organization_plan: ["starter", "pro", "enterprise"],
       organization_status: ["active", "trial", "suspended", "cancelled"],
       transcript_speaker: ["agent", "caller", "system"],
