@@ -22,17 +22,21 @@ import { OutcomePill } from "./OutcomePill";
 import { StatusPill } from "@/components/shared/StatusPill";
 import { cn } from "@/lib/utils";
 
+export type SentimentType = "positive" | "neutral" | "negative" | "not_analyzed";
+export type OutcomeType = "answered" | "no_answer" | "busy" | "failed" | "not_called";
+
 export interface Contact {
   id: number;
   name: string;
   phone: string;
   contactList: string;
-  lastCampaign: string;
-  lastCallDate: string;
-  sentiment: "positive" | "neutral" | "negative";
-  outcome: "answered" | "no_answer" | "busy" | "failed";
+  lastCampaign: string | null;
+  lastCallDate: string | null;
+  sentiment: SentimentType;
+  outcome: OutcomeType;
   status: "active" | "inactive" | "draft";
   doNotCall?: boolean;
+  callCount?: number;
 }
 
 interface ContactsTableProps {
@@ -138,7 +142,8 @@ export function ContactsTable({
               onClick={() => onContactClick(contact)}
               className={cn(
                 "cursor-pointer transition-colors hover:bg-muted/30 border-b border-border",
-                contact.doNotCall && "opacity-60"
+                contact.doNotCall && "opacity-60",
+                contact.status === "inactive" && "opacity-50"
               )}
             >
               <TableCell onClick={(e) => e.stopPropagation()}>
@@ -159,8 +164,12 @@ export function ContactsTable({
               </TableCell>
               <TableCell className="text-muted-foreground">{contact.phone}</TableCell>
               <TableCell className="text-muted-foreground">{contact.contactList}</TableCell>
-              <TableCell className="text-muted-foreground">{contact.lastCampaign}</TableCell>
-              <TableCell className="text-muted-foreground">{contact.lastCallDate}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {contact.lastCampaign || "—"}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {contact.lastCallDate || "—"}
+              </TableCell>
               <TableCell>
                 <SentimentBadge sentiment={contact.sentiment} />
               </TableCell>

@@ -24,10 +24,11 @@ interface ContactsFiltersBarProps {
   onCampaignChange: (value: string) => void;
   onSentimentChange: (values: string[]) => void;
   onOutcomeChange: (values: string[]) => void;
+  onCallStateChange?: (value: string) => void;
 }
 
-const sentimentOptions = ["Positive", "Neutral", "Negative"];
-const outcomeOptions = ["Connected", "No Answer", "Voicemail", "Rejected"];
+const sentimentOptions = ["Positive", "Neutral", "Negative", "Not Analyzed"];
+const outcomeOptions = ["Answered", "No Answer", "Busy", "Failed", "Not Called"];
 
 export function ContactsFiltersBar({
   onSearchChange,
@@ -35,10 +36,12 @@ export function ContactsFiltersBar({
   onCampaignChange,
   onSentimentChange,
   onOutcomeChange,
+  onCallStateChange,
 }: ContactsFiltersBarProps) {
   const [search, setSearch] = useState("");
   const [selectedSentiments, setSelectedSentiments] = useState<string[]>([]);
   const [selectedOutcomes, setSelectedOutcomes] = useState<string[]>([]);
+  const [callState, setCallState] = useState("all");
 
   const handleSearchChange = (value: string) => {
     setSearch(value);
@@ -61,16 +64,23 @@ export function ContactsFiltersBar({
     onOutcomeChange(newOutcomes);
   };
 
+  const handleCallStateChange = (value: string) => {
+    setCallState(value);
+    onCallStateChange?.(value);
+  };
+
   const clearFilters = () => {
     setSearch("");
     setSelectedSentiments([]);
     setSelectedOutcomes([]);
+    setCallState("all");
     onSearchChange("");
     onSentimentChange([]);
     onOutcomeChange([]);
+    onCallStateChange?.("all");
   };
 
-  const hasActiveFilters = search || selectedSentiments.length > 0 || selectedOutcomes.length > 0;
+  const hasActiveFilters = search || selectedSentiments.length > 0 || selectedOutcomes.length > 0 || callState !== "all";
 
   return (
     <motion.div
@@ -89,16 +99,18 @@ export function ContactsFiltersBar({
         />
       </div>
 
-      {/* List Filter */}
-      <Select onValueChange={onListChange} defaultValue="all">
-        <SelectTrigger className="w-[160px] bg-background">
-          <SelectValue placeholder="All Lists" />
+      {/* Call State Filter */}
+      <Select value={callState} onValueChange={handleCallStateChange}>
+        <SelectTrigger className={cn(
+          "w-[140px] bg-background",
+          callState !== "all" && "border-primary text-primary"
+        )}>
+          <SelectValue placeholder="Call State" />
         </SelectTrigger>
         <SelectContent className="bg-popover border-border z-50">
-          <SelectItem value="all">All Lists</SelectItem>
-          <SelectItem value="leads-jan">Leads - Jan</SelectItem>
-          <SelectItem value="hot-prospects">Hot Prospects</SelectItem>
-          <SelectItem value="re-engagement">Re-engagement</SelectItem>
+          <SelectItem value="all">All</SelectItem>
+          <SelectItem value="called">Called</SelectItem>
+          <SelectItem value="not_called">Not Called</SelectItem>
         </SelectContent>
       </Select>
 

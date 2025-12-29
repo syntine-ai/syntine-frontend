@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { X, Star, Ban, Pencil, Plus, Trash2, Phone, Mail, Tag } from "lucide-react";
+import { Plus, Trash2, Phone, Mail, Tag, Pencil, PhoneCall } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -12,10 +12,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { SentimentBadge } from "./SentimentBadge";
 import { OutcomePill } from "./OutcomePill";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+type SentimentType = "positive" | "neutral" | "negative" | "not_analyzed";
+type OutcomeType = "answered" | "no_answer" | "busy" | "failed" | "not_called";
 
 interface ContactDetailDrawerProps {
   contact: {
@@ -24,58 +28,65 @@ interface ContactDetailDrawerProps {
     phone: string;
     email?: string;
     contactList: string;
-    lastCampaign: string;
-    lastCallDate: string;
-    sentiment: "positive" | "neutral" | "negative";
-    outcome: "answered" | "no_answer" | "busy" | "failed";
+    lastCampaign: string | null;
+    lastCallDate: string | null;
+    sentiment: SentimentType;
+    outcome: OutcomeType;
     doNotCall?: boolean;
     tags?: string[];
+    callCount?: number;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onEdit?: () => void;
 }
 
-type Sentiment = "positive" | "neutral" | "negative";
-type Outcome = "answered" | "no_answer" | "busy" | "failed";
-
 interface CallHistoryItem {
   id: number;
   date: string;
   campaign: string;
   duration: string;
-  sentiment: Sentiment;
-  outcome: Outcome;
+  sentiment: SentimentType;
+  outcome: OutcomeType;
 }
 
-const mockCallHistory: CallHistoryItem[] = [
-  {
-    id: 1,
-    date: "Dec 28, 2024",
-    campaign: "Sales Follow-up",
-    duration: "2:34",
-    sentiment: "positive",
-    outcome: "answered",
-  },
-  {
-    id: 2,
-    date: "Dec 20, 2024",
-    campaign: "Loan Outreach",
-    duration: "1:12",
-    sentiment: "neutral",
-    outcome: "answered",
-  },
-  {
-    id: 3,
-    date: "Dec 15, 2024",
-    campaign: "Product Demo",
-    duration: "0:00",
-    sentiment: "negative",
-    outcome: "no_answer",
-  },
-];
+// Mock call history - empty for new contacts
+const getMockCallHistory = (callCount: number = 3): CallHistoryItem[] => {
+  if (callCount === 0) return [];
+  const history: CallHistoryItem[] = [
+    {
+      id: 1,
+      date: "Dec 28, 2024",
+      campaign: "Sales Follow-up",
+      duration: "2:34",
+      sentiment: "positive" as SentimentType,
+      outcome: "answered" as OutcomeType,
+    },
+    {
+      id: 2,
+      date: "Dec 20, 2024",
+      campaign: "Loan Outreach",
+      duration: "1:12",
+      sentiment: "neutral" as SentimentType,
+      outcome: "answered" as OutcomeType,
+    },
+    {
+      id: 3,
+      date: "Dec 15, 2024",
+      campaign: "Product Demo",
+      duration: "0:00",
+      sentiment: "negative" as SentimentType,
+      outcome: "no_answer" as OutcomeType,
+    },
+  ];
+  return history.slice(0, callCount);
+};
 
-const mockLists = ["Leads - Jan", "Hot Prospects", "VIP Customers"];
+const mockLists = [
+  { name: "Leads - Jan", count: 2340 },
+  { name: "Hot Prospects", count: 856 },
+  { name: "VIP Customers", count: 432 },
+];
 
 export function ContactDetailDrawerNew({
   contact,
@@ -85,6 +96,9 @@ export function ContactDetailDrawerNew({
 }: ContactDetailDrawerProps) {
   const [note, setNote] = useState("");
   const [doNotCall, setDoNotCall] = useState(contact?.doNotCall || false);
+
+  const callHistory = getMockCallHistory(contact?.callCount ?? 3);
+  const hasCallHistory = callHistory.length > 0;
 
   const handleSaveNote = () => {
     if (note.trim()) {
@@ -105,6 +119,12 @@ export function ContactDetailDrawerNew({
           : `${contact?.name} can now receive calls.`,
       }
     );
+  };
+
+  const handleAssignToCampaign = () => {
+    toast.info("Assign to Campaign", {
+      description: "Campaign assignment would open here.",
+    });
   };
 
   if (!contact) return null;
@@ -191,7 +211,12 @@ export function ContactDetailDrawerNew({
             transition={{ delay: 0.1 }}
           >
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-foreground">List Membership</h4>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-semibold text-foreground">List Membership</h4>
+                <Badge variant="secondary" className="text-xs">
+                  {mockLists.length}
+                </Badge>
+              </div>
               <Button variant="ghost" size="sm" className="gap-1.5 h-7 text-xs">
                 <Plus className="h-3 w-3" />
                 Add to List
@@ -200,10 +225,15 @@ export function ContactDetailDrawerNew({
             <div className="space-y-2">
               {mockLists.map((list) => (
                 <div
-                  key={list}
+                  key={list.name}
                   className="flex items-center justify-between px-3 py-2.5 bg-background rounded-lg border border-border group"
                 >
-                  <span className="text-sm text-foreground">{list}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-foreground">{list.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      ({list.count.toLocaleString()})
+                    </span>
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"
@@ -225,41 +255,60 @@ export function ContactDetailDrawerNew({
             transition={{ delay: 0.2 }}
           >
             <h4 className="text-sm font-semibold text-foreground mb-4">Call History</h4>
-            <div className="space-y-3">
-              {mockCallHistory.map((call, index) => (
-                <div
-                  key={call.id}
-                  className="relative pl-6 pb-4 last:pb-0"
-                >
-                  {/* Timeline line */}
-                  {index < mockCallHistory.length - 1 && (
-                    <div className="absolute left-[7px] top-3 bottom-0 w-px bg-border" />
-                  )}
-                  {/* Timeline dot */}
+            
+            {hasCallHistory ? (
+              <div className="space-y-3">
+                {callHistory.map((call, index) => (
                   <div
-                    className={cn(
-                      "absolute left-0 top-1.5 h-3.5 w-3.5 rounded-full border-2 border-card",
-                      call.sentiment === "positive" ? "bg-success" : call.sentiment === "negative" ? "bg-destructive" : "bg-muted-foreground"
+                    key={call.id}
+                    className="relative pl-6 pb-4 last:pb-0"
+                  >
+                    {/* Timeline line */}
+                    {index < callHistory.length - 1 && (
+                      <div className="absolute left-[7px] top-3 bottom-0 w-px bg-border" />
                     )}
-                  />
-                  <div className="bg-background rounded-lg p-3 border border-border">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-foreground">
-                        {call.campaign}
-                      </span>
-                      <span className="text-xs text-muted-foreground">{call.date}</span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm">
-                      <span className="text-muted-foreground">
-                        Duration: {call.duration}
-                      </span>
-                      <SentimentBadge sentiment={call.sentiment} />
-                      <OutcomePill outcome={call.outcome} />
+                    {/* Timeline dot */}
+                    <div
+                      className={cn(
+                        "absolute left-0 top-1.5 h-3.5 w-3.5 rounded-full border-2 border-card",
+                        call.sentiment === "positive" ? "bg-success" : 
+                        call.sentiment === "negative" ? "bg-destructive" : 
+                        "bg-muted-foreground"
+                      )}
+                    />
+                    <div className="bg-background rounded-lg p-3 border border-border">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-foreground">
+                          {call.campaign}
+                        </span>
+                        <span className="text-xs text-muted-foreground">{call.date}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-sm">
+                        <span className="text-muted-foreground">
+                          Duration: {call.duration}
+                        </span>
+                        <SentimentBadge sentiment={call.sentiment} />
+                        <OutcomePill outcome={call.outcome} />
+                      </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            ) : (
+              /* Empty State for Call History */
+              <div className="bg-background rounded-lg border border-border p-6 text-center">
+                <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
+                  <PhoneCall className="h-6 w-6 text-muted-foreground" />
                 </div>
-              ))}
-            </div>
+                <h5 className="text-sm font-medium text-foreground mb-1">No Calls Yet</h5>
+                <p className="text-xs text-muted-foreground mb-4">
+                  This contact has not been contacted by any AI agent.
+                </p>
+                <Button size="sm" onClick={handleAssignToCampaign}>
+                  Assign to Campaign
+                </Button>
+              </div>
+            )}
           </motion.div>
 
           <Separator className="bg-border" />

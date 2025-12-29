@@ -1,7 +1,13 @@
 import { cn } from "@/lib/utils";
-import { Smile, Meh, Frown } from "lucide-react";
+import { Smile, Meh, Frown, HelpCircle } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-type SentimentType = "positive" | "neutral" | "negative";
+type SentimentType = "positive" | "neutral" | "negative" | "not_analyzed";
 
 interface SentimentBadgeProps {
   sentiment: SentimentType;
@@ -9,7 +15,7 @@ interface SentimentBadgeProps {
   className?: string;
 }
 
-const sentimentConfig: Record<SentimentType, { label: string; className: string; icon: typeof Smile }> = {
+const sentimentConfig: Record<SentimentType, { label: string; className: string; icon: typeof Smile; tooltip?: string }> = {
   positive: {
     label: "Positive",
     className: "bg-success/15 text-success border-success/40",
@@ -25,16 +31,22 @@ const sentimentConfig: Record<SentimentType, { label: string; className: string;
     className: "bg-destructive/15 text-destructive border-destructive/40",
     icon: Frown,
   },
+  not_analyzed: {
+    label: "Not Analyzed",
+    className: "bg-transparent text-muted-foreground border-border",
+    icon: HelpCircle,
+    tooltip: "This contact has not been called yet",
+  },
 };
 
 export function SentimentBadge({ sentiment, showIcon = true, className }: SentimentBadgeProps) {
   const config = sentimentConfig[sentiment];
   const Icon = config.icon;
 
-  return (
+  const badge = (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border",
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors",
         config.className,
         className
       )}
@@ -43,4 +55,19 @@ export function SentimentBadge({ sentiment, showIcon = true, className }: Sentim
       {config.label}
     </span>
   );
+
+  if (config.tooltip) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>{badge}</TooltipTrigger>
+          <TooltipContent className="bg-popover border-border">
+            <p className="text-xs">{config.tooltip}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return badge;
 }

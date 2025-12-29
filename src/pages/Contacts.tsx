@@ -1,7 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { UserPlus, ListPlus, Users, UserCheck, ThumbsUp, PhoneOff } from "lucide-react";
+import { UserPlus, Users, UserCheck, ThumbsUp, PhoneOff } from "lucide-react";
 import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer, pageItemVariants } from "@/components/layout/PageContainer";
 import { StatCard } from "@/components/shared/StatCard";
@@ -10,9 +9,11 @@ import { ContactsTable, Contact } from "@/components/contacts/ContactsTable";
 import { ContactDetailDrawerNew } from "@/components/contacts/ContactDetailDrawerNew";
 import { AddEditContactModal } from "@/components/contacts/AddEditContactModal";
 import { CreateContactListModal } from "@/components/contacts/CreateContactListModal";
+import { ContactListSelectorBar } from "@/components/contacts/ContactListSelectorBar";
+import { ImportContactsModal } from "@/components/contacts/ImportContactsModal";
 import { Button } from "@/components/ui/button";
 
-// Mock data
+// Mock data with new states
 const mockContacts: Contact[] = [
   {
     id: 1,
@@ -24,6 +25,7 @@ const mockContacts: Contact[] = [
     sentiment: "positive",
     outcome: "answered",
     status: "active",
+    callCount: 3,
   },
   {
     id: 2,
@@ -35,6 +37,7 @@ const mockContacts: Contact[] = [
     sentiment: "neutral",
     outcome: "no_answer",
     status: "active",
+    callCount: 2,
   },
   {
     id: 3,
@@ -47,28 +50,31 @@ const mockContacts: Contact[] = [
     outcome: "busy",
     status: "active",
     doNotCall: true,
+    callCount: 1,
   },
   {
     id: 4,
     name: "David Kim",
     phone: "+1 (555) 567-8901",
     contactList: "Leads - Jan",
-    lastCampaign: "Sales Follow-up",
-    lastCallDate: "Dec 25, 2024",
-    sentiment: "positive",
-    outcome: "answered",
+    lastCampaign: null,
+    lastCallDate: null,
+    sentiment: "not_analyzed",
+    outcome: "not_called",
     status: "active",
+    callCount: 0,
   },
   {
     id: 5,
     name: "Jessica Lee",
     phone: "+1 (555) 678-9012",
     contactList: "Hot Prospects",
-    lastCampaign: "Renewal Campaign",
-    lastCallDate: "Dec 24, 2024",
-    sentiment: "positive",
-    outcome: "answered",
+    lastCampaign: null,
+    lastCallDate: null,
+    sentiment: "not_analyzed",
+    outcome: "not_called",
     status: "active",
+    callCount: 0,
   },
   {
     id: 6,
@@ -80,17 +86,19 @@ const mockContacts: Contact[] = [
     sentiment: "neutral",
     outcome: "failed",
     status: "inactive",
+    callCount: 1,
   },
   {
     id: 7,
     name: "Amanda Wilson",
     phone: "+1 (555) 890-1234",
     contactList: "Leads - Jan",
-    lastCampaign: "Loan Outreach",
-    lastCallDate: "Dec 22, 2024",
-    sentiment: "positive",
-    outcome: "answered",
+    lastCampaign: null,
+    lastCallDate: null,
+    sentiment: "not_analyzed",
+    outcome: "not_called",
     status: "active",
+    callCount: 0,
   },
   {
     id: 8,
@@ -103,16 +111,18 @@ const mockContacts: Contact[] = [
     outcome: "busy",
     status: "active",
     doNotCall: true,
+    callCount: 2,
   },
 ];
 
 export default function Contacts() {
-  const navigate = useNavigate();
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCreateListModalOpen, setIsCreateListModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedList, setSelectedList] = useState("all");
   const [contacts] = useState<Contact[]>(mockContacts);
 
   const handleContactClick = (contact: Contact) => {
@@ -138,16 +148,10 @@ export default function Contacts() {
         title="Contacts"
         subtitle="Manage people your AI agents call"
         actions={
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => setIsCreateListModalOpen(true)} className="gap-2">
-              <ListPlus className="h-4 w-4" />
-              Create Contact List
-            </Button>
-            <Button onClick={handleAddContact} className="gap-2">
-              <UserPlus className="h-4 w-4" />
-              Add Contact
-            </Button>
-          </div>
+          <Button onClick={handleAddContact} className="gap-2">
+            <UserPlus className="h-4 w-4" />
+            Add Contact
+          </Button>
         }
       >
         {/* Stats Row */}
@@ -182,6 +186,16 @@ export default function Contacts() {
           />
         </motion.div>
 
+        {/* Contact List Selector Bar */}
+        <motion.div variants={pageItemVariants}>
+          <ContactListSelectorBar
+            selectedList={selectedList}
+            onListChange={setSelectedList}
+            onImportClick={() => setIsImportModalOpen(true)}
+            onCreateListClick={() => setIsCreateListModalOpen(true)}
+          />
+        </motion.div>
+
         {/* Filters */}
         <motion.div variants={pageItemVariants} className="mb-6">
           <ContactsFiltersBar
@@ -190,6 +204,7 @@ export default function Contacts() {
             onCampaignChange={() => {}}
             onSentimentChange={() => {}}
             onOutcomeChange={() => {}}
+            onCallStateChange={() => {}}
           />
         </motion.div>
 
@@ -241,6 +256,12 @@ export default function Contacts() {
         <CreateContactListModal
           open={isCreateListModalOpen}
           onOpenChange={setIsCreateListModalOpen}
+        />
+
+        {/* Import Contacts Modal */}
+        <ImportContactsModal
+          open={isImportModalOpen}
+          onOpenChange={setIsImportModalOpen}
         />
       </PageContainer>
     </OrgAppShell>
