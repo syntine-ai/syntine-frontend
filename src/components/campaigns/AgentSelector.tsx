@@ -8,19 +8,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-interface Agent {
-  id: string;
-  name: string;
-  type: string;
-}
-
-const mockAgents: Agent[] = [
-  { id: "1", name: "Sales Assistant", type: "Outbound" },
-  { id: "2", name: "Support Bot", type: "Inbound" },
-  { id: "3", name: "Lead Qualifier", type: "Hybrid" },
-  { id: "4", name: "Feedback Collector", type: "Outbound" },
-];
+import { useAgents } from "@/hooks/useAgents";
 
 interface AgentSelectorProps {
   value?: string;
@@ -30,33 +18,46 @@ interface AgentSelectorProps {
 }
 
 export function AgentSelector({ value, onChange, className, disabled }: AgentSelectorProps) {
-  const selectedAgent = mockAgents.find((a) => a.id === value);
+  const { agents, isLoading } = useAgents();
+
+  // Find the selected agent from real data
+  const selectedAgent = agents.find((a) => a.id === value);
 
   return (
     <div className={cn("space-y-2", className)}>
       <Label className="text-sm font-medium text-foreground">Assigned Agent</Label>
-      <Select value={value} onValueChange={onChange} disabled={disabled}>
+      <Select value={value} onValueChange={onChange} disabled={disabled || isLoading}>
         <SelectTrigger className="w-full">
-          <SelectValue placeholder="Select an agent">
+          <SelectValue placeholder={isLoading ? "Loading agents..." : "Select an agent"}>
             {selectedAgent && (
               <div className="flex items-center gap-2">
                 <Bot className="h-4 w-4 text-primary" />
                 <span>{selectedAgent.name}</span>
-                <span className="text-xs text-muted-foreground">({selectedAgent.type})</span>
+                <span className="text-xs text-muted-foreground">
+                  ({selectedAgent.status === "active" ? "Active" : "Inactive"})
+                </span>
               </div>
             )}
           </SelectValue>
         </SelectTrigger>
         <SelectContent>
-          {mockAgents.map((agent) => (
-            <SelectItem key={agent.id} value={agent.id}>
-              <div className="flex items-center gap-2">
-                <Bot className="h-4 w-4 text-primary" />
-                <span>{agent.name}</span>
-                <span className="text-xs text-muted-foreground">({agent.type})</span>
-              </div>
-            </SelectItem>
-          ))}
+          {agents.length === 0 ? (
+            <div className="px-2 py-4 text-sm text-muted-foreground text-center">
+              No agents available
+            </div>
+          ) : (
+            agents.map((agent) => (
+              <SelectItem key={agent.id} value={agent.id}>
+                <div className="flex items-center gap-2">
+                  <Bot className="h-4 w-4 text-primary" />
+                  <span>{agent.name}</span>
+                  <span className="text-xs text-muted-foreground">
+                    ({agent.status === "active" ? "Active" : "Inactive"})
+                  </span>
+                </div>
+              </SelectItem>
+            ))
+          )}
         </SelectContent>
       </Select>
     </div>

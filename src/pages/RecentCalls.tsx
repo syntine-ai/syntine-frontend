@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -11,90 +11,8 @@ import { CallLogsFiltersPanel, CallLogsFilters } from "@/components/calls/CallLo
 import { CallLogsTable, CallLogEntry } from "@/components/calls/CallLogsTable";
 import { Phone, PhoneIncoming, PhoneMissed, Clock, Download, PhoneOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-
-// Mock data
-const mockCallLogs: CallLogEntry[] = [
-  {
-    id: "call-001",
-    caller: "Test Call",
-    phoneNumber: "+91 98765 43210",
-    status: "answered",
-    duration: "2:34",
-    organization: "42487a3f",
-    agent: "Agent A",
-    startedAt: "28/12/2024, 10:30 AM",
-  },
-  {
-    id: "call-002",
-    caller: "Web Call",
-    phoneNumber: "N/A",
-    status: "ended",
-    duration: "1:15",
-    organization: "42487a3f",
-    agent: "Agent B",
-    startedAt: "28/12/2024, 10:25 AM",
-  },
-  {
-    id: "call-003",
-    caller: "Outbound Campaign",
-    phoneNumber: "+1 555 123 4567",
-    status: "missed",
-    duration: null,
-    organization: "7b3e2a1c",
-    agent: "Agent A",
-    startedAt: "28/12/2024, 10:20 AM",
-  },
-  {
-    id: "call-004",
-    caller: "Test Call",
-    phoneNumber: "+44 20 7946 0958",
-    status: "answered",
-    duration: "5:42",
-    organization: "42487a3f",
-    agent: "Agent C",
-    startedAt: "28/12/2024, 10:15 AM",
-  },
-  {
-    id: "call-005",
-    caller: "Inbound Lead",
-    phoneNumber: "+91 87654 32109",
-    status: "failed",
-    duration: null,
-    organization: "9f8d4c5e",
-    agent: "Agent B",
-    startedAt: "28/12/2024, 10:10 AM",
-  },
-  {
-    id: "call-006",
-    caller: "Follow-up Call",
-    phoneNumber: "+1 555 987 6543",
-    status: "answered",
-    duration: "3:18",
-    organization: "42487a3f",
-    agent: "Agent A",
-    startedAt: "28/12/2024, 10:05 AM",
-  },
-  {
-    id: "call-007",
-    caller: "Web Call",
-    phoneNumber: "N/A",
-    status: "missed",
-    duration: null,
-    organization: "7b3e2a1c",
-    agent: "Agent C",
-    startedAt: "28/12/2024, 10:00 AM",
-  },
-  {
-    id: "call-008",
-    caller: "Demo Request",
-    phoneNumber: "+49 30 12345678",
-    status: "answered",
-    duration: "8:22",
-    organization: "42487a3f",
-    agent: "Agent B",
-    startedAt: "27/12/2024, 04:45 PM",
-  },
-];
+import { useCallLogs } from "@/hooks/useCallLogs";
+import { format } from "date-fns";
 
 const defaultFilters: CallLogsFilters = {
   search: "",
@@ -105,16 +23,36 @@ const defaultFilters: CallLogsFilters = {
   dateRange: { from: undefined, to: undefined },
 };
 
+// Map database outcome to display status
+const outcomeToStatus = (outcome: string | null): "answered" | "ended" | "missed" | "failed" => {
+  switch (outcome) {
+    case "answered":
+      return "answered";
+    case "no_answer":
+      return "missed";
+    case "busy":
+    case "voicemail":
+      return "ended";
+    case "failed":
+      return "failed";
+    default:
+      return "ended";
+  }
+};
+
+// Format duration from seconds to "M:SS" string
+const formatDuration = (seconds: number | null): string | null => {
+  if (!seconds) return null;
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+};
+
 const RecentCalls = () => {
-  const [isLoading, setIsLoading] = useState(true);
+  const { calls, isLoading } = useCallLogs();
   const [filters, setFilters] = useState<CallLogsFilters>(defaultFilters);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -125,8 +63,36 @@ const RecentCalls = () => {
     }
   };
 
+  // Transform database calls to CallLogEntry format
+  const callLogs: CallLogEntry[] = useMemo(() => {
+    return calls.map((call) => ({
+      id: call.id,
+      caller: call.contact_name || "Unknown",
+      phoneNumber: call.phone_number || "N/A",
+      status: outcomeToStatus(call.outcome),
+      duration: formatDuration(call.duration_seconds),
+      organization: call.organization_id?.substring(0, 8) || "Unknown",
+      agent: call.agent_name || "Unknown Agent",
+      startedAt: call.created_at
+        ? format(new Date(call.created_at), "dd/MM/yyyy, hh:mm a")
+        : "N/A",
+    }));
+  }, [calls]);
+
+  // Get unique agents for filter
+  const agentOptions = useMemo(() => {
+    const uniqueAgents = new Set<string>();
+    uniqueAgents.add("All Agents");
+    calls.forEach((call) => {
+      if (call.agent_name) {
+        uniqueAgents.add(call.agent_name);
+      }
+    });
+    return Array.from(uniqueAgents);
+  }, [calls]);
+
   const filteredLogs = useMemo(() => {
-    let result = [...mockCallLogs];
+    let result = [...callLogs];
 
     // Search filter
     if (filters.search) {
@@ -151,54 +117,121 @@ const RecentCalls = () => {
       result = result.filter((log) => log.agent === filters.agent);
     }
 
-    // Organization filter
-    if (filters.organization !== "All Orgs") {
-      result = result.filter((log) => log.organization === filters.organization);
+    // Duration filter
+    if (filters.durationRange[0] > 0 || filters.durationRange[1] < 600) {
+      result = result.filter((log) => {
+        if (!log.duration) return filters.durationRange[0] === 0;
+        const [m, s] = log.duration.split(":").map(Number);
+        const durationSec = m * 60 + s;
+        return durationSec >= filters.durationRange[0] && durationSec <= filters.durationRange[1];
+      });
+    }
+
+    // Date range filter
+    if (filters.dateRange.from || filters.dateRange.to) {
+      result = result.filter((log) => {
+        if (log.startedAt === "N/A") return false;
+        // Parse the date from "dd/MM/yyyy, hh:mm a" format
+        const parts = log.startedAt.split(",")[0].split("/");
+        const logDate = new Date(
+          parseInt(parts[2]),
+          parseInt(parts[1]) - 1,
+          parseInt(parts[0])
+        );
+        if (filters.dateRange.from && logDate < filters.dateRange.from) return false;
+        if (filters.dateRange.to && logDate > filters.dateRange.to) return false;
+        return true;
+      });
     }
 
     // Sort
     if (sortColumn) {
       result.sort((a, b) => {
-        let aVal: any, bVal: any;
+        let aVal: number, bVal: number;
         if (sortColumn === "duration") {
           aVal = a.duration ? parseInt(a.duration.replace(":", "")) : 0;
           bVal = b.duration ? parseInt(b.duration.replace(":", "")) : 0;
         } else if (sortColumn === "startedAt") {
-          aVal = new Date(a.startedAt.split(",")[0].split("/").reverse().join("-")).getTime();
-          bVal = new Date(b.startedAt.split(",")[0].split("/").reverse().join("-")).getTime();
+          const aParts = a.startedAt.split(",")[0].split("/");
+          const bParts = b.startedAt.split(",")[0].split("/");
+          aVal = a.startedAt !== "N/A"
+            ? new Date(parseInt(aParts[2]), parseInt(aParts[1]) - 1, parseInt(aParts[0])).getTime()
+            : 0;
+          bVal = b.startedAt !== "N/A"
+            ? new Date(parseInt(bParts[2]), parseInt(bParts[1]) - 1, parseInt(bParts[0])).getTime()
+            : 0;
+        } else {
+          return 0;
         }
         return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
       });
     }
 
     return result;
-  }, [filters, sortColumn, sortDirection]);
+  }, [callLogs, filters, sortColumn, sortDirection]);
 
   const stats = useMemo(() => {
-    const total = mockCallLogs.length;
-    const answered = mockCallLogs.filter((l) => l.status === "answered").length;
-    const missed = mockCallLogs.filter((l) => l.status === "missed").length;
-    const avgDuration = mockCallLogs
-      .filter((l) => l.duration)
-      .reduce((acc, l) => {
-        const [m, s] = l.duration!.split(":").map(Number);
-        return acc + m * 60 + s;
-      }, 0);
-    const avgMins = Math.floor(avgDuration / mockCallLogs.filter((l) => l.duration).length / 60);
-    const avgSecs = Math.floor((avgDuration / mockCallLogs.filter((l) => l.duration).length) % 60);
+    const total = callLogs.length;
+    const answered = callLogs.filter((l) => l.status === "answered").length;
+    const missed = callLogs.filter((l) => l.status === "missed").length;
+
+    const callsWithDuration = callLogs.filter((l) => l.duration);
+    const totalDurationSec = callsWithDuration.reduce((acc, l) => {
+      if (!l.duration) return acc;
+      const [m, s] = l.duration.split(":").map(Number);
+      return acc + m * 60 + s;
+    }, 0);
+
+    const avgDurationSec = callsWithDuration.length > 0
+      ? totalDurationSec / callsWithDuration.length
+      : 0;
+    const avgMins = Math.floor(avgDurationSec / 60);
+    const avgSecs = Math.floor(avgDurationSec % 60);
 
     return {
       total,
       answered,
       missed,
-      avgDuration: `${avgMins}m ${avgSecs}s`,
+      avgDuration: callsWithDuration.length > 0 ? `${avgMins}m ${avgSecs}s` : "0m 0s",
     };
-  }, []);
+  }, [callLogs]);
 
   const handleExport = () => {
+    if (filteredLogs.length === 0) {
+      toast({
+        title: "No data to export",
+        description: "There are no call logs matching your filters.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const csvContent = [
+      ["ID", "Caller", "Phone Number", "Status", "Duration", "Agent", "Started At"].join(","),
+      ...filteredLogs.map((log) =>
+        [
+          log.id,
+          log.caller,
+          log.phoneNumber,
+          log.status,
+          log.duration || "N/A",
+          log.agent,
+          log.startedAt,
+        ].join(",")
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `call-logs-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
     toast({
-      title: "Export started",
-      description: "Your call logs export is being prepared.",
+      title: "Export complete",
+      description: `Exported ${filteredLogs.length} call logs.`,
     });
   };
 
@@ -272,6 +305,7 @@ const RecentCalls = () => {
             filters={filters}
             onFiltersChange={setFilters}
             onClearFilters={() => setFilters(defaultFilters)}
+            agentOptions={agentOptions}
           />
 
           {/* Table */}

@@ -18,12 +18,12 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Filter, 
-  X, 
-  Search, 
+import {
+  Filter,
+  X,
+  Search,
   Calendar as CalendarIcon,
-  RotateCcw 
+  RotateCcw
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -44,16 +44,18 @@ interface CallLogsFiltersPanelProps {
   filters: CallLogsFilters;
   onFiltersChange: (filters: CallLogsFilters) => void;
   onClearFilters: () => void;
+  agentOptions?: string[];
 }
 
 const statusOptions = ["Answered", "Ended", "Missed", "Failed"];
-const agentOptions = ["All Agents", "Agent A", "Agent B", "Agent C"];
-const organizationOptions = ["All Orgs", "42487a3f", "7b3e2a1c", "9f8d4c5e"];
+const defaultAgentOptions = ["All Agents"];
+const organizationOptions = ["All Orgs"];
 
 export function CallLogsFiltersPanel({
   filters,
   onFiltersChange,
   onClearFilters,
+  agentOptions = defaultAgentOptions,
 }: CallLogsFiltersPanelProps) {
   const [isOpen, setIsOpen] = useState(false);
 

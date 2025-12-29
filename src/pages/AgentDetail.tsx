@@ -4,11 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { StatusPill } from "@/components/shared/StatusPill";
-import { TonePresetSelector } from "@/components/agents/TonePresetSelector";
 import { PromptEditorCard } from "@/components/agents/PromptEditorCard";
 import { SentimentRulesCard } from "@/components/agents/SentimentRulesCard";
 import { TestCallCard } from "@/components/agents/TestCallCard";
-import { VoiceSettingsCard } from "@/components/agents/VoiceSettingsCard";
 import { SkeletonCard } from "@/components/shared/SkeletonCard";
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
@@ -18,24 +16,6 @@ import { useAgents } from "@/hooks/useAgents";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { Database } from "@/integrations/supabase/types";
-
-type AgentTone = Database["public"]["Enums"]["agent_tone"];
-
-interface VoiceSettings {
-  voice: string;
-  speed: number;
-  pitch: number;
-  volume: number;
-  enableSSML: boolean;
-}
-
-const defaultVoiceSettings: VoiceSettings = {
-  voice: "en-US-Neural2-A",
-  speed: 1.0,
-  pitch: 0,
-  volume: 1.0,
-  enableSSML: true,
-};
 
 const defaultPrompt = `You are a helpful AI assistant for customer service calls.
 
@@ -70,9 +50,7 @@ const AgentDetail = () => {
 
   // Editable state
   const [isActive, setIsActive] = useState(true);
-  const [tone, setTone] = useState<AgentTone>("professional");
   const [prompt, setPrompt] = useState(defaultPrompt);
-  const [voiceSettings, setVoiceSettings] = useState<VoiceSettings>(defaultVoiceSettings);
   const [hasChanges, setHasChanges] = useState(false);
 
   // Fetch agent data
@@ -93,17 +71,7 @@ const AgentDetail = () => {
 
       setAgent(agentData);
       setIsActive(agentData.status === "active");
-      setTone(agentData.tone || "professional");
       setPrompt(agentData.system_prompt || defaultPrompt);
-      
-      // Parse voice settings from JSON
-      const storedVoiceSettings = agentData.voice_settings as unknown as VoiceSettings | null;
-      if (storedVoiceSettings && typeof storedVoiceSettings === "object") {
-        setVoiceSettings({
-          ...defaultVoiceSettings,
-          ...storedVoiceSettings,
-        });
-      }
 
       // Fetch linked campaigns
       const { data: campaignAgents, error: campaignError } = await supabase
@@ -159,15 +127,10 @@ const AgentDetail = () => {
 
     const currentStatus = isActive ? "active" : "inactive";
     const hasPromptChange = prompt !== (agent.system_prompt || defaultPrompt);
-    const hasToneChange = tone !== (agent.tone || "professional");
     const hasStatusChange = currentStatus !== agent.status;
-    
-    // Compare voice settings
-    const storedVoice = agent.voice_settings as unknown as VoiceSettings | null;
-    const hasVoiceChange = JSON.stringify(voiceSettings) !== JSON.stringify(storedVoice || defaultVoiceSettings);
 
-    setHasChanges(hasPromptChange || hasToneChange || hasStatusChange || hasVoiceChange);
-  }, [agent, isActive, tone, prompt, voiceSettings]);
+    setHasChanges(hasPromptChange || hasStatusChange);
+  }, [agent, isActive, prompt]);
 
   const handleSave = async () => {
     if (!id || !agent) return;
@@ -177,20 +140,16 @@ const AgentDetail = () => {
 
       await updateAgent(id, {
         status: isActive ? "active" : "inactive",
-        tone,
         system_prompt: prompt,
-        voice_settings: voiceSettings as unknown as Database["public"]["Tables"]["agents"]["Update"]["voice_settings"],
       });
 
       setAgent((prev) =>
         prev
           ? {
-              ...prev,
-              status: isActive ? "active" : "inactive",
-              tone,
-              system_prompt: prompt,
-              voice_settings: voiceSettings as any,
-            }
+            ...prev,
+            status: isActive ? "active" : "inactive",
+            system_prompt: prompt,
+          }
           : prev
       );
 
@@ -322,35 +281,6 @@ const AgentDetail = () => {
           >
             <PromptEditorCard value={prompt} onChange={setPrompt} />
           </motion.div>
-
-          {/* Tone & Voice Settings */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-            >
-              <Card className="border-border/50 h-full">
-                <CardHeader>
-                  <CardTitle className="text-lg">Tone Presets</CardTitle>
-                  <CardDescription>
-                    Select the personality style for this agent
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <TonePresetSelector value={tone} onChange={(v) => setTone(v as AgentTone)} />
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <VoiceSettingsCard value={voiceSettings} onChange={setVoiceSettings} />
-            </motion.div>
-          </div>
 
           {/* Sentiment Rules & Test Call */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

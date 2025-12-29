@@ -1,114 +1,45 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Smile, Meh, Frown, AlertTriangle } from "lucide-react";
+import { ClipboardCheck } from "lucide-react";
 import { useState } from "react";
 
-export function SentimentRulesCard() {
-  const [positiveRule, setPositiveRule] = useState(
-    "When customer shows positive sentiment, express appreciation and explore upsell opportunities."
+interface SentimentRulesCardProps {
+  value?: string;
+  onChange?: (value: string) => void;
+}
+
+export function SentimentRulesCard({ value, onChange }: SentimentRulesCardProps) {
+  const [criteria, setCriteria] = useState(
+    value || "After the call ends, analyze the conversation to determine:\n- Overall customer satisfaction\n- Key issues discussed\n- Resolution status\n- Follow-up actions needed"
   );
-  const [negativeRule, setNegativeRule] = useState(
-    "When customer shows frustration, acknowledge their feelings, apologize if appropriate, and focus on resolution."
-  );
-  const [autoDetect, setAutoDetect] = useState(true);
-  const [realTimeAdjust, setRealTimeAdjust] = useState(true);
-  const [logAnalysis, setLogAnalysis] = useState(true);
+
+  const handleChange = (newValue: string) => {
+    setCriteria(newValue);
+    onChange?.(newValue);
+  };
 
   return (
-    <Card className="border-border/50">
+    <Card className="border-border/50 h-full">
       <CardHeader>
-        <CardTitle className="text-lg">Sentiment Rules</CardTitle>
-        <CardDescription>
-          Configure how the agent interprets and responds to customer sentiment
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Positive Sentiment */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-success/10 flex items-center justify-center">
-              <Smile className="h-4 w-4 text-success" />
-            </div>
-            <Label className="font-medium">Positive Sentiment Response</Label>
-          </div>
-          <Textarea
-            value={positiveRule}
-            onChange={(e) => setPositiveRule(e.target.value)}
-            className="min-h-[80px] text-sm"
-            placeholder="How should the agent respond to positive sentiment?"
-          />
-        </div>
-
-        {/* Neutral indicator */}
-        <div className="flex items-center gap-2 p-3 rounded-lg bg-secondary/30">
-          <div className="h-8 w-8 rounded-lg bg-muted flex items-center justify-center">
-            <Meh className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <ClipboardCheck className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="font-medium text-foreground">Neutral Sentiment</p>
-            <p className="text-sm text-muted-foreground">
-              Default conversation flow - no special handling
-            </p>
+            <CardTitle className="text-lg">Post-Call Analysis</CardTitle>
+            <CardDescription>
+              Define criteria for analyzing the call after it ends
+            </CardDescription>
           </div>
         </div>
-
-        {/* Negative Sentiment */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-destructive/10 flex items-center justify-center">
-              <Frown className="h-4 w-4 text-destructive" />
-            </div>
-            <Label className="font-medium">Negative Sentiment Response</Label>
-          </div>
-          <Textarea
-            value={negativeRule}
-            onChange={(e) => setNegativeRule(e.target.value)}
-            className="min-h-[80px] text-sm"
-            placeholder="How should the agent respond to negative sentiment?"
-          />
-        </div>
-
-        {/* Toggles */}
-        <div className="space-y-4 pt-4 border-t border-border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="font-medium text-foreground">Auto-detect sentiment</p>
-                <p className="text-sm text-muted-foreground">
-                  Automatically analyze customer tone in real-time
-                </p>
-              </div>
-            </div>
-            <Switch checked={autoDetect} onCheckedChange={setAutoDetect} />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="font-medium text-foreground">Real-time adjustment</p>
-                <p className="text-sm text-muted-foreground">
-                  Adjust agent behavior based on sentiment shifts
-                </p>
-              </div>
-            </div>
-            <Switch checked={realTimeAdjust} onCheckedChange={setRealTimeAdjust} />
-          </div>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="font-medium text-foreground">Log sentiment analysis</p>
-                <p className="text-sm text-muted-foreground">
-                  Store sentiment data for analytics and reporting
-                </p>
-              </div>
-            </div>
-            <Switch checked={logAnalysis} onCheckedChange={setLogAnalysis} />
-          </div>
-        </div>
+      </CardHeader>
+      <CardContent>
+        <Textarea
+          value={criteria}
+          onChange={(e) => handleChange(e.target.value)}
+          className="min-h-[180px] text-sm resize-none"
+          placeholder="Enter the criteria for post-call analysis..."
+        />
       </CardContent>
     </Card>
   );
