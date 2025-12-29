@@ -14,6 +14,242 @@ export type Database = {
   }
   public: {
     Tables: {
+      agents: {
+        Row: {
+          created_at: string | null
+          deleted_at: string | null
+          id: string
+          language: string | null
+          name: string
+          organization_id: string
+          sentiment_rules: Json | null
+          status: Database["public"]["Enums"]["agent_status"] | null
+          system_prompt: string | null
+          tone: Database["public"]["Enums"]["agent_tone"] | null
+          updated_at: string | null
+          voice_settings: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          language?: string | null
+          name: string
+          organization_id: string
+          sentiment_rules?: Json | null
+          status?: Database["public"]["Enums"]["agent_status"] | null
+          system_prompt?: string | null
+          tone?: Database["public"]["Enums"]["agent_tone"] | null
+          updated_at?: string | null
+          voice_settings?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string
+          language?: string | null
+          name?: string
+          organization_id?: string
+          sentiment_rules?: Json | null
+          status?: Database["public"]["Enums"]["agent_status"] | null
+          system_prompt?: string | null
+          tone?: Database["public"]["Enums"]["agent_tone"] | null
+          updated_at?: string | null
+          voice_settings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agents_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_call_stats: {
+        Row: {
+          answered_calls: number | null
+          avg_sentiment_score: number | null
+          contact_id: string
+          failed_calls: number | null
+          last_call_at: string | null
+          last_outcome: Database["public"]["Enums"]["call_outcome"] | null
+          missed_calls: number | null
+          total_calls: number | null
+          total_duration_seconds: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          answered_calls?: number | null
+          avg_sentiment_score?: number | null
+          contact_id: string
+          failed_calls?: number | null
+          last_call_at?: string | null
+          last_outcome?: Database["public"]["Enums"]["call_outcome"] | null
+          missed_calls?: number | null
+          total_calls?: number | null
+          total_duration_seconds?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          answered_calls?: number | null
+          avg_sentiment_score?: number | null
+          contact_id?: string
+          failed_calls?: number | null
+          last_call_at?: string | null
+          last_outcome?: Database["public"]["Enums"]["call_outcome"] | null
+          missed_calls?: number | null
+          total_calls?: number | null
+          total_duration_seconds?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_call_stats_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: true
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_list_members: {
+        Row: {
+          added_at: string | null
+          contact_id: string
+          contact_list_id: string
+          id: string
+        }
+        Insert: {
+          added_at?: string | null
+          contact_id: string
+          contact_list_id: string
+          id?: string
+        }
+        Update: {
+          added_at?: string | null
+          contact_id?: string
+          contact_list_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_list_members_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_list_members_contact_list_id_fkey"
+            columns: ["contact_list_id"]
+            isOneToOne: false
+            referencedRelation: "contact_lists"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_lists: {
+        Row: {
+          created_at: string | null
+          deleted_at: string | null
+          description: string | null
+          filter_criteria: Json | null
+          id: string
+          list_type: Database["public"]["Enums"]["list_type"] | null
+          name: string
+          organization_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          filter_criteria?: Json | null
+          id?: string
+          list_type?: Database["public"]["Enums"]["list_type"] | null
+          name: string
+          organization_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          filter_criteria?: Json | null
+          id?: string
+          list_type?: Database["public"]["Enums"]["list_type"] | null
+          name?: string
+          organization_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_lists_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          created_at: string | null
+          deleted_at: string | null
+          do_not_call: boolean | null
+          email: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          metadata: Json | null
+          organization_id: string
+          phone: string
+          status: Database["public"]["Enums"]["contact_status"] | null
+          tags: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          deleted_at?: string | null
+          do_not_call?: boolean | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          metadata?: Json | null
+          organization_id: string
+          phone: string
+          status?: Database["public"]["Enums"]["contact_status"] | null
+          tags?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          deleted_at?: string | null
+          do_not_call?: boolean | null
+          email?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          metadata?: Json | null
+          organization_id?: string
+          phone?: string
+          status?: Database["public"]["Enums"]["contact_status"] | null
+          tags?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string | null
@@ -140,7 +376,17 @@ export type Database = {
       is_org_admin: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
+      agent_status: "active" | "inactive" | "draft"
+      agent_tone:
+        | "professional"
+        | "friendly"
+        | "casual"
+        | "formal"
+        | "empathetic"
       app_role: "admin" | "org_owner" | "org_admin" | "org_member"
+      call_outcome: "answered" | "no_answer" | "busy" | "failed" | "voicemail"
+      contact_status: "active" | "inactive"
+      list_type: "static" | "dynamic"
       organization_plan: "starter" | "pro" | "enterprise"
       organization_status: "active" | "trial" | "suspended" | "cancelled"
     }
@@ -270,7 +516,18 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      agent_status: ["active", "inactive", "draft"],
+      agent_tone: [
+        "professional",
+        "friendly",
+        "casual",
+        "formal",
+        "empathetic",
+      ],
       app_role: ["admin", "org_owner", "org_admin", "org_member"],
+      call_outcome: ["answered", "no_answer", "busy", "failed", "voicemail"],
+      contact_status: ["active", "inactive"],
+      list_type: ["static", "dynamic"],
       organization_plan: ["starter", "pro", "enterprise"],
       organization_status: ["active", "trial", "suspended", "cancelled"],
     },
