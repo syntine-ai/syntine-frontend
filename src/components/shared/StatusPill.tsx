@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 
-type StatusType = "running" | "paused" | "draft" | "active" | "inactive" | "error" | "completed";
+type StatusType = "running" | "paused" | "draft" | "active" | "inactive" | "error" | "completed" | "scheduled" | "cancelled";
 
 interface StatusPillProps {
   status: StatusType;
@@ -23,6 +23,11 @@ const statusConfig: Record<StatusType, { label: string; className: string; dotCl
     className: "bg-warning/15 text-warning border-warning/40",
     dotClass: "bg-warning",
   },
+  scheduled: {
+    label: "Scheduled",
+    className: "bg-info/15 text-info border-info/40",
+    dotClass: "bg-info",
+  },
   draft: {
     label: "Draft",
     className: "bg-[rgba(255,255,255,0.06)] text-muted-foreground border-[rgba(255,255,255,0.12)]",
@@ -42,6 +47,11 @@ const statusConfig: Record<StatusType, { label: string; className: string; dotCl
     label: "Completed",
     className: "bg-success/15 text-success border-success/40",
     dotClass: "bg-success",
+  },
+  cancelled: {
+    label: "Cancelled",
+    className: "bg-destructive/15 text-destructive border-destructive/40",
+    dotClass: "bg-destructive",
   },
 };
 

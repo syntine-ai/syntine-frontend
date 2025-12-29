@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { subDays, startOfDay } from "date-fns";
@@ -21,7 +22,7 @@ function getDateRange(preset: DatePreset): Date {
   }
 }
 
-interface DashboardMetrics {
+export interface DashboardMetrics {
   totalCalls: number;
   answeredCalls: number;
   successRate: number;
@@ -45,8 +46,38 @@ interface CallStats {
   failed: number;
 }
 
+// Real-time hook for dashboard metrics with live updates
 export function useDashboardMetrics(datePreset: DatePreset) {
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!profile?.organization_id) return;
+
+    const channel = supabase
+      .channel("dashboard-calls-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "calls",
+          filter: `organization_id=eq.${profile.organization_id}`,
+        },
+        () => {
+          // Invalidate the query to refetch with new data
+          queryClient.invalidateQueries({
+            queryKey: ["dashboard-metrics", profile.organization_id],
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.organization_id, queryClient]);
 
   return useQuery({
     queryKey: ["dashboard-metrics", profile?.organization_id, datePreset],
@@ -73,18 +104,22 @@ export function useDashboardMetrics(datePreset: DatePreset) {
       if (error) throw error;
 
       const totalCalls = calls?.length || 0;
-      const answeredCalls = calls?.filter(c => c.outcome === "answered").length || 0;
+      const answeredCalls = calls?.filter((c) => c.outcome === "answered").length || 0;
       const successRate = totalCalls > 0 ? (answeredCalls / totalCalls) * 100 : 0;
-      
-      const callsWithDuration = calls?.filter(c => c.duration_seconds != null) || [];
-      const avgDuration = callsWithDuration.length > 0
-        ? callsWithDuration.reduce((sum, c) => sum + (c.duration_seconds || 0), 0) / callsWithDuration.length
-        : 0;
 
-      const callsWithSentiment = calls?.filter(c => c.sentiment_score != null) || [];
-      const avgSentiment = callsWithSentiment.length > 0
-        ? callsWithSentiment.reduce((sum, c) => sum + (c.sentiment_score || 0), 0) / callsWithSentiment.length
-        : 0;
+      const callsWithDuration = calls?.filter((c) => c.duration_seconds != null) || [];
+      const avgDuration =
+        callsWithDuration.length > 0
+          ? callsWithDuration.reduce((sum, c) => sum + (c.duration_seconds || 0), 0) /
+            callsWithDuration.length
+          : 0;
+
+      const callsWithSentiment = calls?.filter((c) => c.sentiment_score != null) || [];
+      const avgSentiment =
+        callsWithSentiment.length > 0
+          ? callsWithSentiment.reduce((sum, c) => sum + (c.sentiment_score || 0), 0) /
+            callsWithSentiment.length
+          : 0;
 
       return {
         totalCalls,
@@ -95,11 +130,40 @@ export function useDashboardMetrics(datePreset: DatePreset) {
       };
     },
     enabled: !!profile?.organization_id,
+    refetchInterval: 30000, // Also poll every 30 seconds as fallback
   });
 }
 
 export function useActiveCampaigns() {
   const { profile } = useAuth();
+  const queryClient = useQueryClient();
+
+  // Real-time subscription for campaigns
+  useEffect(() => {
+    if (!profile?.organization_id) return;
+
+    const channel = supabase
+      .channel("dashboard-campaigns-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "campaigns",
+          filter: `organization_id=eq.${profile.organization_id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({
+            queryKey: ["active-campaigns", profile.organization_id],
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.organization_id, queryClient]);
 
   return useQuery({
     queryKey: ["active-campaigns", profile?.organization_id],
@@ -130,7 +194,7 @@ export function useCampaignCallStats(campaignId: string | null, datePreset: Date
       if (!profile?.organization_id) return [];
 
       const startDate = getDateRange(datePreset);
-      
+
       let query = supabase
         .from("calls")
         .select("created_at, outcome")
@@ -146,15 +210,15 @@ export function useCampaignCallStats(campaignId: string | null, datePreset: Date
 
       // Group by date
       const statsMap = new Map<string, CallStats>();
-      
-      calls?.forEach(call => {
-        const date = startOfDay(new Date(call.created_at)).toISOString().split("T")[0];
+
+      calls?.forEach((call) => {
+        const date = startOfDay(new Date(call.created_at!)).toISOString().split("T")[0];
         const existing = statsMap.get(date) || { date, total: 0, answered: 0, failed: 0 };
-        
+
         existing.total++;
         if (call.outcome === "answered") existing.answered++;
         if (call.outcome === "failed") existing.failed++;
-        
+
         statsMap.set(date, existing);
       });
 
@@ -185,4 +249,52 @@ export function useRecentAgents() {
     },
     enabled: !!profile?.organization_id,
   });
+}
+
+// Hook to get live call count (updates in real-time)
+export function useLiveCallCount() {
+  const { profile } = useAuth();
+  const [liveCount, setLiveCount] = useState(0);
+
+  useEffect(() => {
+    if (!profile?.organization_id) return;
+
+    // Get initial count of in-progress calls
+    const fetchLiveCount = async () => {
+      const { count, error } = await supabase
+        .from("calls")
+        .select("*", { count: "exact", head: true })
+        .eq("organization_id", profile.organization_id)
+        .eq("status", "in_progress");
+
+      if (!error && count !== null) {
+        setLiveCount(count);
+      }
+    };
+
+    fetchLiveCount();
+
+    // Subscribe to changes
+    const channel = supabase
+      .channel("live-calls-count")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "calls",
+          filter: `organization_id=eq.${profile.organization_id}`,
+        },
+        () => {
+          fetchLiveCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.organization_id]);
+
+  return liveCount;
 }

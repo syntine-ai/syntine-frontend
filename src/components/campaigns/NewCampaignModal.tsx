@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -19,14 +19,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
+import { useAgents } from "@/hooks/useAgents";
+import { useContacts } from "@/hooks/useContacts";
 
 interface NewCampaignModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit?: (data: {
+    name: string;
+    description?: string;
+    concurrency?: number;
+    agentIds?: string[];
+    contactListIds?: string[];
+  }) => Promise<void>;
 }
 
 const steps = [
@@ -36,10 +43,9 @@ const steps = [
   { id: 4, title: "Call Settings" },
 ];
 
-export function NewCampaignModal({ open, onOpenChange }: NewCampaignModalProps) {
-  const navigate = useNavigate();
-  const { toast } = useToast();
+export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -47,6 +53,9 @@ export function NewCampaignModal({ open, onOpenChange }: NewCampaignModalProps) 
     contactList: "",
     concurrency: 3,
   });
+
+  const { agents, isLoading: agentsLoading } = useAgents();
+  const { contactLists, isLoading: listsLoading } = useContacts();
 
   const handleNext = () => {
     if (currentStep < steps.length) {
@@ -60,14 +69,39 @@ export function NewCampaignModal({ open, onOpenChange }: NewCampaignModalProps) 
     }
   };
 
-  const handleSubmit = () => {
-    // Mock submit - navigate to new campaign
-    onOpenChange(false);
-    toast({
-      title: "Campaign Created",
-      description: `"${formData.name || 'New Campaign'}" has been created successfully.`,
-    });
-    navigate("/app/campaigns/new-campaign");
+  const handleSubmit = async () => {
+    if (!formData.name) return;
+
+    setIsSubmitting(true);
+    try {
+      if (onSubmit) {
+        await onSubmit({
+          name: formData.name,
+          description: formData.description || undefined,
+          concurrency: formData.concurrency,
+          agentIds: formData.agent ? [formData.agent] : undefined,
+          contactListIds: formData.contactList ? [formData.contactList] : undefined,
+        });
+      }
+      // Reset form
+      setCurrentStep(1);
+      setFormData({ name: "", description: "", agent: "", contactList: "", concurrency: 3 });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      setCurrentStep(1);
+      setFormData({ name: "", description: "", agent: "", contactList: "", concurrency: 3 });
+    }
+    onOpenChange(isOpen);
+  };
+
+  const isNextDisabled = () => {
+    if (currentStep === 1) return !formData.name;
+    return false;
   };
 
   const renderStepContent = () => {
@@ -106,12 +140,24 @@ export function NewCampaignModal({ open, onOpenChange }: NewCampaignModalProps) 
                 onValueChange={(value) => setFormData({ ...formData, agent: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose an agent" />
+                  <SelectValue placeholder={agentsLoading ? "Loading agents..." : "Choose an agent"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="agent-a">Sales Assistant</SelectItem>
-                  <SelectItem value="agent-b">Support Bot</SelectItem>
-                  <SelectItem value="agent-c">Lead Qualifier</SelectItem>
+                  {agents.map((agent) => (
+                    <SelectItem key={agent.id} value={agent.id}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span>{agent.name}</span>
+                        <span className="text-xs text-muted-foreground capitalize">
+                          {agent.status}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                  {agents.length === 0 && !agentsLoading && (
+                    <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                      No agents available. Create an agent first.
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -130,12 +176,24 @@ export function NewCampaignModal({ open, onOpenChange }: NewCampaignModalProps) 
                 onValueChange={(value) => setFormData({ ...formData, contactList: value })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a contact list" />
+                  <SelectValue placeholder={listsLoading ? "Loading lists..." : "Select a contact list"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="master">Master List (2,340 contacts)</SelectItem>
-                  <SelectItem value="vip">VIP Customers (156 contacts)</SelectItem>
-                  <SelectItem value="new">New CSV Upload</SelectItem>
+                  {contactLists.map((list) => (
+                    <SelectItem key={list.id} value={list.id}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span>{list.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {list.contactCount} contacts
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                  {contactLists.length === 0 && !listsLoading && (
+                    <div className="px-2 py-3 text-sm text-muted-foreground text-center">
+                      No contact lists available. Create a list first.
+                    </div>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -175,7 +233,7 @@ export function NewCampaignModal({ open, onOpenChange }: NewCampaignModalProps) 
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create New Campaign</DialogTitle>
@@ -238,21 +296,34 @@ export function NewCampaignModal({ open, onOpenChange }: NewCampaignModalProps) 
           <Button
             variant="outline"
             onClick={handleBack}
-            disabled={currentStep === 1}
+            disabled={currentStep === 1 || isSubmitting}
             className="gap-2"
           >
             <ChevronLeft className="h-4 w-4" />
             Back
           </Button>
           {currentStep < steps.length ? (
-            <Button onClick={handleNext} className="gap-2">
+            <Button onClick={handleNext} disabled={isNextDisabled()} className="gap-2">
               Next
               <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} className="gap-2">
-              Create Campaign
-              <Check className="h-4 w-4" />
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isSubmitting || !formData.name}
+              className="gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  Create Campaign
+                  <Check className="h-4 w-4" />
+                </>
+              )}
             </Button>
           )}
         </div>
