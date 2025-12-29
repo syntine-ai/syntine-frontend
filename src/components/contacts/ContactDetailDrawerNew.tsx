@@ -36,30 +36,42 @@ interface ContactDetailDrawerProps {
   onEdit?: () => void;
 }
 
-const mockCallHistory = [
+type Sentiment = "positive" | "neutral" | "negative";
+type Outcome = "answered" | "no_answer" | "busy" | "failed";
+
+interface CallHistoryItem {
+  id: number;
+  date: string;
+  campaign: string;
+  duration: string;
+  sentiment: Sentiment;
+  outcome: Outcome;
+}
+
+const mockCallHistory: CallHistoryItem[] = [
   {
     id: 1,
     date: "Dec 28, 2024",
     campaign: "Sales Follow-up",
     duration: "2:34",
-    sentiment: "positive" as const,
-    outcome: "answered" as const,
+    sentiment: "positive",
+    outcome: "answered",
   },
   {
     id: 2,
     date: "Dec 20, 2024",
     campaign: "Loan Outreach",
     duration: "1:12",
-    sentiment: "neutral" as const,
-    outcome: "answered" as const,
+    sentiment: "neutral",
+    outcome: "answered",
   },
   {
     id: 3,
     date: "Dec 15, 2024",
     campaign: "Product Demo",
     duration: "0:00",
-    sentiment: "neutral" as const,
-    outcome: "no_answer" as const,
+    sentiment: "negative",
+    outcome: "no_answer",
   },
 ];
 
