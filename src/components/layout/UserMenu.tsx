@@ -19,18 +19,35 @@ interface UserMenuProps {
 
 export function UserMenu({ variant }: UserMenuProps) {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { signOut, profile, user, isAdmin } = useAuth();
   const { theme, setTheme } = useTheme();
 
-  const handleLogout = () => {
-    logout();
-    navigate(variant === "admin" ? "/admin/login" : "/login");
+  const handleLogout = async () => {
+    await signOut();
+    navigate(variant === "admin" ? "/admin/login" : "/auth");
   };
 
-  const isAdmin = variant === "admin";
+  const isAdminVariant = variant === "admin";
   const isDark = theme === "dark";
 
-  const menuItems = isAdmin
+  // Get user initials
+  const getInitials = () => {
+    if (profile?.first_name && profile?.last_name) {
+      return `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase();
+    }
+    if (user?.email) {
+      return user.email[0].toUpperCase();
+    }
+    return isAdminVariant ? "AD" : "U";
+  };
+
+  const displayName = profile 
+    ? `${profile.first_name || ""} ${profile.last_name || ""}`.trim() || "User"
+    : "User";
+  
+  const displayEmail = user?.email || "";
+
+  const menuItems = isAdminVariant
     ? [
         { label: "Admin Profile", route: "/admin/profile", icon: User },
         { label: "Admin Settings", route: "/admin/settings", icon: Settings },
@@ -44,43 +61,43 @@ export function UserMenu({ variant }: UserMenuProps) {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Avatar className="h-8 w-8 cursor-pointer ring-2 ring-transparent hover:ring-primary/20 transition-all">
-          <AvatarImage src="" />
+          <AvatarImage src={profile?.avatar_url || ""} />
           <AvatarFallback
             className={
-              isAdmin
+              isAdminVariant
                 ? "bg-admin-accent text-admin-accent-foreground"
                 : "bg-primary text-primary-foreground"
             }
           >
-            {isAdmin ? "AD" : "JD"}
+            {getInitials()}
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56 bg-popover border-border">
         <DropdownMenuLabel className="flex items-center gap-3">
           <Avatar className="h-10 w-10">
-            <AvatarImage src="" />
+            <AvatarImage src={profile?.avatar_url || ""} />
             <AvatarFallback
               className={
-                isAdmin
+                isAdminVariant
                   ? "bg-admin-accent text-admin-accent-foreground"
                   : "bg-primary text-primary-foreground"
               }
             >
-              {isAdmin ? "AD" : "JD"}
+              {getInitials()}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col">
             <span className="text-sm font-medium">
-              {isAdmin ? "Super Admin" : "John Doe"}
+              {isAdminVariant && isAdmin ? "Super Admin" : displayName}
             </span>
-            <span className="text-xs text-muted-foreground">
-              {isAdmin ? "admin@syntine.io" : "john@acmecorp.com"}
+            <span className="text-xs text-muted-foreground truncate max-w-[140px]">
+              {displayEmail}
             </span>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {isAdmin && (
+        {isAdminVariant && isAdmin && (
           <DropdownMenuItem className="text-admin-accent cursor-pointer" disabled>
             <Shield className="mr-2 h-4 w-4" />
             <span className="text-xs">Admin Access</span>

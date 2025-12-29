@@ -8,7 +8,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 
 // Public Pages
 import Landing from "./pages/Landing";
-import Login from "./pages/Login";
+import Auth from "./pages/Auth";
 import AdminLogin from "./pages/AdminLogin";
 
 // Org Pages
@@ -57,7 +57,8 @@ const App = () => (
           <Routes>
             {/* Public Routes */}
             <Route path="/" element={<Landing />} />
-            <Route path="/login" element={<Login />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/login" element={<Navigate to="/auth" replace />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             
             {/* Protected Organization Routes - /app/* */}

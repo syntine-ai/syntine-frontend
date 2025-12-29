@@ -1,68 +1,189 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { User, Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
-type Role = "org" | "admin" | null;
+type AppRole = "admin" | "org_owner" | "org_admin" | "org_member";
+
+interface Profile {
+  id: string;
+  user_id: string;
+  organization_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string | null;
+  avatar_url: string | null;
+  timezone: string;
+}
 
 interface AuthContextType {
-  isAuthenticated: boolean;
+  user: User | null;
+  session: Session | null;
+  profile: Profile | null;
+  roles: AppRole[];
   isLoading: boolean;
-  role: Role;
-  loginOrg: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  loginAdmin: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  isAdmin: boolean;
+  isOrgMember: boolean;
+  signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, metadata: { firstName: string; lastName: string; organizationName: string }) => Promise<{ error: string | null }>;
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [roles, setRoles] = useState<AppRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [role, setRole] = useState<Role>(null);
 
-  // Simulate checking for existing session on mount
+  // Fetch profile and roles after user is set
+  const fetchUserData = async (userId: string) => {
+    try {
+      // Fetch profile
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      
+      if (profileData) {
+        setProfile(profileData as Profile);
+      }
+
+      // Fetch roles
+      const { data: rolesData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId);
+      
+      if (rolesData) {
+        setRoles(rolesData.map(r => r.role as AppRole));
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+
   useEffect(() => {
-    const checkAuth = async () => {
-      // Mock delay to simulate auth check
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, currentSession) => {
+        setSession(currentSession);
+        setUser(currentSession?.user ?? null);
+        
+        // Defer Supabase calls with setTimeout to prevent deadlock
+        if (currentSession?.user) {
+          setTimeout(() => {
+            fetchUserData(currentSession.user.id);
+          }, 0);
+        } else {
+          setProfile(null);
+          setRoles([]);
+        }
+        
+        setIsLoading(false);
+      }
+    );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
+      setSession(existingSession);
+      setUser(existingSession?.user ?? null);
+      
+      if (existingSession?.user) {
+        fetchUserData(existingSession.user.id);
+      }
+      
       setIsLoading(false);
-    };
-    checkAuth();
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const loginOrg = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Mock login - simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    // Mock validation - accept any valid email format with password length > 5
-    if (!email.includes("@") || password.length < 6) {
-      return { success: false, error: "Invalid email or password" };
+  const signIn = async (email: string, password: string): Promise<{ error: string | null }> => {
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          return { error: "Invalid email or password. Please try again." };
+        }
+        if (error.message.includes("Email not confirmed")) {
+          return { error: "Please confirm your email before signing in." };
+        }
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (err) {
+      return { error: "An unexpected error occurred. Please try again." };
     }
-    
-    setIsAuthenticated(true);
-    setRole("org");
-    return { success: true };
   };
 
-  const loginAdmin = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    // Mock login - simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    // Mock validation - for demo, require @syntine.io domain
-    if (!email.endsWith("@syntine.io") || password.length < 6) {
-      return { success: false, error: "Invalid admin credentials" };
+  const signUp = async (
+    email: string, 
+    password: string, 
+    metadata: { firstName: string; lastName: string; organizationName: string }
+  ): Promise<{ error: string | null }> => {
+    try {
+      const redirectUrl = `${window.location.origin}/auth`;
+      
+      const { error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            first_name: metadata.firstName.trim(),
+            last_name: metadata.lastName.trim(),
+            organization_name: metadata.organizationName.trim(),
+          },
+        },
+      });
+
+      if (error) {
+        if (error.message.includes("User already registered")) {
+          return { error: "An account with this email already exists. Please sign in instead." };
+        }
+        return { error: error.message };
+      }
+
+      return { error: null };
+    } catch (err) {
+      return { error: "An unexpected error occurred. Please try again." };
     }
-    
-    setIsAuthenticated(true);
-    setRole("admin");
-    return { success: true };
   };
 
-  const logout = () => {
-    setIsAuthenticated(false);
-    setRole(null);
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    setRoles([]);
   };
+
+  const isAdmin = roles.includes("admin");
+  const isOrgMember = roles.some(r => ["org_owner", "org_admin", "org_member"].includes(r));
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, isLoading, role, loginOrg, loginAdmin, logout }}>
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        session, 
+        profile, 
+        roles, 
+        isLoading, 
+        isAdmin,
+        isOrgMember,
+        signIn, 
+        signUp, 
+        signOut 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
