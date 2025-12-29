@@ -13,8 +13,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SettingsCard } from "@/components/settings/SettingsCard";
-import { IntegrationCard } from "@/components/settings/IntegrationCard";
-import { UsageMeter } from "@/components/settings/UsageMeter";
 import { LogsTable, LogEntry } from "@/components/settings/LogsTable";
 import { LogDetailsDrawer } from "@/components/settings/LogDetailsDrawer";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
@@ -23,9 +21,6 @@ import {
   Building2,
   Phone,
   RefreshCw,
-  CreditCard,
-  Zap,
-  ArrowUpRight,
   Palette,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -92,8 +87,6 @@ const Settings = () => {
           <TabsList className="mb-6 bg-muted/50">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
-            <TabsTrigger value="integrations">Integrations</TabsTrigger>
-            <TabsTrigger value="plan">Plan & Usage</TabsTrigger>
             <TabsTrigger value="logs">System Logs</TabsTrigger>
           </TabsList>
 
@@ -245,115 +238,6 @@ const Settings = () => {
                       Choose your preferred color scheme. Your preference is saved automatically.
                     </p>
                   </div>
-                </SettingsCard>
-              </motion.div>
-            </TabsContent>
-            <TabsContent value="integrations" className="mt-0">
-              <motion.div
-                key="integrations"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="max-w-3xl space-y-4"
-              >
-                <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Connected Integrations
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Manage your third-party connections and automations
-                  </p>
-                </div>
-
-                <IntegrationCard
-                  name="Exotel"
-                  description="Used for outbound voice calls."
-                  status="connected"
-                  buttonLabel="Configure"
-                  delay={0}
-                />
-                <IntegrationCard
-                  name="n8n Automation"
-                  description="Trigger workflows when calls start or end."
-                  status="connected"
-                  buttonLabel="Configure"
-                  delay={0.1}
-                />
-                <IntegrationCard
-                  name="Webhooks"
-                  description="Send call data to any external system."
-                  status="not_configured"
-                  buttonLabel="Set Up"
-                  delay={0.2}
-                />
-              </motion.div>
-            </TabsContent>
-
-            {/* Plan & Usage Tab */}
-            <TabsContent value="plan" className="mt-0">
-              <motion.div
-                key="plan"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="max-w-3xl space-y-6"
-              >
-                <SettingsCard
-                  title="Current Plan"
-                  description="Your subscription details"
-                  icon={CreditCard}
-                  delay={0}
-                >
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg border border-primary/20">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <Zap className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <p className="font-semibold text-foreground">Pro Plan</p>
-                          <p className="text-sm text-muted-foreground">
-                            Next billing date: Apr 10, 2025
-                          </p>
-                        </div>
-                      </div>
-                      <Button variant="outline" size="sm">
-                        <ArrowUpRight className="h-4 w-4 mr-1.5" />
-                        Upgrade Plan
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="p-3 bg-muted/30 rounded-lg">
-                        <p className="text-muted-foreground">Monthly Price</p>
-                        <p className="text-lg font-semibold text-foreground">
-                          $99.00
-                        </p>
-                      </div>
-                      <div className="p-3 bg-muted/30 rounded-lg">
-                        <p className="text-muted-foreground">Billing Cycle</p>
-                        <p className="text-lg font-semibold text-foreground">
-                          Monthly
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </SettingsCard>
-
-                <SettingsCard
-                  title="Usage Overview"
-                  description="Track your resource consumption this billing period"
-                  icon={RefreshCw}
-                  delay={0.1}
-                >
-                  <UsageMeter
-                    items={[
-                      { label: "Calls This Month", value: 1240, limit: 5000 },
-                      { label: "API Requests", value: 8200, limit: 20000 },
-                      { label: "Storage Used", value: 2.4, limit: 10, unit: "GB" },
-                    ]}
-                  />
                 </SettingsCard>
               </motion.div>
             </TabsContent>
