@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
@@ -16,89 +16,44 @@ import {
 import { Plus, Search, MoreVertical, Bot, Copy, Settings, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-
-const agents = [
-  {
-    id: "1",
-    name: "Sales Assistant",
-    linkedCampaigns: 3,
-    language: "English",
-    status: "active" as const,
-    updated: "2 hours ago",
-  },
-  {
-    id: "2",
-    name: "Support Bot",
-    linkedCampaigns: 2,
-    language: "English",
-    status: "active" as const,
-    updated: "1 day ago",
-  },
-  {
-    id: "3",
-    name: "Lead Qualifier",
-    linkedCampaigns: 1,
-    language: "Hinglish",
-    status: "active" as const,
-    updated: "3 days ago",
-  },
-  {
-    id: "4",
-    name: "Feedback Collector",
-    linkedCampaigns: 0,
-    language: "Hindi",
-    status: "inactive" as const,
-    updated: "1 week ago",
-  },
-  {
-    id: "5",
-    name: "Onboarding Guide",
-    linkedCampaigns: 1,
-    language: "English",
-    status: "draft" as const,
-    updated: "2 weeks ago",
-  },
-];
+import { useAgents, type AgentWithCampaigns } from "@/hooks/useAgents";
+import { formatDistanceToNow } from "date-fns";
 
 const Agents = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewModal, setShowNewModal] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [agentList, setAgentList] = useState(agents);
+  
+  const { agents, isLoading, duplicateAgent, deleteAgent, createAgent } = useAgents();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const filteredAgents = agentList.filter((agent) =>
+  const filteredAgents = agents.filter((agent) =>
     agent.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleDuplicate = (agent: typeof agents[0]) => {
-    const newAgent = {
-      ...agent,
-      id: `${Date.now()}`,
-      name: `${agent.name} (Copy)`,
-      updated: "Just now",
-    };
-    setAgentList(prev => [newAgent, ...prev]);
-    toast({
-      title: "Agent Duplicated",
-      description: `"${newAgent.name}" has been created.`,
-    });
+  const handleDuplicate = async (agent: AgentWithCampaigns) => {
+    await duplicateAgent(agent);
   };
 
-  const handleDelete = (id: string) => {
-    setAgentList(prev => prev.filter(a => a.id !== id));
-    toast({
-      title: "Agent Deleted",
-      description: "The agent has been removed.",
-      variant: "destructive",
-    });
+  const handleDelete = async (id: string) => {
+    await deleteAgent(id);
+  };
+
+  const handleCreateAgent = async (data: {
+    name: string;
+    language: string;
+    tone: "professional" | "friendly" | "casual" | "formal" | "empathetic";
+    system_prompt?: string;
+  }) => {
+    const newAgent = await createAgent(data);
+    if (newAgent) {
+      setShowNewModal(false);
+      navigate(`/app/agents/${newAgent.id}`);
+    }
+  };
+
+  const getUpdatedText = (date: string | null) => {
+    if (!date) return "Never";
+    return formatDistanceToNow(new Date(date), { addSuffix: true });
   };
 
   return (
@@ -195,11 +150,13 @@ const Agents = () => {
                           {agent.linkedCampaigns} {agent.linkedCampaigns === 1 ? "campaign" : "campaigns"}
                         </span>
                       </td>
-                      <td className="p-4 text-foreground">{agent.language}</td>
+                      <td className="p-4 text-foreground">{agent.language || "English"}</td>
                       <td className="p-4">
-                        <StatusPill status={agent.status} />
+                        <StatusPill status={agent.status || "draft"} />
                       </td>
-                      <td className="p-4 text-muted-foreground text-sm">{agent.updated}</td>
+                      <td className="p-4 text-muted-foreground text-sm">
+                        {getUpdatedText(agent.updated_at)}
+                      </td>
                       <td className="p-4">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -217,7 +174,13 @@ const Agents = () => {
                             >
                               <Copy className="h-4 w-4" /> Duplicate
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="gap-2" onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuItem 
+                              className="gap-2" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/app/agents/${agent.id}`);
+                              }}
+                            >
                               <Settings className="h-4 w-4" /> Settings
                             </DropdownMenuItem>
                             <DropdownMenuItem 
@@ -241,7 +204,11 @@ const Agents = () => {
         )}
 
         {/* New Agent Modal */}
-        <NewAgentModal open={showNewModal} onOpenChange={setShowNewModal} />
+        <NewAgentModal 
+          open={showNewModal} 
+          onOpenChange={setShowNewModal}
+          onSubmit={handleCreateAgent}
+        />
       </PageContainer>
     </OrgAppShell>
   );

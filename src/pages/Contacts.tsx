@@ -12,134 +12,169 @@ import { CreateContactListModal } from "@/components/contacts/CreateContactListM
 import { ContactListSelectorBar } from "@/components/contacts/ContactListSelectorBar";
 import { ImportContactsModal } from "@/components/contacts/ImportContactsModal";
 import { Button } from "@/components/ui/button";
+import { SkeletonTable } from "@/components/shared/SkeletonTable";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { useContacts, type ContactWithStats } from "@/hooks/useContacts";
+import { formatDistanceToNow } from "date-fns";
 
-// Mock data with new states
-const mockContacts: Contact[] = [
-  {
-    id: 1,
-    name: "Sarah Chen",
-    phone: "+1 (555) 234-5678",
-    contactList: "Leads - Jan",
-    lastCampaign: "Sales Follow-up",
-    lastCallDate: "Dec 28, 2024",
-    sentiment: "positive",
-    outcome: "answered",
-    status: "active",
-    callCount: 3,
-  },
-  {
-    id: 2,
-    name: "Marcus Johnson",
-    phone: "+1 (555) 345-6789",
-    contactList: "Hot Prospects",
-    lastCampaign: "Loan Outreach",
-    lastCallDate: "Dec 27, 2024",
-    sentiment: "neutral",
-    outcome: "no_answer",
-    status: "active",
-    callCount: 2,
-  },
-  {
-    id: 3,
-    name: "Emily Rodriguez",
-    phone: "+1 (555) 456-7890",
-    contactList: "Re-engagement",
-    lastCampaign: "Product Demo",
-    lastCallDate: "Dec 26, 2024",
-    sentiment: "negative",
-    outcome: "busy",
-    status: "active",
-    doNotCall: true,
-    callCount: 1,
-  },
-  {
-    id: 4,
-    name: "David Kim",
-    phone: "+1 (555) 567-8901",
-    contactList: "Leads - Jan",
-    lastCampaign: null,
-    lastCallDate: null,
-    sentiment: "not_analyzed",
-    outcome: "not_called",
-    status: "active",
-    callCount: 0,
-  },
-  {
-    id: 5,
-    name: "Jessica Lee",
-    phone: "+1 (555) 678-9012",
-    contactList: "Hot Prospects",
-    lastCampaign: null,
-    lastCallDate: null,
-    sentiment: "not_analyzed",
-    outcome: "not_called",
-    status: "active",
-    callCount: 0,
-  },
-  {
-    id: 6,
-    name: "Michael Brown",
-    phone: "+1 (555) 789-0123",
-    contactList: "Re-engagement",
-    lastCampaign: "Product Demo",
-    lastCallDate: "Dec 23, 2024",
-    sentiment: "neutral",
-    outcome: "failed",
-    status: "inactive",
-    callCount: 1,
-  },
-  {
-    id: 7,
-    name: "Amanda Wilson",
-    phone: "+1 (555) 890-1234",
-    contactList: "Leads - Jan",
-    lastCampaign: null,
-    lastCallDate: null,
-    sentiment: "not_analyzed",
-    outcome: "not_called",
-    status: "active",
-    callCount: 0,
-  },
-  {
-    id: 8,
-    name: "Robert Taylor",
-    phone: "+1 (555) 901-2345",
-    contactList: "Hot Prospects",
-    lastCampaign: "Sales Follow-up",
-    lastCallDate: "Dec 21, 2024",
-    sentiment: "negative",
-    outcome: "busy",
-    status: "active",
-    doNotCall: true,
-    callCount: 2,
-  },
-];
+// Transform database contact to UI contact format
+function transformContact(contact: ContactWithStats, listName: string): Contact {
+  const stats = contact.callStats;
+  
+  // Determine sentiment from avg score
+  let sentiment: "positive" | "neutral" | "negative" | "not_analyzed" = "not_analyzed";
+  if (stats?.avg_sentiment_score !== null && stats?.avg_sentiment_score !== undefined) {
+    if (stats.avg_sentiment_score >= 70) sentiment = "positive";
+    else if (stats.avg_sentiment_score >= 40) sentiment = "neutral";
+    else sentiment = "negative";
+  }
+
+  // Determine outcome from last call
+  let outcome: "answered" | "no_answer" | "busy" | "failed" | "not_called" = "not_called";
+  if (stats?.last_outcome) {
+    outcome = stats.last_outcome === "voicemail" ? "no_answer" : stats.last_outcome;
+  }
+
+  return {
+    id: contact.id as unknown as number, // We'll handle this type properly
+    name: `${contact.first_name || ""} ${contact.last_name || ""}`.trim() || "Unknown",
+    phone: contact.phone,
+    contactList: listName,
+    lastCampaign: null, // Would need to join with campaigns table
+    lastCallDate: stats?.last_call_at 
+      ? formatDistanceToNow(new Date(stats.last_call_at), { addSuffix: true })
+      : null,
+    sentiment,
+    outcome,
+    status: contact.status || "active",
+    doNotCall: contact.do_not_call || false,
+    callCount: stats?.total_calls || 0,
+  };
+}
 
 export default function Contacts() {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [selectedDbContact, setSelectedDbContact] = useState<ContactWithStats | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCreateListModalOpen, setIsCreateListModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedList, setSelectedList] = useState("all");
-  const [contacts] = useState<Contact[]>(mockContacts);
+
+  const { 
+    contacts, 
+    contactLists, 
+    isLoading, 
+    totalCount,
+    createContact,
+    updateContact,
+    markDoNotCall,
+    createContactList,
+    importContacts,
+  } = useContacts(selectedList);
+
+  // Build list name lookup
+  const listNameMap: Record<string, string> = {};
+  contactLists.forEach((list) => {
+    listNameMap[list.id] = list.name;
+  });
+
+  // Transform contacts to UI format
+  const uiContacts = contacts.map((c) => {
+    const listIds = c.contactLists || [];
+    const listName = listIds.length > 0 ? listNameMap[listIds[0]] || "Unknown" : "No List";
+    return { ...transformContact(c, listName), dbId: c.id };
+  });
+
+  // Compute stats
+  const activeThisMonth = contacts.filter((c) => 
+    c.callStats?.last_call_at && 
+    new Date(c.callStats.last_call_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+  ).length;
+
+  const positiveCount = contacts.filter((c) => 
+    c.callStats?.avg_sentiment_score !== null && 
+    c.callStats?.avg_sentiment_score !== undefined &&
+    c.callStats.avg_sentiment_score >= 70
+  ).length;
+
+  const dncCount = contacts.filter((c) => c.do_not_call).length;
+
+  const positivePercent = totalCount > 0 ? Math.round((positiveCount / totalCount) * 100) : 0;
 
   const handleContactClick = (contact: Contact) => {
+    const dbContact = contacts.find((c) => c.id === (contact as any).dbId);
     setSelectedContact(contact);
+    setSelectedDbContact(dbContact || null);
     setIsDrawerOpen(true);
   };
 
   const handleEditContact = (contact: Contact) => {
+    const dbContact = contacts.find((c) => c.id === (contact as any).dbId);
     setSelectedContact(contact);
+    setSelectedDbContact(dbContact || null);
     setIsEditMode(true);
     setIsAddModalOpen(true);
   };
 
   const handleAddContact = () => {
     setSelectedContact(null);
+    setSelectedDbContact(null);
     setIsEditMode(false);
     setIsAddModalOpen(true);
+  };
+
+  const handleMarkDNC = async (contact: Contact) => {
+    const dbId = (contact as any).dbId;
+    if (dbId) {
+      await markDoNotCall(dbId, !contact.doNotCall);
+    }
+  };
+
+  const handleSaveContact = async (data: {
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email?: string;
+    tags?: string;
+    contactListId?: string;
+    doNotCall?: boolean;
+  }) => {
+    if (isEditMode && selectedDbContact) {
+      await updateContact(selectedDbContact.id, {
+        first_name: data.firstName,
+        last_name: data.lastName,
+        phone: data.phone,
+        email: data.email || null,
+        do_not_call: data.doNotCall || false,
+        tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : [],
+      });
+    } else {
+      await createContact({
+        firstName: data.firstName,
+        lastName: data.lastName,
+        phone: data.phone,
+        email: data.email,
+        tags: data.tags ? data.tags.split(",").map((t) => t.trim()) : undefined,
+        doNotCall: data.doNotCall,
+        contactListId: data.contactListId,
+      });
+    }
+    setIsAddModalOpen(false);
+  };
+
+  const handleCreateList = async (name: string, description?: string) => {
+    await createContactList(name, description);
+    setIsCreateListModalOpen(false);
+  };
+
+  const handleImportContacts = async (
+    parsedContacts: Array<{ firstName: string; lastName: string; phone: string; email?: string }>,
+    listId: string
+  ) => {
+    await importContacts(parsedContacts, listId);
+    setIsImportModalOpen(false);
   };
 
   return (
@@ -158,29 +193,25 @@ export default function Contacts() {
         <motion.div variants={pageItemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <StatCard
             title="Total Contacts"
-            value="12,480"
-            trend={{ value: 8.2, isPositive: true }}
+            value={totalCount.toLocaleString()}
             icon={Users}
             iconColor="primary"
           />
           <StatCard
             title="Active This Month"
-            value="3,214"
-            trend={{ value: 12.5, isPositive: true }}
+            value={activeThisMonth.toLocaleString()}
             icon={UserCheck}
             iconColor="success"
           />
           <StatCard
             title="High Positive Sentiment"
-            value="41%"
-            trend={{ value: 3.8, isPositive: true }}
+            value={`${positivePercent}%`}
             icon={ThumbsUp}
             iconColor="success"
           />
           <StatCard
             title="Do Not Call"
-            value="386"
-            trend={{ value: 2.1, isPositive: false }}
+            value={dncCount.toLocaleString()}
             icon={PhoneOff}
             iconColor="destructive"
           />
@@ -193,6 +224,8 @@ export default function Contacts() {
             onListChange={setSelectedList}
             onImportClick={() => setIsImportModalOpen(true)}
             onCreateListClick={() => setIsCreateListModalOpen(true)}
+            contactLists={contactLists}
+            totalCount={totalCount}
           />
         </motion.div>
 
@@ -210,21 +243,33 @@ export default function Contacts() {
 
         {/* Contacts Table */}
         <motion.div variants={pageItemVariants}>
-          <ContactsTable
-            contacts={contacts}
-            onContactClick={handleContactClick}
-            onEdit={handleEditContact}
-            onAssignToList={() => {}}
-            onMarkDNC={() => {}}
-          />
+          {isLoading ? (
+            <SkeletonTable rows={8} columns={10} />
+          ) : uiContacts.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="No contacts found"
+              description="Add contacts manually or import them from a file."
+              actionLabel="Add Contact"
+              onAction={handleAddContact}
+            />
+          ) : (
+            <ContactsTable
+              contacts={uiContacts}
+              onContactClick={handleContactClick}
+              onEdit={handleEditContact}
+              onAssignToList={() => {}}
+              onMarkDNC={handleMarkDNC}
+            />
+          )}
         </motion.div>
 
         {/* Contact Detail Drawer */}
         <ContactDetailDrawerNew
-          contact={selectedContact ? {
+          contact={selectedContact && selectedDbContact ? {
             ...selectedContact,
-            email: "example@email.com",
-            tags: ["lead", "priority"],
+            email: selectedDbContact.email || undefined,
+            tags: Array.isArray(selectedDbContact.tags) ? selectedDbContact.tags as string[] : [],
           } : null}
           open={isDrawerOpen}
           onOpenChange={setIsDrawerOpen}
@@ -240,28 +285,37 @@ export default function Contacts() {
           onOpenChange={setIsAddModalOpen}
           mode={isEditMode ? "edit" : "add"}
           contact={
-            isEditMode && selectedContact
+            isEditMode && selectedDbContact
               ? {
-                  id: selectedContact.id,
-                  firstName: selectedContact.name.split(" ")[0],
-                  lastName: selectedContact.name.split(" ").slice(1).join(" "),
-                  phone: selectedContact.phone,
-                  doNotCall: selectedContact.doNotCall,
+                  id: selectedDbContact.id as unknown as number,
+                  firstName: selectedDbContact.first_name || "",
+                  lastName: selectedDbContact.last_name || "",
+                  phone: selectedDbContact.phone,
+                  email: selectedDbContact.email || "",
+                  doNotCall: selectedDbContact.do_not_call || false,
+                  tags: Array.isArray(selectedDbContact.tags) 
+                    ? (selectedDbContact.tags as string[]).join(", ") 
+                    : "",
                 }
               : undefined
           }
+          contactLists={contactLists}
+          onSubmit={handleSaveContact}
         />
 
         {/* Create Contact List Modal */}
         <CreateContactListModal
           open={isCreateListModalOpen}
           onOpenChange={setIsCreateListModalOpen}
+          onSubmit={handleCreateList}
         />
 
         {/* Import Contacts Modal */}
         <ImportContactsModal
           open={isImportModalOpen}
           onOpenChange={setIsImportModalOpen}
+          contactLists={contactLists}
+          onImport={handleImportContacts}
         />
       </PageContainer>
     </OrgAppShell>

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Upload, FileSpreadsheet, Check, X, AlertCircle, User, Phone, Mail } from "lucide-react";
+import { Upload, FileSpreadsheet, Check, X, AlertCircle, User, Phone, Mail, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,39 +17,44 @@ import {
 } from "@/components/ui/select";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import type { ContactListWithCount } from "@/hooks/useContacts";
 
 interface ImportContactsModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  contactLists?: ContactListWithCount[];
+  onImport?: (
+    contacts: Array<{ firstName: string; lastName: string; phone: string; email?: string }>,
+    listId: string
+  ) => Promise<void>;
 }
 
-const contactLists = [
-  { value: "leads-jan", label: "Leads - Jan" },
-  { value: "hot-prospects", label: "Hot Prospects" },
-  { value: "vip-customers", label: "VIP Customers" },
-  { value: "re-engagement", label: "Re-engagement" },
-];
+interface ParsedContact {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email?: string;
+}
 
-// Mock preview data
-const mockPreviewContacts = [
-  { name: "John Smith", phone: "+1 (555) 123-4567", email: "john@example.com" },
-  { name: "Sarah Wilson", phone: "+1 (555) 234-5678", email: "sarah@example.com" },
-  { name: "Mike Johnson", phone: "+1 (555) 345-6789", email: "" },
-  { name: "Emily Brown", phone: "+1 (555) 456-7890", email: "emily@example.com" },
-  { name: "David Lee", phone: "+1 (555) 567-8901", email: "" },
-];
-
-export function ImportContactsModal({ open, onOpenChange }: ImportContactsModalProps) {
+export function ImportContactsModal({ 
+  open, 
+  onOpenChange, 
+  contactLists = [],
+  onImport,
+}: ImportContactsModalProps) {
   const [step, setStep] = useState(1);
   const [targetList, setTargetList] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
+  const [parsedContacts, setParsedContacts] = useState<ParsedContact[]>([]);
+  const [isImporting, setIsImporting] = useState(false);
 
   const resetModal = () => {
     setStep(1);
     setTargetList("");
     setFile(null);
+    setParsedContacts([]);
+    setIsImporting(false);
   };
 
   const handleClose = () => {
@@ -67,6 +72,44 @@ export function ImportContactsModal({ open, onOpenChange }: ImportContactsModalP
     }
   };
 
+  const parseCSV = (text: string): ParsedContact[] => {
+    const lines = text.split("\n").filter((line) => line.trim());
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].toLowerCase().split(",").map((h) => h.trim());
+    const nameIndex = headers.findIndex((h) => h.includes("name"));
+    const firstNameIndex = headers.findIndex((h) => h.includes("first"));
+    const lastNameIndex = headers.findIndex((h) => h.includes("last"));
+    const phoneIndex = headers.findIndex((h) => h.includes("phone"));
+    const emailIndex = headers.findIndex((h) => h.includes("email"));
+
+    const contacts: ParsedContact[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(",").map((v) => v.trim().replace(/^"|"$/g, ""));
+      
+      let firstName = "";
+      let lastName = "";
+      
+      if (firstNameIndex >= 0 && lastNameIndex >= 0) {
+        firstName = values[firstNameIndex] || "";
+        lastName = values[lastNameIndex] || "";
+      } else if (nameIndex >= 0) {
+        const nameParts = (values[nameIndex] || "").split(" ");
+        firstName = nameParts[0] || "";
+        lastName = nameParts.slice(1).join(" ") || "";
+      }
+
+      const phone = phoneIndex >= 0 ? values[phoneIndex] : "";
+      const email = emailIndex >= 0 ? values[emailIndex] : undefined;
+
+      if (firstName && phone) {
+        contacts.push({ firstName, lastName, phone, email });
+      }
+    }
+
+    return contacts;
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -75,21 +118,47 @@ export function ImportContactsModal({ open, onOpenChange }: ImportContactsModalP
       const droppedFile = e.dataTransfer.files[0];
       if (droppedFile.name.endsWith(".csv") || droppedFile.name.endsWith(".xlsx")) {
         setFile(droppedFile);
+        // Parse CSV
+        if (droppedFile.name.endsWith(".csv")) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const text = event.target?.result as string;
+            const parsed = parseCSV(text);
+            setParsedContacts(parsed);
+          };
+          reader.readAsText(droppedFile);
+        }
       }
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      // Parse CSV
+      if (selectedFile.name.endsWith(".csv")) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const text = event.target?.result as string;
+          const parsed = parseCSV(text);
+          setParsedContacts(parsed);
+        };
+        reader.readAsText(selectedFile);
+      }
     }
   };
 
-  const handleConfirmImport = () => {
-    toast.success("Contacts imported successfully", {
-      description: `${mockPreviewContacts.length} contacts added to ${contactLists.find(l => l.value === targetList)?.label}`,
-    });
-    handleClose();
+  const handleConfirmImport = async () => {
+    if (!targetList || parsedContacts.length === 0 || !onImport) return;
+    
+    setIsImporting(true);
+    try {
+      await onImport(parsedContacts, targetList);
+      handleClose();
+    } finally {
+      setIsImporting(false);
+    }
   };
 
   const stepVariants = {
@@ -97,6 +166,8 @@ export function ImportContactsModal({ open, onOpenChange }: ImportContactsModalP
     center: { opacity: 1, x: 0 },
     exit: { opacity: 0, x: -20 },
   };
+
+  const selectedListName = contactLists.find((l) => l.id === targetList)?.name;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -152,8 +223,8 @@ export function ImportContactsModal({ open, onOpenChange }: ImportContactsModalP
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border z-50">
                     {contactLists.map((list) => (
-                      <SelectItem key={list.value} value={list.value}>
-                        {list.label}
+                      <SelectItem key={list.id} value={list.id}>
+                        {list.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -182,7 +253,7 @@ export function ImportContactsModal({ open, onOpenChange }: ImportContactsModalP
                     Upload File
                   </h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Supported fields: Name, Phone, Email (optional)
+                    Supported fields: Name (or First Name, Last Name), Phone, Email (optional)
                   </p>
                 </div>
 
@@ -206,14 +277,17 @@ export function ImportContactsModal({ open, onOpenChange }: ImportContactsModalP
                       <div className="text-left">
                         <p className="text-sm font-medium text-foreground">{file.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {(file.size / 1024).toFixed(1)} KB
+                          {parsedContacts.length} contacts found
                         </p>
                       </div>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => setFile(null)}
+                        onClick={() => {
+                          setFile(null);
+                          setParsedContacts([]);
+                        }}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -240,7 +314,7 @@ export function ImportContactsModal({ open, onOpenChange }: ImportContactsModalP
                         </Button>
                       </label>
                       <p className="text-xs text-muted-foreground mt-3">
-                        Accepts .csv or .xlsx files
+                        Accepts .csv files
                       </p>
                     </>
                   )}
@@ -250,7 +324,7 @@ export function ImportContactsModal({ open, onOpenChange }: ImportContactsModalP
                   <Button variant="outline" onClick={() => setStep(1)}>
                     Back
                   </Button>
-                  <Button onClick={() => setStep(3)} disabled={!file}>
+                  <Button onClick={() => setStep(3)} disabled={!file || parsedContacts.length === 0}>
                     Continue
                   </Button>
                 </div>
@@ -274,7 +348,7 @@ export function ImportContactsModal({ open, onOpenChange }: ImportContactsModalP
                   <p className="text-sm text-muted-foreground mb-4">
                     Review contacts before importing to{" "}
                     <span className="text-foreground font-medium">
-                      {contactLists.find((l) => l.value === targetList)?.label}
+                      {selectedListName}
                     </span>
                   </p>
                 </div>
@@ -292,13 +366,13 @@ export function ImportContactsModal({ open, onOpenChange }: ImportContactsModalP
                     </span>
                   </div>
                   <div className="max-h-[200px] overflow-y-auto">
-                    {mockPreviewContacts.map((contact, index) => (
+                    {parsedContacts.slice(0, 10).map((contact, index) => (
                       <div
                         key={index}
                         className="px-4 py-2.5 border-b border-border last:border-0 flex items-center gap-4 text-sm"
                       >
                         <span className="text-foreground font-medium min-w-[140px]">
-                          {contact.name}
+                          {contact.firstName} {contact.lastName}
                         </span>
                         <span className="text-muted-foreground min-w-[140px]">
                           {contact.phone}
@@ -308,22 +382,34 @@ export function ImportContactsModal({ open, onOpenChange }: ImportContactsModalP
                         </span>
                       </div>
                     ))}
+                    {parsedContacts.length > 10 && (
+                      <div className="px-4 py-2.5 text-sm text-muted-foreground text-center">
+                        ... and {parsedContacts.length - 10} more contacts
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 p-3 bg-primary/5 border border-primary/20 rounded-lg">
                   <AlertCircle className="h-4 w-4 text-primary" />
                   <p className="text-xs text-muted-foreground">
-                    {mockPreviewContacts.length} contacts will be imported with "Not Called" status
+                    {parsedContacts.length} contacts will be imported with "Not Called" status
                   </p>
                 </div>
 
                 <div className="flex justify-between pt-4">
-                  <Button variant="outline" onClick={() => setStep(2)}>
+                  <Button variant="outline" onClick={() => setStep(2)} disabled={isImporting}>
                     Back
                   </Button>
-                  <Button onClick={handleConfirmImport}>
-                    Confirm Import
+                  <Button onClick={handleConfirmImport} disabled={isImporting}>
+                    {isImporting ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Importing...
+                      </>
+                    ) : (
+                      "Confirm Import"
+                    )}
                   </Button>
                 </div>
               </motion.div>

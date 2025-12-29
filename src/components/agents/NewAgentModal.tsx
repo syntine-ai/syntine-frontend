@@ -19,13 +19,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TonePresetSelector } from "./TonePresetSelector";
-import { Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import type { Database } from "@/integrations/supabase/types";
+
+type AgentTone = Database["public"]["Enums"]["agent_tone"];
 
 interface NewAgentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onSubmit?: (data: {
+    name: string;
+    language: string;
+    tone: AgentTone;
+    system_prompt?: string;
+  }) => Promise<void>;
 }
 
 const steps = [
@@ -34,9 +42,16 @@ const steps = [
   { id: 3, title: "Base Prompt" },
 ];
 
-export function NewAgentModal({ open, onOpenChange }: NewAgentModalProps) {
-  const navigate = useNavigate();
+const toneToDbValue: Record<string, AgentTone> = {
+  professional: "professional",
+  friendly: "friendly",
+  persuasive: "formal",
+  empathetic: "empathetic",
+};
+
+export function NewAgentModal({ open, onOpenChange, onSubmit }: NewAgentModalProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     language: "",
@@ -56,9 +71,40 @@ export function NewAgentModal({ open, onOpenChange }: NewAgentModalProps) {
     }
   };
 
-  const handleSubmit = () => {
-    onOpenChange(false);
-    navigate("/agents/new-agent");
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.language) return;
+
+    setIsSubmitting(true);
+    try {
+      if (onSubmit) {
+        await onSubmit({
+          name: formData.name,
+          language: formData.language,
+          tone: toneToDbValue[formData.tone] || "professional",
+          system_prompt: formData.prompt || undefined,
+        });
+      }
+      // Reset form
+      setCurrentStep(1);
+      setFormData({ name: "", language: "", tone: "professional", prompt: "" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen) {
+      setCurrentStep(1);
+      setFormData({ name: "", language: "", tone: "professional", prompt: "" });
+    }
+    onOpenChange(isOpen);
+  };
+
+  const isNextDisabled = () => {
+    if (currentStep === 1) {
+      return !formData.name || !formData.language;
+    }
+    return false;
   };
 
   const renderStepContent = () => {
@@ -85,11 +131,11 @@ export function NewAgentModal({ open, onOpenChange }: NewAgentModalProps) {
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="english">English</SelectItem>
-                  <SelectItem value="hindi">Hindi</SelectItem>
-                  <SelectItem value="hinglish">Hinglish</SelectItem>
-                  <SelectItem value="spanish">Spanish</SelectItem>
-                  <SelectItem value="french">French</SelectItem>
+                  <SelectItem value="English">English</SelectItem>
+                  <SelectItem value="Hindi">Hindi</SelectItem>
+                  <SelectItem value="Hinglish">Hinglish</SelectItem>
+                  <SelectItem value="Spanish">Spanish</SelectItem>
+                  <SelectItem value="French">French</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -131,7 +177,7 @@ export function NewAgentModal({ open, onOpenChange }: NewAgentModalProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Create New Agent</DialogTitle>
@@ -194,21 +240,34 @@ export function NewAgentModal({ open, onOpenChange }: NewAgentModalProps) {
           <Button
             variant="outline"
             onClick={handleBack}
-            disabled={currentStep === 1}
+            disabled={currentStep === 1 || isSubmitting}
             className="gap-2"
           >
             <ChevronLeft className="h-4 w-4" />
             Back
           </Button>
           {currentStep < steps.length ? (
-            <Button onClick={handleNext} className="gap-2">
+            <Button onClick={handleNext} disabled={isNextDisabled()} className="gap-2">
               Next
               <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} className="gap-2">
-              Create Agent
-              <Check className="h-4 w-4" />
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isSubmitting || !formData.name || !formData.language}
+              className="gap-2"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  Create Agent
+                  <Check className="h-4 w-4" />
+                </>
+              )}
             </Button>
           )}
         </div>
