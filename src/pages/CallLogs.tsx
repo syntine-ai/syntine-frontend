@@ -30,7 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Search, FileText, ArrowLeft, Download, PhoneOff, User, Bot } from "lucide-react";
+import { Search, FileText, ArrowLeft, Download, PhoneOff, User, Bot, PhoneIncoming, PhoneOutgoing, Globe } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useCallLogs } from "@/hooks/useCallLogs";
@@ -84,10 +84,11 @@ const CallLogs = () => {
     return calls.filter((call) => {
       if (search) {
         const searchLower = search.toLowerCase();
-        const matchesPhone = call.phone_number?.toLowerCase().includes(searchLower);
+        const matchesFromNumber = call.from_number?.toLowerCase().includes(searchLower);
+        const matchesToNumber = call.to_number?.toLowerCase().includes(searchLower);
         const matchesContact = call.contact_name?.toLowerCase().includes(searchLower);
         const matchesId = call.id.toLowerCase().includes(searchLower);
-        if (!matchesPhone && !matchesContact && !matchesId) return false;
+        if (!matchesFromNumber && !matchesToNumber && !matchesContact && !matchesId) return false;
       }
       if (sentimentFilter !== "all" && call.sentiment !== sentimentFilter) return false;
       if (outcomeFilter !== "all" && call.outcome !== outcomeFilter) return false;
@@ -129,11 +130,13 @@ const CallLogs = () => {
 
   const handleExport = () => {
     const csvContent = [
-      ["Time", "Phone", "Contact", "Campaign", "Agent", "Duration", "Outcome", "Sentiment"].join(","),
+      ["Time", "Type", "From", "To", "Contact", "Campaign", "Agent", "Duration", "Outcome", "Sentiment"].join(","),
       ...filteredLogs.map((call) =>
         [
           call.created_at,
-          call.phone_number,
+          call.call_type,
+          call.from_number,
+          call.to_number,
           call.contact_name,
           call.campaign_name,
           call.agent_name,
@@ -254,7 +257,7 @@ const CallLogs = () => {
                 <TableHeader>
                   <TableRow className="border-border/50 hover:bg-transparent">
                     <TableHead className="text-muted-foreground font-medium">Time</TableHead>
-                    <TableHead className="text-muted-foreground font-medium">Phone</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">From → To</TableHead>
                     <TableHead className="text-muted-foreground font-medium">Contact</TableHead>
                     <TableHead className="text-muted-foreground font-medium">Campaign</TableHead>
                     <TableHead className="text-muted-foreground font-medium">Agent</TableHead>
@@ -278,7 +281,9 @@ const CallLogs = () => {
                         {formatTime(call.created_at)}
                       </TableCell>
                       <TableCell className="font-mono text-sm text-foreground">
-                        {call.phone_number}
+                        <span>{call.from_number || "—"}</span>
+                        <span className="mx-1 text-muted-foreground/50">→</span>
+                        <span>{call.to_number || "—"}</span>
                       </TableCell>
                       <TableCell className="text-foreground">
                         {call.contact_name || "-"}
@@ -337,7 +342,7 @@ const CallLogs = () => {
             <DialogHeader>
               <DialogTitle>Call Transcript</DialogTitle>
               <DialogDescription>
-                {selectedCall?.phone_number} • {selectedCall?.created_at && formatTime(selectedCall.created_at)}
+                {selectedCall?.from_number || selectedCall?.to_number} • {selectedCall?.created_at && formatTime(selectedCall.created_at)}
               </DialogDescription>
             </DialogHeader>
             <ScrollArea className="h-[400px] mt-4">

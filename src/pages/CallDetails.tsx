@@ -18,7 +18,9 @@ import { format } from "date-fns";
 
 interface CallData {
   id: string;
-  phone_number: string | null;
+  from_number: string | null;
+  to_number: string | null;
+  call_type: "inbound" | "outbound" | "webcall";
   created_at: string;
   duration_seconds: number | null;
   outcome: string | null;
@@ -187,9 +189,13 @@ const CallDetails = () => {
   }
 
   // Build metadata
+  const displayPhone = callData.call_type === "inbound" 
+    ? callData.from_number 
+    : callData.to_number;
+  
   const metadata: CallMetadata = {
     callUuid: callData.id,
-    phone: callData.phone_number,
+    phone: displayPhone,
     startTime: callData.created_at
       ? format(new Date(callData.created_at), "MMM d, yyyy h:mm a")
       : "Unknown",

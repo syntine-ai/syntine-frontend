@@ -30,7 +30,11 @@ export function useCallLogs() {
       const { data: callsData, error: callsError } = await supabase
         .from("calls")
         .select(`
-          *,
+          id, organization_id, campaign_id, agent_id, contact_id,
+          call_type, from_number, to_number, status, outcome, 
+          duration_seconds, sentiment, sentiment_score, 
+          attempt_number, error_message, summary, tags, metadata,
+          started_at, ended_at, created_at, external_call_id,
           agents:agent_id(name),
           campaigns:campaign_id(name),
           contacts:contact_id(first_name, last_name)

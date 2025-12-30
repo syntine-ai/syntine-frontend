@@ -41,9 +41,9 @@ const outcomeToStatus = (outcome: string | null): "answered" | "ended" | "missed
 };
 
 // Map database call_type to display format
-const mapCallType = (callType: string | null, direction: string | null): "inbound" | "outbound" | "webcall" => {
+const mapCallType = (callType: string | null): "inbound" | "outbound" | "webcall" => {
   if (callType === "webcall") return "webcall";
-  if (callType === "inbound" || direction === "inbound") return "inbound";
+  if (callType === "inbound") return "inbound";
   return "outbound";
 };
 
@@ -75,9 +75,9 @@ const RecentCalls = () => {
     return calls.map((call) => ({
       id: call.id,
       caller: call.contact_name || "Unknown",
-      fromNumber: call.from_number || call.phone_number || null,
-      toNumber: call.to_number || call.phone_number || null,
-      callType: mapCallType(call.call_type, call.direction),
+      fromNumber: call.from_number || null,
+      toNumber: call.to_number || null,
+      callType: mapCallType(call.call_type),
       status: outcomeToStatus(call.outcome),
       duration: formatDuration(call.duration_seconds),
       agent: call.agent_name || "Unknown Agent",
