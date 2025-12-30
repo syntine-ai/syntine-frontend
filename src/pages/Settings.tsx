@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +16,7 @@ import { SettingsCard } from "@/components/settings/SettingsCard";
 import { LogsTable, LogEntry } from "@/components/settings/LogsTable";
 import { LogDetailsDrawer } from "@/components/settings/LogDetailsDrawer";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
+import { SkeletonCard } from "@/components/shared/SkeletonCard";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Building2,
@@ -24,58 +25,185 @@ import {
   Palette,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 
 const timezones = ["UTC", "IST", "EST", "PST", "GMT", "CET"];
 
-// Mock logs data
-const mockLogs: LogEntry[] = Array.from({ length: 20 }, (_, i) => ({
-  id: `log-${i + 1}`,
-  timestamp: new Date(Date.now() - i * 1000 * 60 * Math.random() * 60),
-  level: (["info", "warning", "error"] as const)[Math.floor(Math.random() * 3)],
-  service: ["Agent", "Database", "Telephony", "Dashboard", "API"][
-    Math.floor(Math.random() * 5)
-  ],
-  message: [
-    "Successfully connected to telephony provider",
-    "Agent completed call with positive sentiment",
-    "Database connection timeout - retrying",
-    "API rate limit warning: 80% capacity reached",
-    "Call recording upload failed - storage full",
-    "Webhook delivery successful to endpoint",
-    "Agent response latency exceeded threshold",
-    "User authentication successful",
-    "Campaign scheduled for execution",
-    "Contact list import completed",
-  ][Math.floor(Math.random() * 10)],
-  requestId: `req_${Math.random().toString(36).substring(2, 10)}`,
-  details: {
-    duration: `${Math.floor(Math.random() * 500)}ms`,
-    userId: `usr_${Math.random().toString(36).substring(2, 8)}`,
-  },
-}));
+interface OrganizationSettings {
+  caller_id?: string;
+  business_hours_start?: string;
+  business_hours_end?: string;
+  auto_refresh_interval?: string;
+}
 
 const Settings = () => {
+  const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState("general");
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { toast } = useToast();
 
-  const handleSave = () => {
+  // Organization data
+  const [orgName, setOrgName] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [timezone, setTimezone] = useState("UTC");
+
+  // Settings from organization.settings JSON
+  const [callerId, setCallerId] = useState("");
+  const [businessStart, setBusinessStart] = useState("09:00");
+  const [businessEnd, setBusinessEnd] = useState("18:00");
+  const [autoRefresh, setAutoRefresh] = useState("30");
+
+  // Activity logs
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+
+  // Fetch organization and settings data
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!profile?.organization_id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch organization
+        const { data: org, error: orgError } = await supabase
+          .from("organizations")
+          .select("*")
+          .eq("id", profile.organization_id)
+          .single();
+
+        if (orgError) throw orgError;
+
+        if (org) {
+          setOrgName(org.name || "");
+          setContactEmail(org.email || "");
+
+          // Parse settings JSON
+          const settings = (org.settings as OrganizationSettings) || {};
+          setCallerId(settings.caller_id || org.name || "");
+          setBusinessStart(settings.business_hours_start || "09:00");
+          setBusinessEnd(settings.business_hours_end || "18:00");
+          setAutoRefresh(settings.auto_refresh_interval || "30");
+        }
+
+        // Fetch profile timezone
+        if (profile.timezone) {
+          setTimezone(profile.timezone);
+        }
+
+        // Fetch activity logs
+        const { data: logsData, error: logsError } = await supabase
+          .from("activity_logs")
+          .select("*")
+          .eq("organization_id", profile.organization_id)
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (!logsError && logsData) {
+          const formattedLogs: LogEntry[] = logsData.map((log) => ({
+            id: log.id,
+            timestamp: new Date(log.created_at || Date.now()),
+            level: (log.level as "info" | "warning" | "error") || "info",
+            service: log.service || "System",
+            message: log.message || log.action,
+            requestId: log.resource_id || undefined,
+            details: log.details as Record<string, any> || undefined,
+          }));
+          setLogs(formattedLogs);
+        }
+
+      } catch (err) {
+        console.error("Error fetching settings:", err);
+        toast({
+          title: "Error",
+          description: "Failed to load settings",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [profile?.organization_id, profile?.timezone, toast]);
+
+  const handleSave = async () => {
+    if (!profile?.organization_id) return;
+
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
+    try {
+      // Update organization
+      const settings: OrganizationSettings = {
+        caller_id: callerId,
+        business_hours_start: businessStart,
+        business_hours_end: businessEnd,
+        auto_refresh_interval: autoRefresh,
+      };
+
+      const { error: orgError } = await supabase
+        .from("organizations")
+        .update({
+          name: orgName,
+          email: contactEmail,
+          settings: settings as any,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", profile.organization_id);
+
+      if (orgError) throw orgError;
+
+      // Update profile timezone
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          timezone: timezone,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", profile.id);
+
+      if (profileError) throw profileError;
+
       toast({
         title: "Settings saved",
         description: "Your changes have been saved successfully.",
       });
-    }, 1000);
+    } catch (err) {
+      console.error("Error saving settings:", err);
+      toast({
+        title: "Error",
+        description: "Failed to save settings",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleViewLogDetails = (log: LogEntry) => {
     setSelectedLog(log);
     setDrawerOpen(true);
   };
+
+  if (isLoading) {
+    return (
+      <OrgAppShell>
+        <PageContainer
+          title="Settings"
+          subtitle="Loading settings..."
+        >
+          <div className="max-w-3xl space-y-6">
+            <SkeletonCard className="h-[200px]" />
+            <SkeletonCard className="h-[150px]" />
+            <SkeletonCard className="h-[100px]" />
+          </div>
+        </PageContainer>
+      </OrgAppShell>
+    );
+  }
 
   return (
     <OrgAppShell>
@@ -112,7 +240,8 @@ const Settings = () => {
                       <Label htmlFor="orgName">Organization Name</Label>
                       <Input
                         id="orgName"
-                        defaultValue="Acme Corp"
+                        value={orgName}
+                        onChange={(e) => setOrgName(e.target.value)}
                         className="mt-1.5"
                       />
                     </div>
@@ -121,13 +250,14 @@ const Settings = () => {
                       <Input
                         id="contactEmail"
                         type="email"
-                        defaultValue="contact@acmecorp.com"
+                        value={contactEmail}
+                        onChange={(e) => setContactEmail(e.target.value)}
                         className="mt-1.5"
                       />
                     </div>
                     <div className="md:col-span-2">
                       <Label htmlFor="timezone">Timezone</Label>
-                      <Select defaultValue="IST">
+                      <Select value={timezone} onValueChange={setTimezone}>
                         <SelectTrigger className="mt-1.5">
                           <SelectValue placeholder="Select timezone" />
                         </SelectTrigger>
@@ -154,7 +284,8 @@ const Settings = () => {
                       <Label htmlFor="callerId">Default Caller ID</Label>
                       <Input
                         id="callerId"
-                        defaultValue="Acme Support"
+                        value={callerId}
+                        onChange={(e) => setCallerId(e.target.value)}
                         className="mt-1.5"
                       />
                     </div>
@@ -164,7 +295,8 @@ const Settings = () => {
                         <Input
                           id="businessStart"
                           type="time"
-                          defaultValue="09:00"
+                          value={businessStart}
+                          onChange={(e) => setBusinessStart(e.target.value)}
                           className="mt-1.5"
                         />
                       </div>
@@ -173,7 +305,8 @@ const Settings = () => {
                         <Input
                           id="businessEnd"
                           type="time"
-                          defaultValue="18:00"
+                          value={businessEnd}
+                          onChange={(e) => setBusinessEnd(e.target.value)}
                           className="mt-1.5"
                         />
                       </div>
@@ -189,7 +322,7 @@ const Settings = () => {
                 >
                   <div>
                     <Label htmlFor="autoRefresh">Dashboard Auto-Refresh</Label>
-                    <Select defaultValue="30">
+                    <Select value={autoRefresh} onValueChange={setAutoRefresh}>
                       <SelectTrigger className="mt-1.5 w-full md:w-[200px]">
                         <SelectValue placeholder="Select interval" />
                       </SelectTrigger>
@@ -261,7 +394,13 @@ const Settings = () => {
                   </p>
                 </div>
 
-                <LogsTable logs={mockLogs} onViewDetails={handleViewLogDetails} />
+                {logs.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No system logs available
+                  </div>
+                ) : (
+                  <LogsTable logs={logs} onViewDetails={handleViewLogDetails} />
+                )}
               </motion.div>
             </TabsContent>
           </AnimatePresence>

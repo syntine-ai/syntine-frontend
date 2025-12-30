@@ -12,150 +12,141 @@ import { CallSentimentCard } from "@/components/calls/CallSentimentCard";
 import { CallTranscriptChat } from "@/components/calls/CallTranscriptChat";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { format } from "date-fns";
 
-// Mock data for call details
-const mockCallDetails: Record<string, {
-  metadata: CallMetadata;
-  tags: string[];
-  recording: string | undefined;
-  sentiment: {
-    sentiment: "positive" | "neutral" | "negative";
-    confidenceScore: number;
-    summary: string;
-  } | null;
-  transcript: Array<{
-    id: number;
-    speaker: "agent" | "caller";
-    text: string;
-    timestamp: string;
-    latency?: string;
-  }> | null;
-}> = {
-  "call-001": {
-    metadata: {
-      callUuid: "call-001-uuid-abc123",
-      phone: "+91 98765 43210",
-      startTime: "Dec 28, 2024 10:30 AM",
-      duration: "2:34",
-      organization: "42487a3f",
-      agent: "Agent A",
-      status: "answered",
-    },
-    tags: ["callback request", "scheduling"],
-    recording: "mock-recording-url",
-    sentiment: {
-      sentiment: "positive",
-      confidenceScore: 87,
-      summary: "The caller expressed interest in scheduling a follow-up demo. They were pleased with the initial presentation and requested additional documentation. The conversation ended on a positive note with a scheduled callback.",
-    },
-    transcript: [
-      { id: 1, speaker: "agent", text: "Hello! This is Sarah from Syntine. Am I speaking with John?", timestamp: "0:00", latency: "120ms" },
-      { id: 2, speaker: "caller", text: "Yes, this is John. How can I help you?", timestamp: "0:05" },
-      { id: 3, speaker: "agent", text: "Hi John! I'm calling regarding the demo you requested for our AI calling platform. Do you have a few minutes to discuss?", timestamp: "0:08", latency: "95ms" },
-      { id: 4, speaker: "caller", text: "Sure, I was actually looking forward to this call. Go ahead.", timestamp: "0:18" },
-      { id: 5, speaker: "agent", text: "Great! I'd love to walk you through how our AI agents can handle outbound calls. They can qualify leads, schedule appointments, and even handle objections.", timestamp: "0:22", latency: "110ms" },
-      { id: 6, speaker: "caller", text: "That sounds interesting. What kind of integration options do you have?", timestamp: "0:35" },
-      { id: 7, speaker: "agent", text: "We integrate with most major CRMs including Salesforce, HubSpot, and Pipedrive. We also have a robust API for custom integrations.", timestamp: "0:40", latency: "88ms" },
-      { id: 8, speaker: "caller", text: "Perfect. Can you send me some documentation? I'd like to review it with my team.", timestamp: "0:55" },
-      { id: 9, speaker: "agent", text: "Absolutely! I'll send that over right away. Should I schedule a follow-up call for next week to answer any questions?", timestamp: "1:02", latency: "102ms" },
-    ],
-  },
-  "call-002": {
-    metadata: {
-      callUuid: "call-002-uuid-def456",
-      phone: null,
-      startTime: "Dec 28, 2024 10:25 AM",
-      duration: "1:15",
-      organization: "42487a3f",
-      agent: "Agent B",
-      status: "ended",
-    },
-    tags: ["web call", "quick inquiry"],
-    recording: "mock-recording-url",
-    sentiment: {
-      sentiment: "neutral",
-      confidenceScore: 72,
-      summary: "Brief web call inquiry about pricing. The caller was comparing options and requested email follow-up with pricing details.",
-    },
-    transcript: [
-      { id: 1, speaker: "agent", text: "Thank you for calling Syntine. How can I assist you today?", timestamp: "0:00", latency: "85ms" },
-      { id: 2, speaker: "caller", text: "Hi, I'm looking for pricing information for your AI calling service.", timestamp: "0:06" },
-      { id: 3, speaker: "agent", text: "I'd be happy to help with that. Are you looking for outbound calling, inbound support, or both?", timestamp: "0:12", latency: "92ms" },
-      { id: 4, speaker: "caller", text: "Mainly outbound for sales calls. About 500 calls per month.", timestamp: "0:20" },
-      { id: 5, speaker: "agent", text: "For that volume, our Growth plan would be ideal. It includes unlimited AI agents and priority support. Shall I email you the complete pricing breakdown?", timestamp: "0:28", latency: "105ms" },
-    ],
-  },
-  "call-003": {
-    metadata: {
-      callUuid: "call-003-uuid-ghi789",
-      phone: "+1 555 123 4567",
-      startTime: "Dec 28, 2024 10:20 AM",
-      duration: null,
-      organization: "7b3e2a1c",
-      agent: "Agent A",
-      status: "missed",
-    },
-    tags: ["outbound", "no answer"],
-    recording: undefined,
-    sentiment: null,
-    transcript: null,
-  },
-  "call-004": {
-    metadata: {
-      callUuid: "call-004-uuid-jkl012",
-      phone: "+44 20 7946 0958",
-      startTime: "Dec 28, 2024 10:15 AM",
-      duration: "5:42",
-      organization: "42487a3f",
-      agent: "Agent C",
-      status: "answered",
-    },
-    tags: ["demo", "enterprise", "high value"],
-    recording: "mock-recording-url",
-    sentiment: {
-      sentiment: "positive",
-      confidenceScore: 94,
-      summary: "Excellent enterprise demo call. The prospect showed strong buying signals and requested a formal proposal. Decision expected within two weeks.",
-    },
-    transcript: [
-      { id: 1, speaker: "agent", text: "Good morning! This is Alex from Syntine. I'm calling about the enterprise demo you scheduled.", timestamp: "0:00", latency: "78ms" },
-      { id: 2, speaker: "caller", text: "Yes, perfect timing. I have my team here as well.", timestamp: "0:08" },
-      { id: 3, speaker: "agent", text: "Wonderful! I'll be covering our enterprise features including custom voice training, advanced analytics, and dedicated support.", timestamp: "0:14", latency: "92ms" },
-    ],
-  },
-  "call-005": {
-    metadata: {
-      callUuid: "call-005-uuid-mno345",
-      phone: "+91 87654 32109",
-      startTime: "Dec 28, 2024 10:10 AM",
-      duration: null,
-      organization: "9f8d4c5e",
-      agent: "Agent B",
-      status: "failed",
-    },
-    tags: ["connection error"],
-    recording: undefined,
-    sentiment: null,
-    transcript: null,
-  },
-};
+interface CallData {
+  id: string;
+  phone_number: string | null;
+  created_at: string;
+  duration_seconds: number | null;
+  outcome: string | null;
+  sentiment: string | null;
+  agent_id: string | null;
+  campaign_id: string | null;
+  agents?: { name: string } | null;
+  campaigns?: { name: string } | null;
+}
+
+interface TranscriptEntry {
+  id: number;
+  speaker: "agent" | "caller";
+  text: string;
+  timestamp: string;
+  latency?: string;
+}
+
+interface RecordingData {
+  storage_path: string;
+  duration_seconds: number | null;
+}
 
 const CallDetails = () => {
   const { callId } = useParams<{ callId: string }>();
+  const { profile } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
+  const [callData, setCallData] = useState<CallData | null>(null);
+  const [transcript, setTranscript] = useState<TranscriptEntry[] | null>(null);
+  const [recording, setRecording] = useState<RecordingData | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 600);
-    return () => clearTimeout(timer);
-  }, []);
+    const fetchCallDetails = async () => {
+      if (!callId || !profile?.organization_id) {
+        setIsLoading(false);
+        return;
+      }
 
-  const callData = callId ? mockCallDetails[callId] : null;
+      try {
+        // Fetch call data
+        const { data: call, error: callError } = await supabase
+          .from("calls")
+          .select(`
+            *,
+            agents:agent_id(name),
+            campaigns:campaign_id(name)
+          `)
+          .eq("id", callId)
+          .eq("organization_id", profile.organization_id)
+          .single();
+
+        if (callError) {
+          console.error("Error fetching call:", callError);
+          setCallData(null);
+          setIsLoading(false);
+          return;
+        }
+
+        setCallData(call);
+
+        // Fetch transcript from call_transcripts table
+        const { data: transcriptData, error: transcriptError } = await supabase
+          .from("call_transcripts")
+          .select("*")
+          .eq("call_id", callId)
+          .order("sequence", { ascending: true });
+
+        if (!transcriptError && transcriptData && transcriptData.length > 0) {
+          const formattedTranscript: TranscriptEntry[] = transcriptData.map((t, index) => ({
+            id: index + 1,
+            speaker: t.speaker === "agent" ? "agent" : "caller",
+            text: t.content,
+            timestamp: t.timestamp || "0:00",
+            latency: t.latency_ms ? `${t.latency_ms}ms` : undefined,
+          }));
+          setTranscript(formattedTranscript);
+        }
+
+        // Fetch recording from call_recordings table
+        const { data: recordingData, error: recordingError } = await supabase
+          .from("call_recordings")
+          .select("storage_path, duration_seconds")
+          .eq("call_id", callId)
+          .single();
+
+        if (!recordingError && recordingData) {
+          setRecording(recordingData);
+        }
+
+      } catch (err) {
+        console.error("Error:", err);
+        setCallData(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCallDetails();
+  }, [callId, profile?.organization_id]);
 
   const handleExport = () => {
     toast({
       title: "Export started",
       description: "Call data export is being prepared.",
     });
+  };
+
+  // Format duration
+  const formatDuration = (seconds: number | null): string | null => {
+    if (!seconds) return null;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  // Map outcome to status
+  const mapOutcomeToStatus = (outcome: string | null): "answered" | "missed" | "failed" | "ended" => {
+    switch (outcome) {
+      case "answered":
+        return "answered";
+      case "no_answer":
+        return "missed";
+      case "failed":
+      case "busy":
+        return "failed";
+      default:
+        return "ended";
+    }
   };
 
   if (isLoading) {
@@ -195,7 +186,30 @@ const CallDetails = () => {
     );
   }
 
-  const isAnalyzed = callData.metadata.status === "answered" && callData.sentiment !== null;
+  // Build metadata
+  const metadata: CallMetadata = {
+    callUuid: callData.id,
+    phone: callData.phone_number,
+    startTime: callData.created_at
+      ? format(new Date(callData.created_at), "MMM d, yyyy h:mm a")
+      : "Unknown",
+    duration: formatDuration(callData.duration_seconds),
+    organization: profile?.organization_id?.slice(0, 8) || "",
+    agent: (callData.agents as any)?.name || "Unknown Agent",
+    status: mapOutcomeToStatus(callData.outcome),
+  };
+
+  // Sentiment data
+  const sentimentData = callData.sentiment ? {
+    sentiment: callData.sentiment as "positive" | "neutral" | "negative",
+    confidenceScore: 75,
+    summary: `Call outcome: ${callData.outcome || "completed"}`,
+  } : null;
+
+  const isAnalyzed = callData.outcome === "answered" && callData.sentiment !== null;
+
+  // Get recording URL (from storage_path or construct it)
+  const recordingUrl = recording?.storage_path || undefined;
 
   return (
     <OrgAppShell>
@@ -214,21 +228,19 @@ const CallDetails = () => {
           </Button>
 
           {/* Metadata Bar */}
-          <CallMetadataBar metadata={callData.metadata} onExport={handleExport} />
+          <CallMetadataBar metadata={metadata} onExport={handleExport} />
 
-          {/* Tags */}
-          {callData.tags.length > 0 && (
+          {/* Campaign Tag */}
+          {(callData.campaigns as any)?.name && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
               className="flex flex-wrap gap-2"
             >
-              {callData.tags.map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-xs">
-                  {tag}
-                </Badge>
-              ))}
+              <Badge variant="secondary" className="text-xs">
+                Campaign: {(callData.campaigns as any).name}
+              </Badge>
             </motion.div>
           )}
 
@@ -240,8 +252,8 @@ const CallDetails = () => {
               transition={{ delay: 0.2 }}
             >
               <CallRecordingPlayer
-                recordingUrl={callData.recording}
-                duration={callData.metadata.duration || undefined}
+                recordingUrl={recordingUrl}
+                duration={formatDuration(recording?.duration_seconds ?? callData.duration_seconds) || undefined}
               />
             </motion.div>
             <motion.div
@@ -250,9 +262,9 @@ const CallDetails = () => {
               transition={{ delay: 0.3 }}
             >
               <CallSentimentCard
-                sentiment={callData.sentiment?.sentiment}
-                confidenceScore={callData.sentiment?.confidenceScore}
-                summary={callData.sentiment?.summary}
+                sentiment={sentimentData?.sentiment}
+                confidenceScore={sentimentData?.confidenceScore}
+                summary={sentimentData?.summary}
                 isAnalyzed={isAnalyzed}
               />
             </motion.div>
@@ -265,8 +277,8 @@ const CallDetails = () => {
             transition={{ delay: 0.4 }}
           >
             <CallTranscriptChat
-              messages={callData.transcript || undefined}
-              isAvailable={callData.metadata.status === "answered"}
+              messages={transcript || undefined}
+              isAvailable={callData.outcome === "answered"}
             />
           </motion.div>
         </motion.div>

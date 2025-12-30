@@ -1,9 +1,12 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Phone, CheckCircle, XCircle, Smile, Meh, Frown, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { format, formatDistanceToNow } from "date-fns";
 
 interface TimelineEvent {
-  id: number;
+  id: string;
   type: "call" | "answered" | "no_answer" | "failed";
   campaign: string;
   duration?: string;
@@ -12,14 +15,9 @@ interface TimelineEvent {
   date: string;
 }
 
-const mockEvents: TimelineEvent[] = [
-  { id: 1, type: "answered", campaign: "Renewal Follow-up", duration: "4:23", sentiment: "positive", timestamp: "2:34 PM", date: "Today" },
-  { id: 2, type: "no_answer", campaign: "Customer Feedback", timestamp: "11:20 AM", date: "Today" },
-  { id: 3, type: "answered", campaign: "Renewal Follow-up", duration: "2:45", sentiment: "neutral", timestamp: "3:15 PM", date: "Yesterday" },
-  { id: 4, type: "failed", campaign: "Lead Qualification", timestamp: "10:00 AM", date: "Yesterday" },
-  { id: 5, type: "answered", campaign: "Customer Feedback", duration: "5:12", sentiment: "positive", timestamp: "4:30 PM", date: "Dec 5" },
-  { id: 6, type: "answered", campaign: "Renewal Follow-up", duration: "3:18", sentiment: "negative", timestamp: "2:00 PM", date: "Dec 4" },
-];
+interface ContactTimelineProps {
+  contactId?: string;
+}
 
 const typeConfig = {
   call: { icon: Phone, color: "text-primary", bg: "bg-primary/10" },
@@ -34,14 +32,113 @@ const sentimentIcons = {
   negative: Frown,
 };
 
-export function ContactTimeline() {
+export function ContactTimeline({ contactId }: ContactTimelineProps) {
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCallHistory = async () => {
+      if (!contactId) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("calls")
+          .select(`
+            id,
+            outcome,
+            sentiment,
+            duration_seconds,
+            created_at,
+            campaigns:campaign_id(name)
+          `)
+          .eq("contact_id", contactId)
+          .order("created_at", { ascending: false })
+          .limit(10);
+
+        if (error) {
+          console.error("Error fetching call history:", error);
+          setEvents([]);
+        } else if (data) {
+          const formattedEvents: TimelineEvent[] = data.map((call) => {
+            // Map outcome to type
+            let type: TimelineEvent["type"] = "call";
+            if (call.outcome === "answered") type = "answered";
+            else if (call.outcome === "no_answer" || call.outcome === "voicemail") type = "no_answer";
+            else if (call.outcome === "failed" || call.outcome === "busy") type = "failed";
+
+            // Format duration
+            let duration: string | undefined;
+            if (call.duration_seconds) {
+              const mins = Math.floor(call.duration_seconds / 60);
+              const secs = call.duration_seconds % 60;
+              duration = `${mins}:${secs.toString().padStart(2, "0")}`;
+            }
+
+            // Format date
+            const callDate = new Date(call.created_at || Date.now());
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            let dateLabel: string;
+            if (callDate.toDateString() === today.toDateString()) {
+              dateLabel = "Today";
+            } else if (callDate.toDateString() === yesterday.toDateString()) {
+              dateLabel = "Yesterday";
+            } else {
+              dateLabel = format(callDate, "MMM d");
+            }
+
+            return {
+              id: call.id,
+              type,
+              campaign: (call.campaigns as any)?.name || "Direct Call",
+              duration,
+              sentiment: call.sentiment as TimelineEvent["sentiment"] | undefined,
+              timestamp: format(callDate, "h:mm a"),
+              date: dateLabel,
+            };
+          });
+
+          setEvents(formattedEvents);
+        }
+      } catch (err) {
+        console.error("Error:", err);
+        setEvents([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCallHistory();
+  }, [contactId]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-8 text-muted-foreground">
+        Loading call history...
+      </div>
+    );
+  }
+
+  if (events.length === 0) {
+    return (
+      <div className="flex items-center justify-center py-8 text-muted-foreground text-sm">
+        No call history yet
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
       {/* Timeline line */}
       <div className="absolute left-4 top-0 bottom-0 w-px bg-border" />
 
       <div className="space-y-4">
-        {mockEvents.map((event, i) => {
+        {events.map((event, i) => {
           const config = typeConfig[event.type];
           const Icon = config.icon;
           const SentimentIcon = event.sentiment ? sentimentIcons[event.sentiment] : null;
@@ -88,8 +185,8 @@ export function ContactTimeline() {
                         event.sentiment === "positive"
                           ? "text-success"
                           : event.sentiment === "negative"
-                          ? "text-destructive"
-                          : "text-muted-foreground"
+                            ? "text-destructive"
+                            : "text-muted-foreground"
                       )}
                     >
                       <SentimentIcon className="h-3 w-3" />
