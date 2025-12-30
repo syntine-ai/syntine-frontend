@@ -16,10 +16,11 @@ import { cn } from "@/lib/utils";
 export interface CallLogEntry {
   id: string;
   caller: string;
-  phoneNumber: string;
+  fromNumber: string | null;
+  toNumber: string | null;
+  callType: "inbound" | "outbound" | "webcall";
   status: "answered" | "ended" | "missed" | "failed";
   duration: string | null;
-  organization: string;
   agent: string;
   startedAt: string;
 }
@@ -36,6 +37,12 @@ const statusConfig = {
   ended: { label: "Ended", className: "bg-muted text-muted-foreground border-border" },
   missed: { label: "Missed", className: "bg-warning/15 text-warning border-warning/30" },
   failed: { label: "Failed", className: "bg-destructive/15 text-destructive border-destructive/30" },
+};
+
+const callTypeConfig = {
+  inbound: { label: "Inbound", className: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30" },
+  outbound: { label: "Outbound", className: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" },
+  webcall: { label: "Web Call", className: "bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/30" },
 };
 
 export function CallLogsTable({
@@ -75,10 +82,10 @@ export function CallLogsTable({
         <TableHeader>
           <TableRow className="border-border/50 hover:bg-transparent">
             <TableHead className="text-muted-foreground font-medium">Caller</TableHead>
-            <TableHead className="text-muted-foreground font-medium">Phone Number</TableHead>
+            <TableHead className="text-muted-foreground font-medium">Type</TableHead>
+            <TableHead className="text-muted-foreground font-medium">From → To</TableHead>
             <TableHead className="text-muted-foreground font-medium">Status</TableHead>
             <SortableHeader column="duration" label="Duration" />
-            <TableHead className="text-muted-foreground font-medium">Organization</TableHead>
             <TableHead className="text-muted-foreground font-medium">Agent</TableHead>
             <SortableHeader column="startedAt" label="Started At" />
             <TableHead className="text-muted-foreground font-medium w-[100px]">Details</TableHead>
@@ -95,8 +102,18 @@ export function CallLogsTable({
               onClick={() => navigate(`/app/calls/${log.id}`)}
             >
               <TableCell className="font-medium text-foreground">{log.caller}</TableCell>
+              <TableCell>
+                <Badge
+                  variant="outline"
+                  className={cn("font-medium", callTypeConfig[log.callType].className)}
+                >
+                  {callTypeConfig[log.callType].label}
+                </Badge>
+              </TableCell>
               <TableCell className="text-muted-foreground font-mono text-sm">
-                {log.phoneNumber || "N/A"}
+                <span className="text-foreground">{log.fromNumber || "—"}</span>
+                <span className="mx-1.5 text-muted-foreground/50">→</span>
+                <span className="text-foreground">{log.toNumber || "—"}</span>
               </TableCell>
               <TableCell>
                 <Badge
@@ -108,9 +125,6 @@ export function CallLogsTable({
               </TableCell>
               <TableCell className="text-foreground">
                 {log.duration || "N/A"}
-              </TableCell>
-              <TableCell className="text-muted-foreground font-mono text-sm">
-                {log.organization}
               </TableCell>
               <TableCell className="text-muted-foreground">{log.agent}</TableCell>
               <TableCell className="text-muted-foreground">{log.startedAt}</TableCell>

@@ -40,6 +40,13 @@ const outcomeToStatus = (outcome: string | null): "answered" | "ended" | "missed
   }
 };
 
+// Map database call_type to display format
+const mapCallType = (callType: string | null, direction: string | null): "inbound" | "outbound" | "webcall" => {
+  if (callType === "webcall") return "webcall";
+  if (callType === "inbound" || direction === "inbound") return "inbound";
+  return "outbound";
+};
+
 // Format duration from seconds to "M:SS" string
 const formatDuration = (seconds: number | null): string | null => {
   if (!seconds) return null;
@@ -68,10 +75,11 @@ const RecentCalls = () => {
     return calls.map((call) => ({
       id: call.id,
       caller: call.contact_name || "Unknown",
-      phoneNumber: call.phone_number || "N/A",
+      fromNumber: call.from_number || call.phone_number || null,
+      toNumber: call.to_number || call.phone_number || null,
+      callType: mapCallType(call.call_type, call.direction),
       status: outcomeToStatus(call.outcome),
       duration: formatDuration(call.duration_seconds),
-      organization: call.organization_id?.substring(0, 8) || "Unknown",
       agent: call.agent_name || "Unknown Agent",
       startedAt: call.created_at
         ? format(new Date(call.created_at), "dd/MM/yyyy, hh:mm a")
@@ -100,7 +108,8 @@ const RecentCalls = () => {
       result = result.filter(
         (log) =>
           log.id.toLowerCase().includes(search) ||
-          log.phoneNumber.toLowerCase().includes(search) ||
+          (log.fromNumber?.toLowerCase().includes(search)) ||
+          (log.toNumber?.toLowerCase().includes(search)) ||
           log.caller.toLowerCase().includes(search)
       );
     }
@@ -207,12 +216,14 @@ const RecentCalls = () => {
     }
 
     const csvContent = [
-      ["ID", "Caller", "Phone Number", "Status", "Duration", "Agent", "Started At"].join(","),
+      ["ID", "Caller", "Type", "From Number", "To Number", "Status", "Duration", "Agent", "Started At"].join(","),
       ...filteredLogs.map((log) =>
         [
           log.id,
           log.caller,
-          log.phoneNumber,
+          log.callType,
+          log.fromNumber || "N/A",
+          log.toNumber || "N/A",
           log.status,
           log.duration || "N/A",
           log.agent,
