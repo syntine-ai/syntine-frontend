@@ -206,11 +206,10 @@ export type Database = {
         Row: {
           agent_id: string | null
           attempt_number: number | null
-          call_type: Database["public"]["Enums"]["call_type"] | null
+          call_type: Database["public"]["Enums"]["call_type"]
           campaign_id: string | null
           contact_id: string | null
           created_at: string | null
-          direction: Database["public"]["Enums"]["call_direction"] | null
           duration_seconds: number | null
           ended_at: string | null
           error_message: string | null
@@ -220,7 +219,6 @@ export type Database = {
           metadata: Json | null
           organization_id: string
           outcome: Database["public"]["Enums"]["call_outcome"] | null
-          phone_number: string
           sentiment: Database["public"]["Enums"]["call_sentiment"] | null
           sentiment_score: number | null
           started_at: string | null
@@ -232,11 +230,10 @@ export type Database = {
         Insert: {
           agent_id?: string | null
           attempt_number?: number | null
-          call_type?: Database["public"]["Enums"]["call_type"] | null
+          call_type?: Database["public"]["Enums"]["call_type"]
           campaign_id?: string | null
           contact_id?: string | null
           created_at?: string | null
-          direction?: Database["public"]["Enums"]["call_direction"] | null
           duration_seconds?: number | null
           ended_at?: string | null
           error_message?: string | null
@@ -246,7 +243,6 @@ export type Database = {
           metadata?: Json | null
           organization_id: string
           outcome?: Database["public"]["Enums"]["call_outcome"] | null
-          phone_number: string
           sentiment?: Database["public"]["Enums"]["call_sentiment"] | null
           sentiment_score?: number | null
           started_at?: string | null
@@ -258,11 +254,10 @@ export type Database = {
         Update: {
           agent_id?: string | null
           attempt_number?: number | null
-          call_type?: Database["public"]["Enums"]["call_type"] | null
+          call_type?: Database["public"]["Enums"]["call_type"]
           campaign_id?: string | null
           contact_id?: string | null
           created_at?: string | null
-          direction?: Database["public"]["Enums"]["call_direction"] | null
           duration_seconds?: number | null
           ended_at?: string | null
           error_message?: string | null
@@ -272,7 +267,6 @@ export type Database = {
           metadata?: Json | null
           organization_id?: string
           outcome?: Database["public"]["Enums"]["call_outcome"] | null
-          phone_number?: string
           sentiment?: Database["public"]["Enums"]["call_sentiment"] | null
           sentiment_score?: number | null
           started_at?: string | null

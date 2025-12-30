@@ -82,7 +82,7 @@ const CampaignDetail = () => {
   const recentCalls = useMemo(() => {
     return campaignCalls.slice(0, 5).map((call) => ({
       id: call.id,
-      phone: call.phone_number || "N/A",
+      phone: call.call_type === "inbound" ? call.from_number : call.to_number || "N/A",
       status: call.outcome || "completed",
       duration: call.duration_seconds
         ? `${Math.floor(call.duration_seconds / 60)}:${(call.duration_seconds % 60).toString().padStart(2, "0")}`
