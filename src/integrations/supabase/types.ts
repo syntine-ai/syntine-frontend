@@ -206,6 +206,7 @@ export type Database = {
         Row: {
           agent_id: string | null
           attempt_number: number | null
+          call_type: Database["public"]["Enums"]["call_type"] | null
           campaign_id: string | null
           contact_id: string | null
           created_at: string | null
@@ -214,6 +215,7 @@ export type Database = {
           ended_at: string | null
           error_message: string | null
           external_call_id: string | null
+          from_number: string | null
           id: string
           metadata: Json | null
           organization_id: string
@@ -225,10 +227,12 @@ export type Database = {
           status: Database["public"]["Enums"]["call_status"] | null
           summary: string | null
           tags: Json | null
+          to_number: string | null
         }
         Insert: {
           agent_id?: string | null
           attempt_number?: number | null
+          call_type?: Database["public"]["Enums"]["call_type"] | null
           campaign_id?: string | null
           contact_id?: string | null
           created_at?: string | null
@@ -237,6 +241,7 @@ export type Database = {
           ended_at?: string | null
           error_message?: string | null
           external_call_id?: string | null
+          from_number?: string | null
           id?: string
           metadata?: Json | null
           organization_id: string
@@ -248,10 +253,12 @@ export type Database = {
           status?: Database["public"]["Enums"]["call_status"] | null
           summary?: string | null
           tags?: Json | null
+          to_number?: string | null
         }
         Update: {
           agent_id?: string | null
           attempt_number?: number | null
+          call_type?: Database["public"]["Enums"]["call_type"] | null
           campaign_id?: string | null
           contact_id?: string | null
           created_at?: string | null
@@ -260,6 +267,7 @@ export type Database = {
           ended_at?: string | null
           error_message?: string | null
           external_call_id?: string | null
+          from_number?: string | null
           id?: string
           metadata?: Json | null
           organization_id?: string
@@ -271,6 +279,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["call_status"] | null
           summary?: string | null
           tags?: Json | null
+          to_number?: string | null
         }
         Relationships: [
           {
@@ -826,6 +835,7 @@ export type Database = {
       call_outcome: "answered" | "no_answer" | "busy" | "failed" | "voicemail"
       call_sentiment: "positive" | "neutral" | "negative"
       call_status: "queued" | "ringing" | "in_progress" | "ended"
+      call_type: "inbound" | "outbound" | "webcall"
       campaign_status:
         | "draft"
         | "scheduled"
@@ -980,6 +990,7 @@ export const Constants = {
       call_outcome: ["answered", "no_answer", "busy", "failed", "voicemail"],
       call_sentiment: ["positive", "neutral", "negative"],
       call_status: ["queued", "ringing", "in_progress", "ended"],
+      call_type: ["inbound", "outbound", "webcall"],
       campaign_status: [
         "draft",
         "scheduled",
