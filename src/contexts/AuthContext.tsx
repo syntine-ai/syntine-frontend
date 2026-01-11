@@ -3,6 +3,8 @@ import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "admin" | "org_owner" | "org_admin" | "org_member";
+type OrganizationPlan = "starter" | "pro" | "enterprise";
+type OrganizationStatus = "active" | "trial" | "suspended" | "cancelled";
 
 interface Profile {
   id: string;
@@ -15,10 +17,20 @@ interface Profile {
   timezone: string;
 }
 
+interface Organization {
+  id: string;
+  name: string;
+  plan: OrganizationPlan;
+  status: OrganizationStatus;
+  email: string | null;
+  domain: string | null;
+}
+
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
+  organization: Organization | null;
   roles: AppRole[];
   isLoading: boolean;
   isAdmin: boolean;
@@ -34,10 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [organization, setOrganization] = useState<Organization | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch profile and roles after user is set
+  // Fetch profile, organization, and roles after user is set
   const fetchUserData = async (userId: string) => {
     try {
       // Fetch profile
@@ -49,6 +62,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (profileData) {
         setProfile(profileData as Profile);
+        
+        // Fetch organization using the profile's organization_id
+        const { data: orgData } = await supabase
+          .from("organizations")
+          .select("id, name, plan, status, email, domain")
+          .eq("id", profileData.organization_id)
+          .maybeSingle();
+        
+        if (orgData) {
+          setOrganization(orgData as Organization);
+        }
       }
 
       // Fetch roles
@@ -163,6 +187,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setProfile(null);
+    setOrganization(null);
     setRoles([]);
   };
 
@@ -175,6 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user, 
         session, 
         profile, 
+        organization,
         roles, 
         isLoading, 
         isAdmin,

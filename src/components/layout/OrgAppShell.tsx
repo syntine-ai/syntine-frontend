@@ -1,11 +1,13 @@
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SidebarNavigation } from "./SidebarNavigation";
 import { TopBar } from "./TopBar";
-import { Zap, Menu, PanelLeftClose } from "lucide-react";
+import { Zap, Menu, PanelLeftClose, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSidebar, SidebarProvider } from "@/contexts/SidebarContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface OrgAppShellProps {
   children: ReactNode;
@@ -13,6 +15,23 @@ interface OrgAppShellProps {
 
 function OrgAppShellContent({ children }: OrgAppShellProps) {
   const { isCollapsed, toggleSidebar } = useSidebar();
+  const { organization, isLoading } = useAuth();
+
+  // Get initials from organization name
+  const orgInitials = useMemo(() => {
+    if (!organization?.name) return "??";
+    const words = organization.name.trim().split(/\s+/);
+    if (words.length === 1) {
+      return words[0].substring(0, 2).toUpperCase();
+    }
+    return (words[0][0] + words[1][0]).toUpperCase();
+  }, [organization?.name]);
+
+  // Format plan name for display
+  const planDisplay = useMemo(() => {
+    if (!organization?.plan) return null;
+    return organization.plan.charAt(0).toUpperCase() + organization.plan.slice(1) + " Plan";
+  }, [organization?.plan]);
 
   return (
     <div className="min-h-screen flex w-full">
@@ -81,7 +100,7 @@ function OrgAppShellContent({ children }: OrgAppShellProps) {
         {/* Navigation */}
         <SidebarNavigation variant="org" />
 
-        {/* Footer */}
+        {/* Footer - Organization Info */}
         <div className="p-3 border-t border-sidebar-border">
           <motion.div
             className={cn(
@@ -89,25 +108,62 @@ function OrgAppShellContent({ children }: OrgAppShellProps) {
               isCollapsed && "justify-center px-0"
             )}
           >
-            <div className="h-8 w-8 rounded-full bg-sidebar-accent flex items-center justify-center shrink-0">
-              <span className="text-xs font-medium text-sidebar-foreground">AC</span>
-            </div>
-            <AnimatePresence mode="wait">
-              {!isCollapsed && (
-                <motion.div
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="flex-1 min-w-0 overflow-hidden"
-                >
-                  <p className="text-sm font-medium text-sidebar-foreground truncate">
-                    Acme Corp
-                  </p>
-                  <p className="text-xs text-sidebar-muted truncate">Pro Plan</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {isLoading ? (
+              <>
+                <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                {!isCollapsed && (
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                )}
+              </>
+            ) : organization ? (
+              <>
+                <div className="h-8 w-8 rounded-full bg-sidebar-accent flex items-center justify-center shrink-0">
+                  <span className="text-xs font-medium text-sidebar-foreground">{orgInitials}</span>
+                </div>
+                <AnimatePresence mode="wait">
+                  {!isCollapsed && (
+                    <motion.div
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: "auto" }}
+                      exit={{ opacity: 0, width: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex-1 min-w-0 overflow-hidden"
+                    >
+                      <p className="text-sm font-medium text-sidebar-foreground truncate">
+                        {organization.name}
+                      </p>
+                      {planDisplay && (
+                        <p className="text-xs text-sidebar-muted truncate">{planDisplay}</p>
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            ) : (
+              <>
+                <div className="h-8 w-8 rounded-full bg-sidebar-accent/50 flex items-center justify-center shrink-0">
+                  <Building2 className="h-4 w-4 text-sidebar-muted" />
+                </div>
+                <AnimatePresence mode="wait">
+                  {!isCollapsed && (
+                    <motion.div
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: "auto" }}
+                      exit={{ opacity: 0, width: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="flex-1 min-w-0 overflow-hidden"
+                    >
+                      <p className="text-sm font-medium text-sidebar-muted truncate">
+                        No Organization
+                      </p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </>
+            )}
           </motion.div>
         </div>
       </motion.aside>
@@ -118,7 +174,7 @@ function OrgAppShellContent({ children }: OrgAppShellProps) {
         animate={{ marginLeft: isCollapsed ? 72 : 240 }}
         transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
       >
-        <TopBar workspaceName="Acme Corp" variant="org" />
+        <TopBar workspaceName={organization?.name || "Organization"} variant="org" />
         <main className="bg-background min-h-[calc(100vh-64px)]">
           {children}
         </main>

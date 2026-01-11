@@ -762,6 +762,39 @@ export type Database = {
           },
         ]
       }
+      transcripts: {
+        Row: {
+          call_uuid: string
+          created_at: string | null
+          id: string
+          language: string | null
+          org_id: string | null
+          speaker: string
+          text: string
+          timestamp_relative: number
+        }
+        Insert: {
+          call_uuid: string
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          org_id?: string | null
+          speaker: string
+          text: string
+          timestamp_relative: number
+        }
+        Update: {
+          call_uuid?: string
+          created_at?: string | null
+          id?: string
+          language?: string | null
+          org_id?: string | null
+          speaker?: string
+          text?: string
+          timestamp_relative?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -785,7 +818,20 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      unified_transcripts: {
+        Row: {
+          call_id: string | null
+          created_at: string | null
+          id: string | null
+          language: string | null
+          org_id: string | null
+          source_table: string | null
+          speaker: string | null
+          text: string | null
+          timestamp_relative: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_unread_notification_count: { Args: never; Returns: number }
