@@ -834,6 +834,19 @@ export type Database = {
       }
     }
     Functions: {
+      get_org_team_members: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          created_at: string
+          first_name: string
+          id: string
+          last_name: string
+          organization_id: string
+          timezone: string
+          user_id: string
+        }[]
+      }
       get_unread_notification_count: { Args: never; Returns: number }
       get_user_organization_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
