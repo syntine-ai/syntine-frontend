@@ -2,205 +2,62 @@ import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { StatusPill } from "@/components/shared/StatusPill";
-import { PromptEditorCard } from "@/components/agents/PromptEditorCard";
-import { SentimentRulesCard } from "@/components/agents/SentimentRulesCard";
-import { TestCallCard } from "@/components/agents/TestCallCard";
-import { SkeletonCard } from "@/components/shared/SkeletonCard";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { useParams, useNavigate } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Bot, Copy, Globe, Layers, Save, ArrowLeft, Loader2 } from "lucide-react";
-import { useAgents } from "@/hooks/useAgents";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import type { Database } from "@/integrations/supabase/types";
-
-const defaultPrompt = `You are a helpful AI assistant for customer service calls.
-
-Guidelines:
-- Be polite and professional at all times
-- Listen carefully to customer concerns
-- Provide clear and concise answers
-- Offer solutions when possible
-- Escalate to a human agent if needed
-
-Remember to:
-- Introduce yourself at the start of each call
-- Confirm customer details before proceeding
-- Summarize key points at the end of the call`;
-
-interface LinkedCampaign {
-  id: string;
-  name: string;
-  status: "running" | "paused" | "draft" | "completed";
-  callsToday: number;
-}
+import {
+  Bot,
+  ArrowLeft,
+  Phone,
+  PhoneIncoming,
+  CheckCircle2,
+  Database,
+  Shield,
+  Lightbulb,
+  Lock,
+} from "lucide-react";
+import { getAgentById, type MockAgent } from "@/data/demoAgentCampaignData";
 
 const AgentDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { updateAgent, duplicateAgent } = useAgents();
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [agent, setAgent] = useState<Database["public"]["Tables"]["agents"]["Row"] | null>(null);
-  const [linkedCampaigns, setLinkedCampaigns] = useState<LinkedCampaign[]>([]);
+  const agent = id ? getAgentById(id) : undefined;
 
-  // Editable state
-  const [isActive, setIsActive] = useState(true);
-  const [prompt, setPrompt] = useState(defaultPrompt);
-  const [hasChanges, setHasChanges] = useState(false);
-
-  // Fetch agent data
-  const fetchAgent = useCallback(async () => {
-    if (!id) return;
-
-    try {
-      setIsLoading(true);
-
-      // Fetch agent
-      const { data: agentData, error: agentError } = await supabase
-        .from("agents")
-        .select("*")
-        .eq("id", id)
-        .single();
-
-      if (agentError) throw agentError;
-
-      setAgent(agentData);
-      setIsActive(agentData.status === "active");
-      setPrompt(agentData.system_prompt || defaultPrompt);
-
-      // Fetch linked campaigns
-      const { data: campaignAgents, error: campaignError } = await supabase
-        .from("campaign_agents")
-        .select(`
-          campaign_id,
-          campaigns:campaign_id(id, name, status)
-        `)
-        .eq("agent_id", id);
-
-      if (campaignError) throw campaignError;
-
-      // Get today's call counts for each campaign
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const campaignsWithCalls: LinkedCampaign[] = await Promise.all(
-        (campaignAgents || []).map(async (ca: any) => {
-          if (!ca.campaigns) return null;
-
-          const { count } = await supabase
-            .from("calls")
-            .select("*", { count: "exact", head: true })
-            .eq("campaign_id", ca.campaigns.id)
-            .gte("created_at", today.toISOString());
-
-          return {
-            id: ca.campaigns.id,
-            name: ca.campaigns.name,
-            status: ca.campaigns.status as LinkedCampaign["status"],
-            callsToday: count || 0,
-          };
-        })
-      );
-
-      setLinkedCampaigns(campaignsWithCalls.filter(Boolean) as LinkedCampaign[]);
-    } catch (err: any) {
-      console.error("Error fetching agent:", err);
-      toast.error("Failed to load agent");
-      navigate("/app/agents");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id, navigate]);
-
-  useEffect(() => {
-    fetchAgent();
-  }, [fetchAgent]);
-
-  // Track changes
-  useEffect(() => {
-    if (!agent) return;
-
-    const currentStatus = isActive ? "active" : "inactive";
-    const hasPromptChange = prompt !== (agent.system_prompt || defaultPrompt);
-    const hasStatusChange = currentStatus !== agent.status;
-
-    setHasChanges(hasPromptChange || hasStatusChange);
-  }, [agent, isActive, prompt]);
-
-  const handleSave = async () => {
-    if (!id || !agent) return;
-
-    try {
-      setIsSaving(true);
-
-      await updateAgent(id, {
-        status: isActive ? "active" : "inactive",
-        system_prompt: prompt,
-      });
-
-      setAgent((prev) =>
-        prev
-          ? {
-            ...prev,
-            status: isActive ? "active" : "inactive",
-            system_prompt: prompt,
-          }
-          : prev
-      );
-
-      setHasChanges(false);
-      toast.success("Agent saved successfully");
-    } catch (err) {
-      console.error("Error saving agent:", err);
-      toast.error("Failed to save agent");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDuplicate = async () => {
-    if (!agent) return;
-
-    try {
-      // Create an AgentWithCampaigns object for the duplicateAgent function
-      const agentWithCampaigns = {
-        ...agent,
-        linkedCampaigns: linkedCampaigns.length,
-      };
-      const newAgent = await duplicateAgent(agentWithCampaigns);
-      if (newAgent) {
-        navigate(`/app/agents/${newAgent.id}`);
-      }
-    } catch (err) {
-      console.error("Error duplicating agent:", err);
-    }
-  };
-
-  if (isLoading) {
+  if (!agent) {
     return (
       <OrgAppShell>
         <PageContainer>
-          <div className="space-y-6">
-            <SkeletonCard className="h-24" />
-            <SkeletonCard className="h-96" />
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SkeletonCard className="h-64" />
-              <SkeletonCard className="h-64" />
-            </div>
+          <div className="text-center py-12">
+            <h2 className="text-xl font-semibold text-foreground mb-2">Agent not found</h2>
+            <p className="text-muted-foreground mb-4">The agent you're looking for doesn't exist.</p>
+            <Button onClick={() => navigate("/app/agents")}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Agents
+            </Button>
           </div>
         </PageContainer>
       </OrgAppShell>
     );
   }
 
-  if (!agent) {
-    return null;
-  }
+  const getTypeBadge = (type: MockAgent["type"]) => {
+    if (type === "Outbound") {
+      return (
+        <Badge className="bg-primary/15 text-primary border-primary/40 border">
+          <Phone className="h-3 w-3 mr-1" />
+          Outbound
+        </Badge>
+      );
+    }
+    return (
+      <Badge className="bg-success/15 text-success border-success/40 border">
+        <PhoneIncoming className="h-3 w-3 mr-1" />
+        Inbound
+      </Badge>
+    );
+  };
 
   return (
     <OrgAppShell>
@@ -218,7 +75,7 @@ const AgentDetail = () => {
             </Button>
           </div>
 
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 mb-6">
             <div className="flex items-start gap-4">
               <div className="h-14 w-14 rounded-xl bg-primary/10 flex items-center justify-center">
                 <Bot className="h-7 w-7 text-primary" />
@@ -228,130 +85,175 @@ const AgentDetail = () => {
                   <h1 className="text-2xl lg:text-3xl font-semibold text-foreground tracking-tight">
                     {agent.name}
                   </h1>
-                  <StatusPill status={isActive ? "active" : "inactive"} />
+                  {getTypeBadge(agent.type)}
                 </div>
-                <p className="text-muted-foreground text-sm">Agent ID: {id}</p>
+                <p className="text-muted-foreground">{agent.purpose}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 mr-4">
-                <span className="text-sm text-muted-foreground">Active</span>
-                <Switch checked={isActive} onCheckedChange={setIsActive} />
-              </div>
-              <Button variant="outline" className="gap-2" onClick={handleDuplicate}>
-                <Copy className="h-4 w-4" /> Duplicate
-              </Button>
-              <Button
-                className="gap-2"
-                onClick={handleSave}
-                disabled={!hasChanges || isSaving}
-              >
-                {isSaving ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="h-4 w-4" />
-                )}
-                Save Changes
-              </Button>
-            </div>
+            <Badge className="bg-success/15 text-success border-success/40 border">
+              <CheckCircle2 className="h-3 w-3 mr-1" />
+              {agent.status}
+            </Badge>
           </div>
 
-          {/* Subinfo */}
-          <div className="flex flex-wrap gap-6">
-            <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">{agent.language || "English"}</span>
+          {/* Metrics Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 rounded-xl bg-card border border-border/50">
+              <p className="text-sm text-muted-foreground mb-1">Calls Handled</p>
+              <p className="text-2xl font-semibold text-foreground">{agent.metrics.callsHandled}</p>
             </div>
-            <div className="flex items-center gap-2">
-              <Layers className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-foreground">
-                {linkedCampaigns.length} Linked Campaign{linkedCampaigns.length !== 1 ? "s" : ""}
-              </span>
+            <div className="p-4 rounded-xl bg-card border border-border/50">
+              <p className="text-sm text-muted-foreground mb-1">
+                {agent.metrics.successRate ? "Success Rate" : "Resolution Rate"}
+              </p>
+              <p className="text-2xl font-semibold text-foreground">
+                {agent.metrics.successRate || agent.metrics.resolutionRate}
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-card border border-border/50">
+              <p className="text-sm text-muted-foreground mb-1">Used By</p>
+              <div className="flex flex-wrap gap-1.5 mt-1">
+                {agent.usedBy.map((use) => (
+                  <Badge key={use} variant="outline" className="text-xs">
+                    {use}
+                  </Badge>
+                ))}
+              </div>
             </div>
           </div>
         </motion.div>
 
         {/* Main Content */}
         <div className="space-y-6">
-          {/* Prompt Editor */}
+          {/* Purpose Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <PromptEditorCard value={prompt} onChange={setPrompt} />
-          </motion.div>
-
-          {/* Sentiment Rules & Test Call */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-            >
-              <SentimentRulesCard />
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-            >
-              <TestCallCard />
-            </motion.div>
-          </div>
-
-          {/* Linked Campaigns */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-          >
             <Card className="border-border/50">
               <CardHeader>
-                <CardTitle className="text-lg">Linked Campaigns</CardTitle>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Lightbulb className="h-5 w-5 text-primary" />
+                  What this agent does
+                </CardTitle>
                 <CardDescription>
-                  Campaigns using this agent
+                  A plain-English explanation of this agent's purpose
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {linkedCampaigns.length === 0 ? (
-                  <p className="text-muted-foreground text-sm py-4 text-center">
-                    No campaigns are currently using this agent
-                  </p>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b border-border">
-                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">Campaign Name</th>
-                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">Status</th>
-                          <th className="text-left p-3 text-sm font-medium text-muted-foreground">Calls Today</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {linkedCampaigns.map((campaign, i) => (
-                          <motion.tr
-                            key={campaign.id}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: i * 0.05 }}
-                            className="border-b border-border/50 last:border-0 hover:bg-secondary/20 cursor-pointer"
-                            onClick={() => navigate(`/app/campaigns/${campaign.id}`)}
-                          >
-                            <td className="p-3 font-medium text-foreground">{campaign.name}</td>
-                            <td className="p-3">
-                              <StatusPill status={campaign.status} />
-                            </td>
-                            <td className="p-3 text-foreground">{campaign.callsToday}</td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                <p className="text-foreground leading-relaxed">{agent.purpose}</p>
               </CardContent>
             </Card>
+          </motion.div>
+
+          {/* Scenarios Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <CheckCircle2 className="h-5 w-5 text-success" />
+                  Supported Scenarios
+                </CardTitle>
+                <CardDescription>
+                  Situations this agent is designed to handle
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-3">
+                  {agent.details.scenarios.map((scenario, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <div className="h-6 w-6 rounded-full bg-success/10 flex items-center justify-center shrink-0 mt-0.5">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+                      </div>
+                      <span className="text-foreground">{scenario}</span>
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Data Used Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Database className="h-5 w-5 text-primary" />
+                  Data Used
+                </CardTitle>
+                <CardDescription>
+                  Information this agent accesses during calls
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {agent.details.dataUsed.map((data) => (
+                    <Badge
+                      key={data}
+                      variant="secondary"
+                      className="px-3 py-1.5 text-sm"
+                    >
+                      {data}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Compliance Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+          >
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Shield className="h-5 w-5 text-warning" />
+                  Compliance & Safety
+                </CardTitle>
+                <CardDescription>
+                  How this agent protects you and your customers
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="p-4 rounded-lg bg-warning/10 border border-warning/20">
+                  <p className="text-foreground leading-relaxed">
+                    {agent.details.complianceNote}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Restrictions Notice */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <div className="p-4 rounded-xl bg-muted/50 border border-border/50">
+              <div className="flex items-center gap-2 mb-2">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium text-foreground">
+                  This agent is read-only
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Agent customization, prompt editing, and behavior modification are not available in this version.
+                All agents are pre-configured and managed by the system for optimal performance.
+              </p>
+            </div>
           </motion.div>
         </div>
       </PageContainer>

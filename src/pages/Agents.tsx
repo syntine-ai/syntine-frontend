@@ -1,214 +1,232 @@
 import { useState } from "react";
 import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { StatusPill } from "@/components/shared/StatusPill";
-import { NewAgentModal } from "@/components/agents/NewAgentModal";
-import { EmptyState } from "@/components/shared/EmptyState";
-import { SkeletonTable } from "@/components/shared/SkeletonTable";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Plus, Search, MoreVertical, Bot, Copy, Settings, Trash2 } from "lucide-react";
+  Bot,
+  Phone,
+  PhoneIncoming,
+  TrendingUp,
+  CheckCircle2,
+  Info,
+  Lock,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useAgents, type AgentWithCampaigns } from "@/hooks/useAgents";
-import { formatDistanceToNow } from "date-fns";
+import { mockAgents, getAgentStats, type MockAgent } from "@/data/demoAgentCampaignData";
+import { AnalyticsSummaryCard } from "@/components/analytics/AnalyticsSummaryCard";
+import { toast } from "sonner";
 
 const Agents = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showNewModal, setShowNewModal] = useState(false);
-  
-  const { agents, isLoading, duplicateAgent, deleteAgent, createAgent } = useAgents();
-
-  const filteredAgents = agents.filter((agent) =>
-    agent.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const [agentStatuses, setAgentStatuses] = useState<Record<string, boolean>>(
+    Object.fromEntries(mockAgents.map((a) => [a.id, a.status === "Active"]))
   );
 
-  const handleDuplicate = async (agent: AgentWithCampaigns) => {
-    await duplicateAgent(agent);
-  };
+  const stats = getAgentStats();
 
-  const handleDelete = async (id: string) => {
-    await deleteAgent(id);
-  };
-
-  const handleCreateAgent = async (data: {
-    name: string;
-    language: string;
-    tone: "professional" | "friendly" | "casual" | "formal" | "empathetic";
-    system_prompt?: string;
-  }) => {
-    const newAgent = await createAgent(data);
-    if (newAgent) {
-      setShowNewModal(false);
-      navigate(`/app/agents/${newAgent.id}`);
+  const handleToggleAgent = (agent: MockAgent, checked: boolean) => {
+    if (!agent.canToggle) {
+      toast.info("This agent cannot be disabled as it handles inbound calls.");
+      return;
     }
+    setAgentStatuses((prev) => ({ ...prev, [agent.id]: checked }));
+    toast.success(`${agent.name} ${checked ? "activated" : "deactivated"}`);
   };
 
-  const getUpdatedText = (date: string | null) => {
-    if (!date) return "Never";
-    return formatDistanceToNow(new Date(date), { addSuffix: true });
+  const getTypeBadge = (type: MockAgent["type"]) => {
+    if (type === "Outbound") {
+      return (
+        <Badge className="bg-primary/15 text-primary border-primary/40 border">
+          <Phone className="h-3 w-3 mr-1" />
+          Outbound
+        </Badge>
+      );
+    }
+    return (
+      <Badge className="bg-success/15 text-success border-success/40 border">
+        <PhoneIncoming className="h-3 w-3 mr-1" />
+        Inbound
+      </Badge>
+    );
+  };
+
+  const getStatusBadge = (isActive: boolean) => {
+    if (isActive) {
+      return (
+        <Badge className="bg-success/15 text-success border-success/40 border">
+          <CheckCircle2 className="h-3 w-3 mr-1" />
+          Active
+        </Badge>
+      );
+    }
+    return (
+      <Badge className="bg-muted text-muted-foreground border-border border">
+        Inactive
+      </Badge>
+    );
   };
 
   return (
     <OrgAppShell>
       <PageContainer
-        title="Agents"
-        subtitle="Manage your AI assistants."
-        actions={
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Button className="gap-2" onClick={() => setShowNewModal(true)}>
-              <Plus className="h-4 w-4" />
-              New Agent
-            </Button>
-          </motion.div>
-        }
+        title="Voice Agents"
+        subtitle="Pre-built AI voice agents designed for e-commerce automation"
       >
-        {/* Search */}
+        {/* Summary Stats */}
+        <div className="grid gap-4 md:grid-cols-3 mb-6">
+          <AnalyticsSummaryCard
+            title="Total Agents"
+            value={stats.total.toString()}
+            icon={Bot}
+          />
+          <AnalyticsSummaryCard
+            title="Active Agents"
+            value={stats.active.toString()}
+            icon={CheckCircle2}
+          />
+          <AnalyticsSummaryCard
+            title="Total Calls Handled"
+            value={stats.totalCalls.toString()}
+            icon={Phone}
+          />
+        </div>
+
+        {/* System Notice */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 rounded-xl bg-primary/10 border border-primary/20 flex items-start gap-3"
         >
-          <div className="relative max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search agents..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm text-primary font-medium">System-Managed Agents</p>
+            <p className="text-sm text-primary/80">
+              These agents are pre-configured for e-commerce use cases. You can enable or disable them, but customization is not available in this version.
+            </p>
           </div>
         </motion.div>
 
-        {/* Loading State */}
-        {isLoading ? (
-          <SkeletonTable rows={5} columns={6} />
-        ) : filteredAgents.length === 0 ? (
-          /* Empty State */
-          <EmptyState
-            icon={Bot}
-            title="No agents found"
-            description={
-              searchQuery
-                ? "Try adjusting your search query."
-                : "Create your first AI agent to power your calling campaigns."
-            }
-            actionLabel={searchQuery ? "Clear Search" : "Create Agent"}
-            onAction={() => {
-              if (searchQuery) {
-                setSearchQuery("");
-              } else {
-                setShowNewModal(true);
-              }
-            }}
-          />
-        ) : (
-          /* Agents Table */
-          <div className="bg-card rounded-lg shadow-card border border-border/50 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border bg-secondary/30">
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Name</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Linked Campaigns</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Language</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Updated</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAgents.map((agent, i) => (
-                    <motion.tr
-                      key={agent.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: i * 0.05 }}
-                      onClick={() => navigate(`/app/agents/${agent.id}`)}
-                      className="border-b border-border/50 last:border-0 hover:bg-secondary/20 transition-colors cursor-pointer"
-                    >
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <Bot className="h-5 w-5 text-primary" />
-                          </div>
-                          <span className="font-medium text-foreground">{agent.name}</span>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <span className="px-2.5 py-1 rounded-full bg-secondary text-foreground text-sm">
-                          {agent.linkedCampaigns} {agent.linkedCampaigns === 1 ? "campaign" : "campaigns"}
-                        </span>
-                      </td>
-                      <td className="p-4 text-foreground">{agent.language || "English"}</td>
-                      <td className="p-4">
-                        <StatusPill status={agent.status || "draft"} />
-                      </td>
-                      <td className="p-4 text-muted-foreground text-sm">
-                        {getUpdatedText(agent.updated_at)}
-                      </td>
-                      <td className="p-4">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem 
-                              className="gap-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDuplicate(agent);
-                              }}
-                            >
-                              <Copy className="h-4 w-4" /> Duplicate
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="gap-2" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/app/agents/${agent.id}`);
-                              }}
-                            >
-                              <Settings className="h-4 w-4" /> Settings
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="gap-2 text-destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDelete(agent.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {/* Agents Grid */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {mockAgents.map((agent, index) => {
+            const isActive = agentStatuses[agent.id];
+            return (
+              <motion.div
+                key={agent.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.3 }}
+              >
+                <Card
+                  className="border-border/50 hover:shadow-md transition-all cursor-pointer h-full"
+                  onClick={() => navigate(`/app/agents/${agent.id}`)}
+                >
+                  <CardContent className="p-6">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Bot className="h-6 w-6 text-primary" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getTypeBadge(agent.type)}
+                      </div>
+                    </div>
 
-        {/* New Agent Modal */}
-        <NewAgentModal 
-          open={showNewModal} 
-          onOpenChange={setShowNewModal}
-          onSubmit={handleCreateAgent}
-        />
+                    {/* Agent Info */}
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      {agent.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                      {agent.purpose}
+                    </p>
+
+                    {/* Metrics */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="p-3 rounded-lg bg-muted/50">
+                        <p className="text-xs text-muted-foreground mb-1">Calls Handled</p>
+                        <p className="text-lg font-semibold text-foreground">
+                          {agent.metrics.callsHandled}
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-lg bg-muted/50">
+                        <p className="text-xs text-muted-foreground mb-1">
+                          {agent.metrics.successRate ? "Success Rate" : "Resolution Rate"}
+                        </p>
+                        <p className="text-lg font-semibold text-foreground">
+                          {agent.metrics.successRate || agent.metrics.resolutionRate}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Used By */}
+                    <div className="mb-4">
+                      <p className="text-xs text-muted-foreground mb-1.5">Used by</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {agent.usedBy.map((use) => (
+                          <Badge
+                            key={use}
+                            variant="outline"
+                            className="text-xs font-normal"
+                          >
+                            {use}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(isActive)}
+                        {!agent.canToggle && (
+                          <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+                        )}
+                      </div>
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-2"
+                      >
+                        <span className="text-xs text-muted-foreground">
+                          {isActive ? "On" : "Off"}
+                        </span>
+                        <Switch
+                          checked={isActive}
+                          onCheckedChange={(checked) => handleToggleAgent(agent, checked)}
+                          disabled={!agent.canToggle}
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Restrictions Notice */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-8 p-4 rounded-xl bg-muted/50 border border-border/50"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Lock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">What's not available</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {["Create Agent", "Edit Agent", "Delete Agent", "Duplicate Agent", "Custom Prompts"].map(
+              (item) => (
+                <Badge key={item} variant="outline" className="text-muted-foreground">
+                  {item}
+                </Badge>
+              )
+            )}
+          </div>
+        </motion.div>
       </PageContainer>
     </OrgAppShell>
   );

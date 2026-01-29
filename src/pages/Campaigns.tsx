@@ -1,268 +1,229 @@
 import { useState } from "react";
 import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { StatusPill } from "@/components/shared/StatusPill";
-import { NewCampaignModal } from "@/components/campaigns/NewCampaignModal";
-import { EmptyState } from "@/components/shared/EmptyState";
-import { SkeletonTable } from "@/components/shared/SkeletonTable";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Plus, Search, MoreVertical, Play, Pause, Settings, Trash2, Megaphone } from "lucide-react";
+  Megaphone,
+  Phone,
+  CheckCircle2,
+  Clock,
+  TrendingUp,
+  Zap,
+  Info,
+  Lock,
+  ShoppingCart,
+  AlertCircle,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useCampaigns, type CampaignWithDetails } from "@/hooks/useCampaigns";
-import { formatDistanceToNow } from "date-fns";
+import { mockCampaigns, getCampaignStats, type MockCampaign } from "@/data/demoAgentCampaignData";
+import { AnalyticsSummaryCard } from "@/components/analytics/AnalyticsSummaryCard";
+import { toast } from "sonner";
 
 const Campaigns = () => {
   const navigate = useNavigate();
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showNewModal, setShowNewModal] = useState(false);
+  const [campaignStatuses, setCampaignStatuses] = useState<Record<string, boolean>>(
+    Object.fromEntries(mockCampaigns.map((c) => [c.id, c.status === "Enabled"]))
+  );
 
-  const { campaigns, isLoading, updateCampaignStatus, deleteCampaign, createCampaign } = useCampaigns();
+  const stats = getCampaignStats();
 
-  const filteredCampaigns = campaigns.filter((campaign) => {
-    const matchesStatus = statusFilter === "all" || campaign.status === statusFilter;
-    const matchesSearch = campaign.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
-
-  const handleToggleCampaign = async (id: string, currentStatus: string) => {
-    const newStatus = currentStatus === "running" ? "paused" : "running";
-    await updateCampaignStatus(id, newStatus as any);
+  const handleToggleCampaign = (campaign: MockCampaign, checked: boolean) => {
+    setCampaignStatuses((prev) => ({ ...prev, [campaign.id]: checked }));
+    toast.success(
+      `${campaign.name} campaign ${checked ? "enabled" : "disabled"}`
+    );
   };
 
-  const handleDeleteCampaign = async (id: string) => {
-    await deleteCampaign(id);
-  };
-
-  const handleCreateCampaign = async (data: {
-    name: string;
-    description?: string;
-    concurrency?: number;
-    agentIds?: string[];
-    contactListIds?: string[];
-  }) => {
-    const newCampaign = await createCampaign(data);
-    if (newCampaign) {
-      setShowNewModal(false);
-      navigate(`/app/campaigns/${newCampaign.id}`);
+  const getStatusBadge = (isEnabled: boolean) => {
+    if (isEnabled) {
+      return (
+        <Badge className="bg-success/15 text-success border-success/40 border">
+          <CheckCircle2 className="h-3 w-3 mr-1" />
+          Enabled
+        </Badge>
+      );
     }
+    return (
+      <Badge className="bg-muted text-muted-foreground border-border border">
+        <AlertCircle className="h-3 w-3 mr-1" />
+        Disabled
+      </Badge>
+    );
   };
 
-  const getLastRunText = (campaign: CampaignWithDetails) => {
-    if (campaign.started_at) {
-      return formatDistanceToNow(new Date(campaign.started_at), { addSuffix: true });
+  const getCampaignIcon = (campaignId: string) => {
+    if (campaignId === "order_confirmation_campaign") {
+      return <Phone className="h-6 w-6 text-primary" />;
     }
-    return "Never";
-  };
-
-  const getPrimaryAgentName = (campaign: CampaignWithDetails) => {
-    const primary = campaign.agents.find((a) => a.is_primary);
-    if (primary) return primary.name;
-    if (campaign.agents.length > 0) return campaign.agents[0].name;
-    return "No agent";
+    return <ShoppingCart className="h-6 w-6 text-primary" />;
   };
 
   return (
     <OrgAppShell>
       <PageContainer
         title="Campaigns"
-        subtitle="Manage and monitor all AI calling campaigns."
-        actions={
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <Button className="gap-2" onClick={() => setShowNewModal(true)}>
-              <Plus className="h-4 w-4" />
-              New Campaign
-            </Button>
-          </motion.div>
-        }
+        subtitle="Automated voice campaigns for transactional e-commerce use cases"
       >
-        {/* Filters */}
+        {/* Summary Stats */}
+        <div className="grid gap-4 md:grid-cols-3 mb-6">
+          <AnalyticsSummaryCard
+            title="Total Campaigns"
+            value={stats.total.toString()}
+            icon={Megaphone}
+          />
+          <AnalyticsSummaryCard
+            title="Enabled"
+            value={stats.enabled.toString()}
+            icon={CheckCircle2}
+          />
+          <AnalyticsSummaryCard
+            title="Total Calls"
+            value={stats.totalCalls.toString()}
+            icon={Phone}
+          />
+        </div>
+
+        {/* System Notice */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col sm:flex-row gap-4 mb-6"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6 p-4 rounded-xl bg-primary/10 border border-primary/20 flex items-start gap-3"
         >
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="running">Running</SelectItem>
-              <SelectItem value="paused">Paused</SelectItem>
-              <SelectItem value="draft">Draft</SelectItem>
-              <SelectItem value="scheduled">Scheduled</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search campaigns..."
-              className="pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm text-primary font-medium">Transactional Campaigns Only</p>
+            <p className="text-sm text-primary/80">
+              These campaigns are designed for order verification and cart recovery. Marketing or promotional campaigns are not supported.
+            </p>
           </div>
         </motion.div>
 
-        {/* Loading State */}
-        {isLoading ? (
-          <SkeletonTable rows={5} columns={8} />
-        ) : filteredCampaigns.length === 0 ? (
-          /* Empty State */
-          <EmptyState
-            icon={Megaphone}
-            title="No campaigns found"
-            description={
-              searchQuery || statusFilter !== "all"
-                ? "Try adjusting your filters or search query."
-                : "Get started by creating your first AI calling campaign."
-            }
-            actionLabel={searchQuery || statusFilter !== "all" ? "Clear Filters" : "Create Campaign"}
-            onAction={() => {
-              if (searchQuery || statusFilter !== "all") {
-                setSearchQuery("");
-                setStatusFilter("all");
-              } else {
-                setShowNewModal(true);
-              }
-            }}
-          />
-        ) : (
-          /* Campaigns Table */
-          <div className="bg-card rounded-lg shadow-card border border-border/50 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border bg-secondary/30">
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Name</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Agent</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Concurrency</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Calls Today</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Success Rate</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Last Run</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCampaigns.map((campaign, i) => (
-                    <motion.tr
-                      key={campaign.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: i * 0.05 }}
-                      onClick={() => navigate(`/app/campaigns/${campaign.id}`)}
-                      className="border-b border-border/50 last:border-0 hover:bg-secondary/20 transition-colors cursor-pointer"
-                    >
-                      <td className="p-4">
-                        <span className="font-medium text-foreground">{campaign.name}</span>
-                      </td>
-                      <td className="p-4">
-                        <StatusPill status={campaign.status || "draft"} />
-                      </td>
-                      <td className="p-4 text-foreground">{getPrimaryAgentName(campaign)}</td>
-                      <td className="p-4">
-                        <span className="px-2.5 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                          {campaign.concurrency || 1}x
-                        </span>
-                      </td>
-                      <td className="p-4 text-foreground font-medium">{campaign.callsToday}</td>
-                      <td className="p-4">
-                        <span
-                          className={
-                            campaign.successRate >= 80
-                              ? "text-success font-medium"
-                              : campaign.successRate >= 60
-                              ? "text-warning font-medium"
-                              : campaign.successRate > 0
-                              ? "text-destructive font-medium"
-                              : "text-muted-foreground"
-                          }
-                        >
-                          {campaign.successRate > 0 ? `${campaign.successRate.toFixed(1)}%` : "-"}
-                        </span>
-                      </td>
-                      <td className="p-4 text-muted-foreground text-sm">{getLastRunText(campaign)}</td>
-                      <td className="p-4">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem 
-                              className="gap-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleCampaign(campaign.id, campaign.status || "draft");
-                              }}
-                            >
-                              {campaign.status === "running" ? (
-                                <>
-                                  <Pause className="h-4 w-4" /> Pause
-                                </>
-                              ) : (
-                                <>
-                                  <Play className="h-4 w-4" /> Start
-                                </>
-                              )}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="gap-2" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/app/campaigns/${campaign.id}`);
-                              }}
-                            >
-                              <Settings className="h-4 w-4" /> Settings
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              className="gap-2 text-destructive"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteCampaign(campaign.id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" /> Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {/* Campaigns Grid */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {mockCampaigns.map((campaign, index) => {
+            const isEnabled = campaignStatuses[campaign.id];
+            return (
+              <motion.div
+                key={campaign.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.3 }}
+              >
+                <Card
+                  className="border-border/50 hover:shadow-md transition-all cursor-pointer h-full"
+                  onClick={() => navigate(`/app/campaigns/${campaign.id}`)}
+                >
+                  <CardContent className="p-6">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                        {getCampaignIcon(campaign.id)}
+                      </div>
+                      {getStatusBadge(isEnabled)}
+                    </div>
 
-        {/* New Campaign Modal */}
-        <NewCampaignModal 
-          open={showNewModal} 
-          onOpenChange={setShowNewModal}
-          onSubmit={handleCreateCampaign}
-        />
+                    {/* Campaign Info */}
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      {campaign.name}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {campaign.triggerDescription}
+                    </p>
+
+                    {/* Trigger Badge */}
+                    <div className="mb-4">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50">
+                        <Zap className="h-3.5 w-3.5 text-warning" />
+                        <span className="text-sm text-foreground">
+                          Trigger: <span className="font-medium">{campaign.trigger}</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Agent Used */}
+                    <div className="mb-4 p-3 rounded-lg bg-muted/50">
+                      <p className="text-xs text-muted-foreground mb-1">Agent Used</p>
+                      <p className="text-sm font-medium text-foreground">{campaign.agentUsed}</p>
+                    </div>
+
+                    {/* Metrics */}
+                    <div className="grid grid-cols-3 gap-3 mb-4">
+                      <div className="text-center p-2 rounded-lg bg-muted/30">
+                        <p className="text-xs text-muted-foreground mb-0.5">Last Run</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {campaign.metrics.lastTriggered}
+                        </p>
+                      </div>
+                      <div className="text-center p-2 rounded-lg bg-muted/30">
+                        <p className="text-xs text-muted-foreground mb-0.5">Success</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {campaign.metrics.successRate}
+                        </p>
+                      </div>
+                      <div className="text-center p-2 rounded-lg bg-muted/30">
+                        <p className="text-xs text-muted-foreground mb-0.5">Calls</p>
+                        <p className="text-sm font-medium text-foreground">
+                          {campaign.metrics.totalCalls}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                      <span className="text-sm text-muted-foreground">
+                        {isEnabled ? "Campaign is running" : "Campaign is paused"}
+                      </span>
+                      <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-2"
+                      >
+                        <span className="text-xs text-muted-foreground">
+                          {isEnabled ? "On" : "Off"}
+                        </span>
+                        <Switch
+                          checked={isEnabled}
+                          onCheckedChange={(checked) =>
+                            handleToggleCampaign(campaign, checked)
+                          }
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Restrictions Notice */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-8 p-4 rounded-xl bg-muted/50 border border-border/50"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Lock className="h-4 w-4 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">What's not available</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              "Create Campaign",
+              "Edit Trigger",
+              "Change Agent",
+              "Retry Rules",
+              "Contact Lists",
+              "Marketing Campaigns",
+            ].map((item) => (
+              <Badge key={item} variant="outline" className="text-muted-foreground">
+                {item}
+              </Badge>
+            ))}
+          </div>
+        </motion.div>
       </PageContainer>
     </OrgAppShell>
   );
