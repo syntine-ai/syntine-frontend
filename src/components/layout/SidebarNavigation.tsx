@@ -11,9 +11,7 @@ import {
   CreditCard,
   Users,
   Activity,
-  Contact,
   Link2,
-  Package,
   ShoppingCart,
   ShoppingBag,
 } from "lucide-react";
@@ -31,12 +29,10 @@ const orgNavItems: NavItem[] = [
   { icon: Zap, label: "Dashboard", route: "/app/dashboard" },
   { icon: LayoutGrid, label: "Campaigns", route: "/app/campaigns" },
   { icon: Bot, label: "Agents", route: "/app/agents" },
-  { icon: Contact, label: "Contacts", route: "/app/contacts" },
-  { icon: Phone, label: "Calls", route: "/app/calls" },
-  { icon: Link2, label: "Integrations", route: "/app/integrations" },
-  { icon: Package, label: "Products", route: "/app/products" },
+  { icon: Phone, label: "Call Logs", route: "/app/calls" },
   { icon: ShoppingCart, label: "Orders", route: "/app/orders" },
   { icon: ShoppingBag, label: "Abandoned Carts", route: "/app/abandoned-carts" },
+  { icon: Link2, label: "Integrations", route: "/app/integrations" },
   { icon: Settings, label: "Settings", route: "/app/settings" },
 ];
 
