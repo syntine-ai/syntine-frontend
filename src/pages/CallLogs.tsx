@@ -1,13 +1,12 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { SkeletonTable } from "@/components/shared/SkeletonTable";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -24,125 +23,137 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Search, FileText, ArrowLeft, Download, PhoneOff, User, Bot, PhoneIncoming, PhoneOutgoing, Globe } from "lucide-react";
+  Search,
+  Download,
+  PhoneOff,
+  ShoppingBag,
+  ShoppingCart,
+  PhoneIncoming,
+  FileText,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { useCallLogs } from "@/hooks/useCallLogs";
-import { useCampaigns } from "@/hooks/useCampaigns";
 import { format } from "date-fns";
-import type { Database } from "@/integrations/supabase/types";
+import {
+  demoCallLogs,
+  demoCallLogStats,
+  formatCurrency,
+  type DemoCallLog,
+} from "@/data/demoOutcomesData";
 
-type CallOutcome = Database["public"]["Enums"]["call_outcome"];
-type CallSentiment = Database["public"]["Enums"]["call_sentiment"];
-type CallTranscript = Database["public"]["Tables"]["call_transcripts"]["Row"];
-
-const outcomeConfig: Record<CallOutcome, { label: string; className: string }> = {
-  answered: { label: "Answered", className: "bg-success/15 text-success" },
-  no_answer: { label: "No Answer", className: "bg-muted text-muted-foreground" },
-  busy: { label: "Busy", className: "bg-warning/15 text-warning" },
-  failed: { label: "Failed", className: "bg-destructive/15 text-destructive" },
-  voicemail: { label: "Voicemail", className: "bg-muted text-muted-foreground" },
+const outcomeConfig: Record<string, { label: string; className: string }> = {
+  confirmed: {
+    label: "Confirmed",
+    className: "bg-success/15 text-success border-success/30",
+  },
+  rejected: {
+    label: "Rejected",
+    className: "bg-destructive/15 text-destructive border-destructive/30",
+  },
+  no_response: {
+    label: "No Response",
+    className: "bg-muted text-muted-foreground border-border",
+  },
+  recovered: {
+    label: "Recovered",
+    className: "bg-success/15 text-success border-success/30",
+  },
+  not_recovered: {
+    label: "Not Recovered",
+    className: "bg-warning/15 text-warning border-warning/30",
+  },
+  handled: {
+    label: "Handled",
+    className: "bg-primary/15 text-primary border-primary/30",
+  },
 };
 
-const sentimentConfig: Record<CallSentiment, { label: string; className: string }> = {
-  positive: { label: "Positive", className: "bg-success/15 text-success" },
-  neutral: { label: "Neutral", className: "bg-warning/15 text-warning" },
-  negative: { label: "Negative", className: "bg-destructive/15 text-destructive" },
+const relatedToConfig: Record<string, { label: string; className: string }> = {
+  order: {
+    label: "Order",
+    className: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
+  },
+  cart: {
+    label: "Cart",
+    className: "bg-violet-500/15 text-violet-600 dark:text-violet-400 border-violet-500/30",
+  },
+  inbound: {
+    label: "Inbound",
+    className: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
+  },
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { staggerChildren: 0.06 } },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
 };
 
 const CallLogs = () => {
   const navigate = useNavigate();
-  const { calls, isLoading, fetchTranscript } = useCallLogs();
-  const { campaigns } = useCampaigns();
-  
   const [search, setSearch] = useState("");
-  const [sentimentFilter, setSentimentFilter] = useState("all");
   const [outcomeFilter, setOutcomeFilter] = useState("all");
+  const [relatedToFilter, setRelatedToFilter] = useState("all");
   const [campaignFilter, setCampaignFilter] = useState("all");
-  const [selectedCallId, setSelectedCallId] = useState<string | null>(null);
-  const [transcripts, setTranscripts] = useState<CallTranscript[]>([]);
-  const [loadingTranscript, setLoadingTranscript] = useState(false);
-
-  // Get unique campaigns for filter
-  const campaignOptions = useMemo(() => {
-    const uniqueCampaigns = new Map<string, string>();
-    calls.forEach((call) => {
-      if (call.campaign_id && call.campaign_name) {
-        uniqueCampaigns.set(call.campaign_id, call.campaign_name);
-      }
-    });
-    return Array.from(uniqueCampaigns.entries()).map(([id, name]) => ({ id, name }));
-  }, [calls]);
 
   const filteredLogs = useMemo(() => {
-    return calls.filter((call) => {
+    return demoCallLogs.filter((call) => {
       if (search) {
         const searchLower = search.toLowerCase();
-        const matchesFromNumber = call.from_number?.toLowerCase().includes(searchLower);
-        const matchesToNumber = call.to_number?.toLowerCase().includes(searchLower);
-        const matchesContact = call.contact_name?.toLowerCase().includes(searchLower);
-        const matchesId = call.id.toLowerCase().includes(searchLower);
-        if (!matchesFromNumber && !matchesToNumber && !matchesContact && !matchesId) return false;
+        const matchesPhone = call.customerPhone.toLowerCase().includes(searchLower);
+        const matchesName = call.customerName.toLowerCase().includes(searchLower);
+        const matchesId = call.relatedId?.toLowerCase().includes(searchLower);
+        if (!matchesPhone && !matchesName && !matchesId) return false;
       }
-      if (sentimentFilter !== "all" && call.sentiment !== sentimentFilter) return false;
       if (outcomeFilter !== "all" && call.outcome !== outcomeFilter) return false;
-      if (campaignFilter !== "all" && call.campaign_id !== campaignFilter) return false;
+      if (relatedToFilter !== "all" && call.relatedTo !== relatedToFilter) return false;
+      if (campaignFilter !== "all") {
+        if (campaignFilter === "order" && call.campaign !== "Order Confirmation") return false;
+        if (campaignFilter === "cart" && call.campaign !== "Cart Abandonment") return false;
+        if (campaignFilter === "inbound" && call.campaign !== null) return false;
+      }
       return true;
     });
-  }, [calls, search, sentimentFilter, outcomeFilter, campaignFilter]);
+  }, [search, outcomeFilter, relatedToFilter, campaignFilter]);
 
   const clearFilters = () => {
     setSearch("");
-    setSentimentFilter("all");
     setOutcomeFilter("all");
+    setRelatedToFilter("all");
     setCampaignFilter("all");
   };
 
-  const hasActiveFilters = search || sentimentFilter !== "all" || outcomeFilter !== "all" || campaignFilter !== "all";
+  const hasActiveFilters =
+    search || outcomeFilter !== "all" || relatedToFilter !== "all" || campaignFilter !== "all";
 
-  const handleViewTranscript = async (callId: string) => {
-    setSelectedCallId(callId);
-    setLoadingTranscript(true);
-    const data = await fetchTranscript(callId);
-    setTranscripts(data);
-    setLoadingTranscript(false);
-  };
-
-  const selectedCall = calls.find((c) => c.id === selectedCallId);
-
-  const formatDuration = (seconds: number | null) => {
+  const formatDuration = (seconds: number) => {
     if (!seconds) return "-";
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const formatTime = (date: string | null) => {
-    if (!date) return "-";
+  const formatTime = (date: string) => {
     return format(new Date(date), "MMM d, h:mm a");
   };
 
   const handleExport = () => {
     const csvContent = [
-      ["Time", "Type", "From", "To", "Contact", "Campaign", "Agent", "Duration", "Outcome", "Sentiment"].join(","),
+      ["Time", "Customer", "Related To", "ID", "Campaign", "Agent", "Duration", "Outcome"].join(","),
       ...filteredLogs.map((call) =>
         [
-          call.created_at,
-          call.call_type,
-          call.from_number,
-          call.to_number,
-          call.contact_name,
-          call.campaign_name,
-          call.agent_name,
-          call.duration_seconds,
+          call.createdAt,
+          call.customerName,
+          call.relatedTo,
+          call.relatedId || "-",
+          call.campaign || "Inbound",
+          call.agent,
+          call.duration,
           call.outcome,
-          call.sentiment,
         ].join(",")
       ),
     ].join("\n");
@@ -160,248 +171,215 @@ const CallLogs = () => {
     <OrgAppShell>
       <PageContainer
         title="Call Logs"
-        subtitle="Detailed log of all calls with transcripts"
+        subtitle="Review voice calls linked to orders and carts."
       >
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
           className="space-y-6"
         >
-          {/* Header */}
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <Button variant="ghost" asChild>
-              <Link to="/app/calls">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Analytics
-              </Link>
-            </Button>
-            <Button variant="outline" onClick={handleExport}>
-              <Download className="h-4 w-4 mr-2" />
-              Export CSV
-            </Button>
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by phone or contact..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-9"
+          {/* Summary Cards */}
+          <motion.div variants={itemVariants}>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <MetricCard
+                label="Calls Linked to Orders"
+                value={demoCallLogStats.callsLinkedToOrders.toString()}
+                icon={ShoppingBag}
+              />
+              <MetricCard
+                label="Calls Linked to Carts"
+                value={demoCallLogStats.callsLinkedToCarts.toString()}
+                icon={ShoppingCart}
+              />
+              <MetricCard
+                label="Inbound Handled"
+                value={demoCallLogStats.inboundCallsHandled.toString()}
+                icon={PhoneIncoming}
+              />
+              <MetricCard
+                label="No Response"
+                value={demoCallLogStats.noResponseCalls.toString()}
+                icon={PhoneOff}
               />
             </div>
-            <Select value={sentimentFilter} onValueChange={setSentimentFilter}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Sentiment" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sentiment</SelectItem>
-                <SelectItem value="positive">Positive</SelectItem>
-                <SelectItem value="neutral">Neutral</SelectItem>
-                <SelectItem value="negative">Negative</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Outcome" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Outcomes</SelectItem>
-                <SelectItem value="answered">Answered</SelectItem>
-                <SelectItem value="no_answer">No Answer</SelectItem>
-                <SelectItem value="busy">Busy</SelectItem>
-                <SelectItem value="voicemail">Voicemail</SelectItem>
-                <SelectItem value="failed">Failed</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Campaign" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Campaigns</SelectItem>
-                {campaignOptions.map((campaign) => (
-                  <SelectItem key={campaign.id} value={campaign.id}>
-                    {campaign.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                Clear filters
-              </Button>
-            )}
-          </div>
+          </motion.div>
 
-          {/* Content */}
-          {isLoading ? (
-            <SkeletonTable rows={8} columns={8} />
-          ) : filteredLogs.length === 0 ? (
-            <EmptyState
-              icon={PhoneOff}
-              title="No call logs found"
-              description={
-                hasActiveFilters
-                  ? "Try adjusting your filters to find what you're looking for."
-                  : "Call logs will appear here once your campaigns start making calls."
-              }
-              actionLabel={hasActiveFilters ? "Clear Filters" : undefined}
-              onAction={hasActiveFilters ? clearFilters : undefined}
-            />
-          ) : (
-            <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50 hover:bg-transparent">
-                    <TableHead className="text-muted-foreground font-medium">Time</TableHead>
-                    <TableHead className="text-muted-foreground font-medium">From → To</TableHead>
-                    <TableHead className="text-muted-foreground font-medium">Contact</TableHead>
-                    <TableHead className="text-muted-foreground font-medium">Campaign</TableHead>
-                    <TableHead className="text-muted-foreground font-medium">Agent</TableHead>
-                    <TableHead className="text-muted-foreground font-medium">Duration</TableHead>
-                    <TableHead className="text-muted-foreground font-medium">Outcome</TableHead>
-                    <TableHead className="text-muted-foreground font-medium">Sentiment</TableHead>
-                    <TableHead className="text-muted-foreground font-medium w-[100px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLogs.map((call, index) => (
-                    <motion.tr
-                      key={call.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.02 }}
-                      className="border-border/50 hover:bg-muted/30 cursor-pointer"
-                      onClick={() => navigate(`/app/calls/${call.id}`)}
-                    >
-                      <TableCell className="text-muted-foreground">
-                        {formatTime(call.created_at)}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm text-foreground">
-                        <span>{call.from_number || "—"}</span>
-                        <span className="mx-1 text-muted-foreground/50">→</span>
-                        <span>{call.to_number || "—"}</span>
-                      </TableCell>
-                      <TableCell className="text-foreground">
-                        {call.contact_name || "-"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {call.campaign_name || "-"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {call.agent_name || "-"}
-                      </TableCell>
-                      <TableCell className="text-foreground">
-                        {formatDuration(call.duration_seconds)}
-                      </TableCell>
-                      <TableCell>
-                        {call.outcome ? (
-                          <Badge variant="secondary" className={outcomeConfig[call.outcome].className}>
+          {/* Filters */}
+          <motion.div variants={itemVariants}>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name, phone, or ID..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={relatedToFilter} onValueChange={setRelatedToFilter}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Related To" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="order">Order</SelectItem>
+                  <SelectItem value="cart">Cart</SelectItem>
+                  <SelectItem value="inbound">Inbound</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Outcome" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Outcomes</SelectItem>
+                  <SelectItem value="confirmed">Confirmed</SelectItem>
+                  <SelectItem value="rejected">Rejected</SelectItem>
+                  <SelectItem value="recovered">Recovered</SelectItem>
+                  <SelectItem value="not_recovered">Not Recovered</SelectItem>
+                  <SelectItem value="no_response">No Response</SelectItem>
+                  <SelectItem value="handled">Handled</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={campaignFilter} onValueChange={setCampaignFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Campaign" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Campaigns</SelectItem>
+                  <SelectItem value="order">Order Confirmation</SelectItem>
+                  <SelectItem value="cart">Cart Abandonment</SelectItem>
+                  <SelectItem value="inbound">Inbound</SelectItem>
+                </SelectContent>
+              </Select>
+              {hasActiveFilters && (
+                <Button variant="ghost" size="sm" onClick={clearFilters}>
+                  Clear filters
+                </Button>
+              )}
+              <div className="flex-1" />
+              <Button variant="outline" onClick={handleExport}>
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Table */}
+          <motion.div variants={itemVariants}>
+            {filteredLogs.length === 0 ? (
+              <EmptyState
+                icon={PhoneOff}
+                title="No call logs found"
+                description={
+                  hasActiveFilters
+                    ? "Try adjusting your filters to find what you're looking for."
+                    : "Call logs will appear here once your campaigns start making calls."
+                }
+                actionLabel={hasActiveFilters ? "Clear Filters" : undefined}
+                onAction={hasActiveFilters ? clearFilters : undefined}
+              />
+            ) : (
+              <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-border/50 hover:bg-transparent">
+                      <TableHead className="text-muted-foreground font-medium">Time</TableHead>
+                      <TableHead className="text-muted-foreground font-medium">Customer</TableHead>
+                      <TableHead className="text-muted-foreground font-medium">Related To</TableHead>
+                      <TableHead className="text-muted-foreground font-medium">Order / Cart ID</TableHead>
+                      <TableHead className="text-muted-foreground font-medium">Outcome</TableHead>
+                      <TableHead className="text-muted-foreground font-medium">Campaign</TableHead>
+                      <TableHead className="text-muted-foreground font-medium">Agent</TableHead>
+                      <TableHead className="text-muted-foreground font-medium">Duration</TableHead>
+                      <TableHead className="text-muted-foreground font-medium w-[100px]">Details</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredLogs.map((call, index) => (
+                      <motion.tr
+                        key={call.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.02 }}
+                        className="border-border/50 hover:bg-muted/30 cursor-pointer"
+                        onClick={() => navigate(`/app/calls/${call.id}`)}
+                      >
+                        <TableCell className="text-muted-foreground">
+                          {formatTime(call.createdAt)}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-medium text-foreground">{call.customerName}</span>
+                            <span className="text-xs text-muted-foreground">{call.customerPhone}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={cn("font-medium", relatedToConfig[call.relatedTo].className)}
+                          >
+                            {relatedToConfig[call.relatedTo].label}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {call.relatedId ? (
+                            <Link
+                              to={call.relatedTo === "order" ? `/app/orders` : `/app/abandoned-carts`}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-primary hover:underline font-mono text-sm"
+                            >
+                              {call.relatedId}
+                            </Link>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={cn("font-medium", outcomeConfig[call.outcome].className)}
+                          >
                             {outcomeConfig[call.outcome].label}
                           </Badge>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {call.sentiment ? (
-                          <Badge variant="secondary" className={sentimentConfig[call.sentiment].className}>
-                            {sentimentConfig[call.sentiment].label}
-                          </Badge>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewTranscript(call.id);
-                          }}
-                        >
-                          <FileText className="h-4 w-4 mr-1" />
-                          View
-                        </Button>
-                      </TableCell>
-                    </motion.tr>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {call.campaign || "Inbound"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          <Link
+                            to={`/app/agents/${call.agent.toLowerCase().replace(/ /g, "_")}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="hover:text-primary hover:underline"
+                          >
+                            {call.agent}
+                          </Link>
+                        </TableCell>
+                        <TableCell className="text-foreground">
+                          {formatDuration(call.duration)}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/app/calls/${call.id}`);
+                            }}
+                          >
+                            <FileText className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                        </TableCell>
+                      </motion.tr>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </motion.div>
         </motion.div>
-
-        {/* Transcript Dialog */}
-        <Dialog open={!!selectedCallId} onOpenChange={() => setSelectedCallId(null)}>
-          <DialogContent className="max-w-2xl max-h-[80vh]">
-            <DialogHeader>
-              <DialogTitle>Call Transcript</DialogTitle>
-              <DialogDescription>
-                {selectedCall?.from_number || selectedCall?.to_number} • {selectedCall?.created_at && formatTime(selectedCall.created_at)}
-              </DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="h-[400px] mt-4">
-              {loadingTranscript ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-                </div>
-              ) : transcripts.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  No transcript available for this call
-                </p>
-              ) : (
-                <div className="space-y-4 pr-4">
-                  {transcripts.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className={cn(
-                        "flex gap-3 p-3 rounded-lg",
-                        entry.speaker === "agent"
-                          ? "bg-primary/5 ml-4"
-                          : entry.speaker === "caller"
-                          ? "bg-secondary/50 mr-4"
-                          : "bg-muted/30 text-center italic"
-                      )}
-                    >
-                      {entry.speaker !== "system" && (
-                        <div
-                          className={cn(
-                            "h-8 w-8 rounded-full flex items-center justify-center shrink-0",
-                            entry.speaker === "agent" ? "bg-primary/20" : "bg-secondary"
-                          )}
-                        >
-                          {entry.speaker === "agent" ? (
-                            <Bot className="h-4 w-4 text-primary" />
-                          ) : (
-                            <User className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        {entry.speaker !== "system" && (
-                          <p className="text-xs font-medium text-muted-foreground mb-1 capitalize">
-                            {entry.speaker}
-                          </p>
-                        )}
-                        <p className="text-sm text-foreground">{entry.content}</p>
-                        {entry.timestamp && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {format(new Date(entry.timestamp), "h:mm:ss a")}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
       </PageContainer>
     </OrgAppShell>
   );
