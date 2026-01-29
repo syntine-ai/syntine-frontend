@@ -12,6 +12,10 @@ import {
   Users,
   Activity,
   Contact,
+  Link2,
+  Package,
+  ShoppingCart,
+  ShoppingBag,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -29,6 +33,10 @@ const orgNavItems: NavItem[] = [
   { icon: Bot, label: "Agents", route: "/app/agents" },
   { icon: Contact, label: "Contacts", route: "/app/contacts" },
   { icon: Phone, label: "Calls", route: "/app/calls" },
+  { icon: Link2, label: "Integrations", route: "/app/integrations" },
+  { icon: Package, label: "Products", route: "/app/products" },
+  { icon: ShoppingCart, label: "Orders", route: "/app/orders" },
+  { icon: ShoppingBag, label: "Abandoned Carts", route: "/app/abandoned-carts" },
   { icon: Settings, label: "Settings", route: "/app/settings" },
 ];
 
