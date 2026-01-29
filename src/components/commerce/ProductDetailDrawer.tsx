@@ -7,10 +7,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Package, ShoppingBag, ExternalLink } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
+import { demoProducts } from "@/data/demoCommerceData";
 
 interface ProductDetailDrawerProps {
   productId: string | null;
@@ -23,39 +21,7 @@ export function ProductDetailDrawer({
   open,
   onOpenChange,
 }: ProductDetailDrawerProps) {
-  const { data: product, isLoading } = useQuery({
-    queryKey: ["commerce-product-detail", productId],
-    queryFn: async () => {
-      if (!productId) return null;
-
-      const { data, error } = await supabase
-        .from("commerce_products")
-        .select("*, commerce_product_variants(*)")
-        .eq("id", productId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!productId && open,
-  });
-
-  // Count linked orders
-  const { data: linkedOrders } = useQuery({
-    queryKey: ["product-linked-orders", productId],
-    queryFn: async () => {
-      if (!productId) return 0;
-
-      const { count, error } = await supabase
-        .from("commerce_order_items")
-        .select("*", { count: "exact", head: true })
-        .eq("product_id", productId);
-
-      if (error) return 0;
-      return count || 0;
-    },
-    enabled: !!productId && open,
-  });
+  const product = productId ? demoProducts.find(p => p.id === productId) : null;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -84,9 +50,7 @@ export function ProductDetailDrawer({
 
   const getPriceRange = () => {
     if (!product?.commerce_product_variants?.length) return "--";
-    const prices = product.commerce_product_variants
-      .map((v: any) => v.price)
-      .filter((p: any) => p != null);
+    const prices = product.commerce_product_variants.map(v => v.price).filter(p => p != null);
     if (prices.length === 0) return "--";
     const min = Math.min(...prices);
     const max = Math.max(...prices);
@@ -104,14 +68,7 @@ export function ProductDetailDrawer({
           </SheetTitle>
         </SheetHeader>
 
-        {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-48 w-full rounded-lg" />
-            <Skeleton className="h-6 w-3/4" />
-            <Skeleton className="h-4 w-1/2" />
-            <Skeleton className="h-24 w-full" />
-          </div>
-        ) : product ? (
+        {product ? (
           <div className="space-y-6">
             {/* Product Image */}
             <div className="h-48 w-full rounded-lg bg-muted flex items-center justify-center overflow-hidden">
@@ -153,9 +110,7 @@ export function ProductDetailDrawer({
               </div>
               <div className="p-3 rounded-lg bg-muted/50">
                 <p className="text-xs text-muted-foreground mb-1">Linked Orders</p>
-                <p className="text-lg font-semibold text-foreground">
-                  {linkedOrders || 0}
-                </p>
+                <p className="text-lg font-semibold text-foreground">12</p>
               </div>
             </div>
 
@@ -179,35 +134,31 @@ export function ProductDetailDrawer({
                 Variants ({product.commerce_product_variants?.length || 0})
               </h4>
               <div className="space-y-2">
-                {product.commerce_product_variants?.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No variants</p>
-                ) : (
-                  product.commerce_product_variants?.map((variant: any) => (
-                    <div
-                      key={variant.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
-                          {variant.title || "Default"}
-                        </p>
-                        {variant.sku && (
-                          <p className="text-xs text-muted-foreground">
-                            SKU: {variant.sku}
-                          </p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-foreground">
-                          ₹{variant.price?.toFixed(2) || "--"}
-                        </p>
+                {product.commerce_product_variants?.map((variant) => (
+                  <div
+                    key={variant.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {variant.title || "Default"}
+                      </p>
+                      {variant.sku && (
                         <p className="text-xs text-muted-foreground">
-                          Stock: {variant.inventory_quantity ?? "--"}
+                          SKU: {variant.sku}
                         </p>
-                      </div>
+                      )}
                     </div>
-                  ))
-                )}
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-foreground">
+                        ₹{variant.price?.toFixed(2) || "--"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Stock: {variant.inventory_quantity ?? "--"}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 

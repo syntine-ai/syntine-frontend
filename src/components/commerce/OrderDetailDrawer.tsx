@@ -10,17 +10,13 @@ import {
   ShoppingCart,
   Phone,
   Mail,
-  MapPin,
   Truck,
   CreditCard,
-  Clock,
   ExternalLink,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TriggerReadyBadge } from "./TriggerReadyBadge";
+import { demoOrders } from "@/data/demoCommerceData";
 
 interface OrderDetailDrawerProps {
   orderId: string | null;
@@ -33,22 +29,7 @@ export function OrderDetailDrawer({
   open,
   onOpenChange,
 }: OrderDetailDrawerProps) {
-  const { data: order, isLoading } = useQuery({
-    queryKey: ["commerce-order-detail", orderId],
-    queryFn: async () => {
-      if (!orderId) return null;
-
-      const { data, error } = await supabase
-        .from("commerce_orders")
-        .select("*, commerce_order_items(*)")
-        .eq("id", orderId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!orderId && open,
-  });
+  const order = orderId ? demoOrders.find(o => o.id === orderId) : null;
 
   const getPaymentBadge = (paymentType: string) => {
     switch (paymentType) {
@@ -106,14 +87,7 @@ export function OrderDetailDrawer({
           </SheetTitle>
         </SheetHeader>
 
-        {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-6 w-1/2" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-        ) : order ? (
+        {order ? (
           <div className="space-y-6">
             {/* Order Header */}
             <div>
@@ -205,33 +179,29 @@ export function OrderDetailDrawer({
                 Items ({order.commerce_order_items?.length || 0})
               </h4>
               <div className="space-y-2">
-                {order.commerce_order_items?.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No items</p>
-                ) : (
-                  order.commerce_order_items?.map((item: any) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                    >
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">
-                          {item.title}
-                        </p>
-                        {item.variant_title && (
-                          <p className="text-xs text-muted-foreground">
-                            {item.variant_title}
-                          </p>
-                        )}
-                        <p className="text-xs text-muted-foreground">
-                          Qty: {item.quantity}
-                        </p>
-                      </div>
+                {order.commerce_order_items?.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                  >
+                    <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">
-                        ₹{item.total?.toFixed(2)}
+                        {item.title}
+                      </p>
+                      {item.variant_title && (
+                        <p className="text-xs text-muted-foreground">
+                          {item.variant_title}
+                        </p>
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Qty: {item.quantity}
                       </p>
                     </div>
-                  ))
-                )}
+                    <p className="text-sm font-medium text-foreground">
+                      ₹{item.total?.toFixed(2)}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
 
