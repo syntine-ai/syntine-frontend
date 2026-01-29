@@ -15,11 +15,9 @@ import {
   ExternalLink,
   Link2,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
 import { TriggerReadyBadge } from "./TriggerReadyBadge";
+import { demoAbandonedCarts } from "@/data/demoCommerceData";
 
 interface CartDetailDrawerProps {
   cartId: string | null;
@@ -32,22 +30,7 @@ export function CartDetailDrawer({
   open,
   onOpenChange,
 }: CartDetailDrawerProps) {
-  const { data: cart, isLoading } = useQuery({
-    queryKey: ["commerce-cart-detail", cartId],
-    queryFn: async () => {
-      if (!cartId) return null;
-
-      const { data, error } = await supabase
-        .from("commerce_abandoned_carts")
-        .select("*, commerce_cart_items(*)")
-        .eq("id", cartId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!cartId && open,
-  });
+  const cart = cartId ? demoAbandonedCarts.find(c => c.id === cartId) : null;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -84,14 +67,7 @@ export function CartDetailDrawer({
           </SheetTitle>
         </SheetHeader>
 
-        {isLoading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-6 w-1/2" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-        ) : cart ? (
+        {cart ? (
           <div className="space-y-6">
             {/* Cart Header */}
             <div>
@@ -178,44 +154,40 @@ export function CartDetailDrawer({
                 Items ({cart.commerce_cart_items?.length || 0})
               </h4>
               <div className="space-y-2">
-                {cart.commerce_cart_items?.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No items</p>
-                ) : (
-                  cart.commerce_cart_items?.map((item: any) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
-                    >
-                      <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden">
-                        {item.image_url ? (
-                          <img
-                            src={item.image_url}
-                            alt={item.title}
-                            className="h-12 w-12 object-cover"
-                          />
-                        ) : (
-                          <ShoppingCart className="h-5 w-5 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {item.title}
-                        </p>
-                        {item.variant_title && (
-                          <p className="text-xs text-muted-foreground">
-                            {item.variant_title}
-                          </p>
-                        )}
+                {cart.commerce_cart_items?.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
+                  >
+                    <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center shrink-0 overflow-hidden">
+                      {item.image_url ? (
+                        <img
+                          src={item.image_url}
+                          alt={item.title}
+                          className="h-12 w-12 object-cover"
+                        />
+                      ) : (
+                        <ShoppingCart className="h-5 w-5 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {item.title}
+                      </p>
+                      {item.variant_title && (
                         <p className="text-xs text-muted-foreground">
-                          Qty: {item.quantity} × ₹{item.price?.toFixed(2)}
+                          {item.variant_title}
                         </p>
-                      </div>
-                      <p className="text-sm font-medium text-foreground">
-                        ₹{item.total?.toFixed(2)}
+                      )}
+                      <p className="text-xs text-muted-foreground">
+                        Qty: {item.quantity} × ₹{item.price?.toFixed(2)}
                       </p>
                     </div>
-                  ))
-                )}
+                    <p className="text-sm font-medium text-foreground">
+                      ₹{item.total?.toFixed(2)}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
 
