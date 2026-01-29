@@ -25,6 +25,10 @@ import CallerList from "./pages/CallerList";
 import Contacts from "./pages/Contacts";
 import ContactLists from "./pages/ContactLists";
 import Settings from "./pages/Settings";
+import Integrations from "./pages/Integrations";
+import Products from "./pages/Products";
+import Orders from "./pages/Orders";
+import AbandonedCarts from "./pages/AbandonedCarts";
 import SystemLogs from "./pages/SystemLogs";
 
 // Admin Pages
@@ -120,6 +124,26 @@ const App = () => (
             <Route path="/app/contacts/lists" element={
               <ProtectedRoute requiredRole="org">
                 <ContactLists />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/integrations" element={
+              <ProtectedRoute requiredRole="org">
+                <Integrations />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/products" element={
+              <ProtectedRoute requiredRole="org">
+                <Products />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/orders" element={
+              <ProtectedRoute requiredRole="org">
+                <Orders />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/abandoned-carts" element={
+              <ProtectedRoute requiredRole="org">
+                <AbandonedCarts />
               </ProtectedRoute>
             } />
             <Route path="/app/settings" element={

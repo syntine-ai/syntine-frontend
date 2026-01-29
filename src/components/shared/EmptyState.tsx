@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -9,6 +10,7 @@ interface EmptyStateProps {
   description: string;
   actionLabel?: string;
   onAction?: () => void;
+  actionHref?: string;
   secondaryActionLabel?: string;
   onSecondaryAction?: () => void;
   className?: string;
@@ -20,6 +22,7 @@ export function EmptyState({
   description,
   actionLabel,
   onAction,
+  actionHref,
   secondaryActionLabel,
   onSecondaryAction,
   className,
@@ -52,7 +55,12 @@ export function EmptyState({
       </p>
       
       <div className="flex items-center gap-3">
-        {actionLabel && onAction && (
+        {actionLabel && actionHref && (
+          <Button asChild className="gap-2">
+            <Link to={actionHref}>{actionLabel}</Link>
+          </Button>
+        )}
+        {actionLabel && onAction && !actionHref && (
           <Button onClick={onAction} className="gap-2">
             {actionLabel}
           </Button>
