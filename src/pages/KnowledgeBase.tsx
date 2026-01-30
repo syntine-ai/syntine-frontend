@@ -2,16 +2,24 @@ import { useState, useCallback } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Upload, CheckCircle, AlertCircle } from "lucide-react";
+import { FileText, Upload, CheckCircle, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type UploadState = "idle" | "uploading" | "success" | "error";
 
+interface UploadedDocument {
+  id: string;
+  name: string;
+  size: number;
+  uploadDate: Date;
+}
+
 export default function KnowledgeBase() {
   const [file, setFile] = useState<File | null>(null);
   const [uploadState, setUploadState] = useState<UploadState>("idle");
   const [isDragOver, setIsDragOver] = useState(false);
+  const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>([]);
 
   const validateFile = (file: File): boolean => {
     if (file.type !== "application/pdf") {
@@ -66,6 +74,15 @@ export default function KnowledgeBase() {
     // Simulate upload delay
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
+    // Add to uploaded documents list
+    const newDoc: UploadedDocument = {
+      id: Date.now().toString(),
+      name: file.name,
+      size: file.size,
+      uploadDate: new Date(),
+    };
+    setUploadedDocs((prev) => [newDoc, ...prev]); // Add to beginning of list
+
     setUploadState("success");
     toast.success("PDF uploaded successfully");
 
@@ -76,12 +93,30 @@ export default function KnowledgeBase() {
     }, 2000);
   };
 
+  const handleDelete = (id: string) => {
+    setUploadedDocs((prev) => prev.filter((doc) => doc.id !== id));
+    toast.success("Document deleted");
+  };
+
+  const formatDate = (date: Date): string => {
+    return new Intl.DateTimeFormat("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(date);
+  };
+
+  const formatSize = (bytes: number): string => {
+    return (bytes / 1024 / 1024).toFixed(1) + " MB";
+  };
+
   return (
     <PageContainer
       title="Knowledge Base"
       subtitle="Upload PDFs to provide reference material for the system."
     >
-      <div className="flex flex-col items-center justify-center max-w-xl mx-auto">
+      <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Upload Card */}
         <Card className="w-full p-6">
           {/* Upload Area */}
           <label
@@ -157,6 +192,55 @@ export default function KnowledgeBase() {
             {uploadState === "uploading" ? "Uploading..." : "Upload PDF"}
           </Button>
         </Card>
+
+        {/* Uploaded Documents Section */}
+        {uploadedDocs.length > 0 ? (
+          <div className="w-full mt-8">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">
+              Uploaded Documents
+            </h3>
+            <div className="space-y-2">
+              {uploadedDocs.map((doc) => (
+                <Card
+                  key={doc.id}
+                  className="p-4 hover:bg-muted/30 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-primary shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {doc.name}
+                      </p>
+                      <div className="flex items-center gap-2 sm:gap-3 mt-1 flex-wrap">
+                        <p className="text-xs text-muted-foreground">
+                          {formatSize(doc.size)}
+                        </p>
+                        <span className="text-xs text-muted-foreground">•</span>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(doc.uploadDate)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(doc.id)}
+                      className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="w-full text-center py-12 mt-8">
+            <p className="text-sm text-muted-foreground">
+              No documents uploaded yet.
+            </p>
+          </div>
+        )}
       </div>
     </PageContainer>
   );
