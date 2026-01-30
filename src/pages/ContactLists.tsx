@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Plus, Users, ListChecks, Megaphone, Clock } from "lucide-react";
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer, pageItemVariants } from "@/components/layout/PageContainer";
 import { StatCard } from "@/components/shared/StatCard";
 import { ContactListsTable, ContactList } from "@/components/contacts/ContactListsTable";
@@ -86,7 +85,7 @@ export default function ContactLists() {
     toast.info(`Viewing "${list.name}"`, {
       description: `${list.totalContacts.toLocaleString()} contacts in this list.`,
     });
-    // In a real app, navigate to list detail: navigate(`/app/contacts/lists/${list.id}`);
+    // In a real app, navigate to list detail: navigate(`/contacts/lists/${list.id}`);
   };
 
   const handleRenameList = (list: ContactList) => {
@@ -106,8 +105,7 @@ export default function ContactLists() {
   const totalCampaigns = lists.reduce((sum, list) => sum + list.linkedCampaigns, 0);
 
   return (
-    <OrgAppShell>
-      <PageContainer
+    <PageContainer
         title="Contact Lists"
         subtitle="Segment contacts for campaigns"
         actions={
@@ -163,6 +161,5 @@ export default function ContactLists() {
           onOpenChange={setIsCreateModalOpen}
         />
       </PageContainer>
-    </OrgAppShell>
   );
 }

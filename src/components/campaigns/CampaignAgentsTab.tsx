@@ -66,7 +66,7 @@ export function CampaignAgentsTab({ campaignId, campaign, onViewAgent }: Campaig
     if (onViewAgent) {
       onViewAgent(agentId);
     } else {
-      navigate(`/app/agents/${agentId}`);
+      navigate(`/agents/${agentId}`);
     }
   };
 
@@ -84,7 +84,7 @@ export function CampaignAgentsTab({ campaignId, campaign, onViewAgent }: Campaig
             <Plus className="h-4 w-4 mr-2" />
             Attach Agent
           </Button>
-          <Button onClick={() => navigate("/app/agents/new")}>
+          <Button onClick={() => navigate("/agents/new")}>
             <Bot className="h-4 w-4 mr-2" />
             Create New Agent
           </Button>

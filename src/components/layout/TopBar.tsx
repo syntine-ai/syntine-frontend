@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Search, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "react-router-dom";
 import { CommandPalette } from "./CommandPalette";
 import { AdminCommandPalette } from "@/components/admin/AdminCommandPalette";
 import { NotificationDropdown } from "./NotificationDropdown";
 import { UserMenu } from "./UserMenu";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface TopBarProps {
@@ -15,12 +14,12 @@ interface TopBarProps {
 }
 
 const routeLabels: Record<string, string> = {
-  "/app/dashboard": "Dashboard",
-  "/app/campaigns": "Campaigns",
-  "/app/agents": "Agents",
-  "/app/calls": "Call Analytics",
-  "/app/settings": "Settings",
-  "/app/account": "Account",
+  "/dashboard": "Dashboard",
+  "/campaigns": "Campaigns",
+  "/agents": "Agents",
+  "/calls": "Call Analytics",
+  "/settings": "Settings",
+  "/account": "Account",
   "/admin/dashboard": "Dashboard",
   "/admin/organizations": "Organizations",
   "/admin/subscriptions": "Subscriptions",
@@ -48,17 +47,17 @@ export function TopBar({ workspaceName = "Syntine Workspace", variant }: TopBarP
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
   }, []);
-  
+
   const getBreadcrumbs = () => {
     const crumbs: { label: string; path: string }[] = [];
     let currentPath = "";
-    
+
     pathParts.forEach((part) => {
       currentPath += `/${part}`;
       const label = routeLabels[currentPath] || part.charAt(0).toUpperCase() + part.slice(1);
       crumbs.push({ label, path: currentPath });
     });
-    
+
     return crumbs;
   };
 
@@ -71,54 +70,25 @@ export function TopBar({ workspaceName = "Syntine Workspace", variant }: TopBarP
       ) : (
         <CommandPalette variant={variant} />
       )}
-      <motion.header
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
+      <header
         className="h-16 border-b border-border bg-background flex items-center justify-between px-5"
       >
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-foreground">{workspaceName}</span>
-          {breadcrumbs.map((crumb, index) => (
-            <div key={crumb.path} className="flex items-center gap-2">
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              <span
-                className={
-                  index === breadcrumbs.length - 1
-                    ? "text-sm font-medium text-foreground"
-                    : "text-sm text-muted-foreground"
-                }
-              >
-                {crumb.label}
-              </span>
-            </div>
-          ))}
+          {/* Clean header - no breadcrumb navigation */}
         </div>
 
         <div className="flex items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 text-icon hover:text-foreground"
-                onClick={() => setCommandOpen(true)}
-              >
-                <Search className="h-[18px] w-[18px]" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Search <kbd className="ml-1 px-1.5 py-0.5 text-xs bg-muted rounded">⌘K</kbd></p>
-            </TooltipContent>
-          </Tooltip>
-          
+
+
+          <ThemeToggle />
+
           <NotificationDropdown variant={variant} />
-          
+
           <div className="h-8 w-px bg-border mx-1" />
-          
+
           <UserMenu variant={variant} />
         </div>
-      </motion.header>
+      </header>
     </>
   );
 }

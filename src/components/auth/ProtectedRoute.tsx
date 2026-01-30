@@ -46,7 +46,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
   if (requiredRole === "admin" && !isAdmin) {
     // Not an admin, redirect to org dashboard if they have org role
     if (isOrgMember) {
-      return <Navigate to="/app/dashboard" replace />;
+      return <Navigate to="/dashboard" replace />;
     }
     return <Navigate to="/auth" replace />;
   }

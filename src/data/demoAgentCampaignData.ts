@@ -16,6 +16,8 @@ export interface MockAgent {
     resolutionRate?: string;
   };
   canToggle: boolean;
+  editedBy: string;
+  lastUpdated: string;
   details: {
     scenarios: string[];
     dataUsed: string[];
@@ -56,6 +58,8 @@ export const mockAgents: MockAgent[] = [
       successRate: "78%",
     },
     canToggle: true,
+    editedBy: "System",
+    lastUpdated: "01/28/2026, 14:30",
     details: {
       scenarios: [
         "Confirms order details with the customer",
@@ -80,6 +84,8 @@ export const mockAgents: MockAgent[] = [
       successRate: "42%",
     },
     canToggle: true,
+    editedBy: "System",
+    lastUpdated: "01/25/2026, 10:15",
     details: {
       scenarios: [
         "Reminds customer about items left in cart",
@@ -104,6 +110,8 @@ export const mockAgents: MockAgent[] = [
       resolutionRate: "90%",
     },
     canToggle: false,
+    editedBy: "System",
+    lastUpdated: "01/20/2026, 09:00",
     details: {
       scenarios: [
         "Answers customer queries about orders",

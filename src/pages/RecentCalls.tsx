@@ -1,18 +1,16 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { StatCard } from "@/components/shared/StatCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { SkeletonTable } from "@/components/shared/SkeletonTable";
-import { SkeletonCard } from "@/components/shared/SkeletonCard";
 import { Button } from "@/components/ui/button";
 import { CallLogsFiltersPanel, CallLogsFilters } from "@/components/calls/CallLogsFiltersPanel";
 import { CallLogsTable, CallLogEntry } from "@/components/calls/CallLogsTable";
 import { Phone, PhoneIncoming, PhoneMissed, Clock, Download, PhoneOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { useCallLogs } from "@/hooks/useCallLogs";
 import { format } from "date-fns";
+import { demoCallLogs, DemoCallLog } from "@/data/demoOutcomesData";
 
 const defaultFilters: CallLogsFilters = {
   search: "",
@@ -23,43 +21,43 @@ const defaultFilters: CallLogsFilters = {
   dateRange: { from: undefined, to: undefined },
 };
 
-// Map database outcome to display status
-const outcomeToStatus = (outcome: string | null): "answered" | "ended" | "missed" | "failed" => {
+// Map demo outcome to display status
+const outcomeToStatus = (outcome: string): "answered" | "ended" | "missed" | "failed" => {
   switch (outcome) {
-    case "answered":
+    case "confirmed":
+    case "rejected":
+    case "recovered":
+    case "not_recovered":
+    case "handled":
       return "answered";
-    case "no_answer":
+    case "no_response":
       return "missed";
-    case "busy":
-    case "voicemail":
-      return "ended";
-    case "failed":
-      return "failed";
     default:
       return "ended";
   }
 };
 
-// Map database call_type to display format
-const mapCallType = (callType: string | null): "inbound" | "outbound" | "webcall" => {
-  if (callType === "webcall") return "webcall";
+// Map demo call_type to display format
+const mapCallType = (callType: string): "inbound" | "outbound" | "webcall" => {
   if (callType === "inbound") return "inbound";
   return "outbound";
 };
 
 // Format duration from seconds to "M:SS" string
-const formatDuration = (seconds: number | null): string | null => {
-  if (!seconds) return null;
+const formatDuration = (seconds: number): string => {
+  if (!seconds) return "0:00";
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 };
 
 const RecentCalls = () => {
-  const { calls, isLoading } = useCallLogs();
   const [filters, setFilters] = useState<CallLogsFilters>(defaultFilters);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  // Loading state simulation (optional, can be removed for instant load)
+  const isLoading = false;
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -70,34 +68,32 @@ const RecentCalls = () => {
     }
   };
 
-  // Transform database calls to CallLogEntry format
+  // Transform demo calls to CallLogEntry format
   const callLogs: CallLogEntry[] = useMemo(() => {
-    return calls.map((call) => ({
+    return demoCallLogs.map((call) => ({
       id: call.id,
-      caller: call.contact_name || "Unknown",
-      fromNumber: call.from_number || null,
-      toNumber: call.to_number || null,
-      callType: mapCallType(call.call_type),
+      caller: call.customerName || "Unknown",
+      fromNumber: call.fromNumber,
+      toNumber: call.toNumber,
+      callType: mapCallType(call.callType),
       status: outcomeToStatus(call.outcome),
-      duration: formatDuration(call.duration_seconds),
-      agent: call.agent_name || "Unknown Agent",
-      startedAt: call.created_at
-        ? format(new Date(call.created_at), "dd/MM/yyyy, hh:mm a")
-        : "N/A",
+      duration: formatDuration(call.duration),
+      agent: call.agent,
+      startedAt: format(new Date(call.createdAt), "dd/MM/yyyy, hh:mm a"),
     }));
-  }, [calls]);
+  }, []);
 
   // Get unique agents for filter
   const agentOptions = useMemo(() => {
     const uniqueAgents = new Set<string>();
     uniqueAgents.add("All Agents");
-    calls.forEach((call) => {
-      if (call.agent_name) {
-        uniqueAgents.add(call.agent_name);
+    demoCallLogs.forEach((call) => {
+      if (call.agent) {
+        uniqueAgents.add(call.agent);
       }
     });
     return Array.from(uniqueAgents);
-  }, [calls]);
+  }, []);
 
   const filteredLogs = useMemo(() => {
     let result = [...callLogs];
@@ -139,7 +135,6 @@ const RecentCalls = () => {
     // Date range filter
     if (filters.dateRange.from || filters.dateRange.to) {
       result = result.filter((log) => {
-        if (log.startedAt === "N/A") return false;
         // Parse the date from "dd/MM/yyyy, hh:mm a" format
         const parts = log.startedAt.split(",")[0].split("/");
         const logDate = new Date(
@@ -163,12 +158,8 @@ const RecentCalls = () => {
         } else if (sortColumn === "startedAt") {
           const aParts = a.startedAt.split(",")[0].split("/");
           const bParts = b.startedAt.split(",")[0].split("/");
-          aVal = a.startedAt !== "N/A"
-            ? new Date(parseInt(aParts[2]), parseInt(aParts[1]) - 1, parseInt(aParts[0])).getTime()
-            : 0;
-          bVal = b.startedAt !== "N/A"
-            ? new Date(parseInt(bParts[2]), parseInt(bParts[1]) - 1, parseInt(bParts[0])).getTime()
-            : 0;
+          aVal = new Date(parseInt(aParts[2]), parseInt(aParts[1]) - 1, parseInt(aParts[0])).getTime();
+          bVal = new Date(parseInt(bParts[2]), parseInt(bParts[1]) - 1, parseInt(bParts[0])).getTime();
         } else {
           return 0;
         }
@@ -184,7 +175,7 @@ const RecentCalls = () => {
     const answered = callLogs.filter((l) => l.status === "answered").length;
     const missed = callLogs.filter((l) => l.status === "missed").length;
 
-    const callsWithDuration = callLogs.filter((l) => l.duration);
+    const callsWithDuration = callLogs.filter((l) => l.duration !== "0:00");
     const totalDurationSec = callsWithDuration.reduce((acc, l) => {
       if (!l.duration) return acc;
       const [m, s] = l.duration.split(":").map(Number);
@@ -257,94 +248,84 @@ const RecentCalls = () => {
     filters.dateRange.to;
 
   return (
-    <OrgAppShell>
-      <PageContainer
-        title="Recent Calls"
-        subtitle="Monitor and inspect all AI-driven calls"
+    <PageContainer
+      title="Recent Calls"
+      subtitle="Monitor and inspect all AI-driven calls"
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
       >
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-6"
-        >
-          {/* Stats Row */}
-          {isLoading ? (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <SkeletonCard key={i} className="h-[100px]" />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard
-                title="Total Calls"
-                value={stats.total}
-                icon={Phone}
-                iconColor="primary"
-              />
-              <StatCard
-                title="Answered"
-                value={stats.answered}
-                icon={PhoneIncoming}
-                iconColor="success"
-              />
-              <StatCard
-                title="Missed"
-                value={stats.missed}
-                icon={PhoneMissed}
-                iconColor="warning"
-              />
-              <StatCard
-                title="Avg Duration"
-                value={stats.avgDuration}
-                icon={Clock}
-                iconColor="primary"
-              />
-            </div>
-          )}
-
-          {/* Header Actions */}
-          <div className="flex items-center justify-end">
-            <Button variant="outline" onClick={handleExport} className="gap-2">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-          </div>
-
-          {/* Filters */}
-          <CallLogsFiltersPanel
-            filters={filters}
-            onFiltersChange={setFilters}
-            onClearFilters={() => setFilters(defaultFilters)}
-            agentOptions={agentOptions}
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            title="Total Calls"
+            value={stats.total}
+            icon={Phone}
+            iconColor="primary"
           />
+          <StatCard
+            title="Answered"
+            value={stats.answered}
+            icon={PhoneIncoming}
+            iconColor="success"
+          />
+          <StatCard
+            title="Missed"
+            value={stats.missed}
+            icon={PhoneMissed}
+            iconColor="warning"
+          />
+          <StatCard
+            title="Avg Duration"
+            value={stats.avgDuration}
+            icon={Clock}
+            iconColor="primary"
+          />
+        </div>
 
-          {/* Table */}
-          {isLoading ? (
-            <SkeletonTable rows={8} columns={8} />
-          ) : filteredLogs.length === 0 ? (
-            <EmptyState
-              icon={PhoneOff}
-              title="No calls found"
-              description={
-                hasActiveFilters
-                  ? "Try adjusting your filters to find what you're looking for."
-                  : "Call logs will appear here once your agents start making calls."
-              }
-              actionLabel={hasActiveFilters ? "Clear Filters" : undefined}
-              onAction={hasActiveFilters ? () => setFilters(defaultFilters) : undefined}
-            />
-          ) : (
-            <CallLogsTable
-              logs={filteredLogs}
-              sortColumn={sortColumn}
-              sortDirection={sortDirection}
-              onSort={handleSort}
-            />
-          )}
-        </motion.div>
-      </PageContainer>
-    </OrgAppShell>
+        {/* Header Actions */}
+        <div className="flex items-center justify-end">
+          <Button variant="outline" onClick={handleExport} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+        </div>
+
+        {/* Filters */}
+        <CallLogsFiltersPanel
+          filters={filters}
+          onFiltersChange={setFilters}
+          onClearFilters={() => setFilters(defaultFilters)}
+          agentOptions={agentOptions}
+        />
+
+        {/* Table */}
+        {isLoading ? (
+          <SkeletonTable rows={8} columns={8} />
+        ) : filteredLogs.length === 0 ? (
+          <EmptyState
+            icon={PhoneOff}
+            title="No calls found"
+            description={
+              hasActiveFilters
+                ? "Try adjusting your filters to find what you're looking for."
+                : "Call logs will appear here once your agents start making calls."
+            }
+            actionLabel={hasActiveFilters ? "Clear Filters" : undefined}
+            onAction={hasActiveFilters ? () => setFilters(defaultFilters) : undefined}
+          />
+        ) : (
+          <CallLogsTable
+            logs={filteredLogs}
+            sortColumn={sortColumn}
+            sortDirection={sortDirection}
+            onSort={handleSort}
+          />
+        )}
+      </motion.div>
+    </PageContainer>
   );
 };
 

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -15,15 +14,9 @@ import {
 import { SettingsCard } from "@/components/settings/SettingsCard";
 import { LogsTable, LogEntry } from "@/components/settings/LogsTable";
 import { LogDetailsDrawer } from "@/components/settings/LogDetailsDrawer";
-import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { SkeletonCard } from "@/components/shared/SkeletonCard";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Building2,
-  Phone,
-  RefreshCw,
-  Palette,
-} from "lucide-react";
+import { Building2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -190,229 +183,129 @@ const Settings = () => {
 
   if (isLoading) {
     return (
-      <OrgAppShell>
-        <PageContainer
-          title="Settings"
-          subtitle="Loading settings..."
-        >
-          <div className="max-w-3xl space-y-6">
-            <SkeletonCard className="h-[200px]" />
-            <SkeletonCard className="h-[150px]" />
-            <SkeletonCard className="h-[100px]" />
-          </div>
-        </PageContainer>
-      </OrgAppShell>
+      <PageContainer
+        title="Settings"
+        subtitle="Loading settings..."
+      >
+        <div className="max-w-3xl space-y-6">
+          <SkeletonCard className="h-[200px]" />
+          <SkeletonCard className="h-[150px]" />
+          <SkeletonCard className="h-[100px]" />
+        </div>
+      </PageContainer>
     );
   }
 
   return (
-    <OrgAppShell>
-      <PageContainer
-        title="Settings"
-        subtitle="Manage workspace preferences, integrations, usage, and system logs."
-      >
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="mb-6 bg-muted/50">
-            <TabsTrigger value="general">General</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
-            <TabsTrigger value="logs">System Logs</TabsTrigger>
-          </TabsList>
+    <PageContainer
+      title="Settings"
+      subtitle="Manage workspace preferences, integrations, usage, and system logs."
+    >
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="mb-6 bg-muted/50">
+          <TabsTrigger value="general">General</TabsTrigger>
+          <TabsTrigger value="logs">System Logs</TabsTrigger>
+        </TabsList>
 
-          <AnimatePresence mode="wait">
-            {/* General Tab */}
-            <TabsContent value="general" className="mt-0">
-              <motion.div
-                key="general"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="max-w-3xl space-y-6"
+        <AnimatePresence mode="wait">
+          {/* General Tab */}
+          <TabsContent value="general" className="mt-0">
+            <motion.div
+              key="general"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="max-w-3xl space-y-6"
+            >
+              <SettingsCard
+                title="Organization Profile"
+                description="Basic information about your organization"
+                icon={Building2}
+                delay={0}
               >
-                <SettingsCard
-                  title="Organization Profile"
-                  description="Basic information about your organization"
-                  icon={Building2}
-                  delay={0}
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="orgName">Organization Name</Label>
-                      <Input
-                        id="orgName"
-                        value={orgName}
-                        onChange={(e) => setOrgName(e.target.value)}
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="contactEmail">Primary Contact Email</Label>
-                      <Input
-                        id="contactEmail"
-                        type="email"
-                        value={contactEmail}
-                        onChange={(e) => setContactEmail(e.target.value)}
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div className="md:col-span-2">
-                      <Label htmlFor="timezone">Timezone</Label>
-                      <Select value={timezone} onValueChange={setTimezone}>
-                        <SelectTrigger className="mt-1.5">
-                          <SelectValue placeholder="Select timezone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timezones.map((tz) => (
-                            <SelectItem key={tz} value={tz}>
-                              {tz}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </SettingsCard>
-
-                <SettingsCard
-                  title="Calling Preferences"
-                  description="Configure default calling behavior"
-                  icon={Phone}
-                  delay={0.1}
-                >
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="callerId">Default Caller ID</Label>
-                      <Input
-                        id="callerId"
-                        value={callerId}
-                        onChange={(e) => setCallerId(e.target.value)}
-                        className="mt-1.5"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="businessStart">Business Hours Start</Label>
-                        <Input
-                          id="businessStart"
-                          type="time"
-                          value={businessStart}
-                          onChange={(e) => setBusinessStart(e.target.value)}
-                          className="mt-1.5"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="businessEnd">Business Hours End</Label>
-                        <Input
-                          id="businessEnd"
-                          type="time"
-                          value={businessEnd}
-                          onChange={(e) => setBusinessEnd(e.target.value)}
-                          className="mt-1.5"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </SettingsCard>
-
-                <SettingsCard
-                  title="Auto-Refresh"
-                  description="Control how data updates in your dashboard"
-                  icon={RefreshCw}
-                  delay={0.2}
-                >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="autoRefresh">Dashboard Auto-Refresh</Label>
-                    <Select value={autoRefresh} onValueChange={setAutoRefresh}>
-                      <SelectTrigger className="mt-1.5 w-full md:w-[200px]">
-                        <SelectValue placeholder="Select interval" />
+                    <Label htmlFor="orgName">Organization Name</Label>
+                    <Input
+                      id="orgName"
+                      value={orgName}
+                      onChange={(e) => setOrgName(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="contactEmail">Primary Contact Email</Label>
+                    <Input
+                      id="contactEmail"
+                      type="email"
+                      value={contactEmail}
+                      onChange={(e) => setContactEmail(e.target.value)}
+                      className="mt-1.5"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="timezone">Timezone</Label>
+                    <Select value={timezone} onValueChange={setTimezone}>
+                      <SelectTrigger className="mt-1.5">
+                        <SelectValue placeholder="Select timezone" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="off">Off</SelectItem>
-                        <SelectItem value="5">5 seconds</SelectItem>
-                        <SelectItem value="10">10 seconds</SelectItem>
-                        <SelectItem value="30">30 seconds</SelectItem>
-                        <SelectItem value="60">60 seconds</SelectItem>
+                        {timezones.map((tz) => (
+                          <SelectItem key={tz} value={tz}>
+                            {tz}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Automatically refresh dashboard metrics at the selected
-                      interval
-                    </p>
                   </div>
-                </SettingsCard>
-
-                <div className="flex justify-end pt-2">
-                  <Button onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? "Saving..." : "Save Changes"}
-                  </Button>
                 </div>
-              </motion.div>
-            </TabsContent>
+              </SettingsCard>
+              <div className="flex justify-end pt-2">
+                <Button onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </motion.div>
+          </TabsContent>
 
-            {/* Appearance Tab */}
-            <TabsContent value="appearance" className="mt-0">
-              <motion.div
-                key="appearance"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="max-w-3xl space-y-6"
-              >
-                <SettingsCard
-                  title="Theme"
-                  description="Customize the visual appearance of the interface"
-                  icon={Palette}
-                  delay={0}
-                >
-                  <div className="space-y-4">
-                    <ThemeToggle />
-                    <p className="text-xs text-muted-foreground">
-                      Choose your preferred color scheme. Your preference is saved automatically.
-                    </p>
-                  </div>
-                </SettingsCard>
-              </motion.div>
-            </TabsContent>
+          {/* System Logs Tab */}
+          <TabsContent value="logs" className="mt-0">
+            <motion.div
+              key="logs"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-4"
+            >
+              <div className="mb-2">
+                <h3 className="text-lg font-semibold text-foreground">
+                  System Logs
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  View internal system events for debugging and observability
+                </p>
+              </div>
 
-            {/* System Logs Tab */}
-            <TabsContent value="logs" className="mt-0">
-              <motion.div
-                key="logs"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.2 }}
-                className="space-y-4"
-              >
-                <div className="mb-2">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    System Logs
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    View internal system events for debugging and observability
-                  </p>
+              {logs.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  No system logs available
                 </div>
+              ) : (
+                <LogsTable logs={logs} onViewDetails={handleViewLogDetails} />
+              )}
+            </motion.div>
+          </TabsContent>
+        </AnimatePresence>
+      </Tabs>
 
-                {logs.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    No system logs available
-                  </div>
-                ) : (
-                  <LogsTable logs={logs} onViewDetails={handleViewLogDetails} />
-                )}
-              </motion.div>
-            </TabsContent>
-          </AnimatePresence>
-        </Tabs>
-
-        <LogDetailsDrawer
-          log={selectedLog}
-          open={drawerOpen}
-          onOpenChange={setDrawerOpen}
-        />
-      </PageContainer>
-    </OrgAppShell>
+      <LogDetailsDrawer
+        log={selectedLog}
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+      />
+    </PageContainer>
   );
 };
 

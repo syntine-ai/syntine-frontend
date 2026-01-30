@@ -53,8 +53,8 @@ export function UserMenu({ variant }: UserMenuProps) {
         { label: "Admin Settings", route: "/admin/settings", icon: Settings },
       ]
     : [
-        { label: "View Account", route: "/app/account", icon: User },
-        { label: "Settings", route: "/app/settings", icon: Settings },
+        { label: "View Account", route: "/account", icon: User },
+        { label: "Settings", route: "/settings", icon: Settings },
       ];
 
   return (

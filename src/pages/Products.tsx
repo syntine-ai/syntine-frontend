@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -71,8 +70,7 @@ const Products = () => {
   };
 
   return (
-    <OrgAppShell>
-      <PageContainer
+    <PageContainer
         title="Products"
         subtitle="Read-only view of your synced product catalog"
       >
@@ -214,7 +212,6 @@ const Products = () => {
           onOpenChange={setDrawerOpen}
         />
       </PageContainer>
-    </OrgAppShell>
   );
 };
 

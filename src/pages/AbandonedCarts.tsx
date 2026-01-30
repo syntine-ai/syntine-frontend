@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -73,8 +72,7 @@ const AbandonedCarts = () => {
   };
 
   return (
-    <OrgAppShell>
-      <PageContainer
+    <PageContainer
         title="Abandoned Carts"
         subtitle="Track abandoned carts for recovery campaigns"
       >
@@ -211,7 +209,6 @@ const AbandonedCarts = () => {
           onOpenChange={setDrawerOpen}
         />
       </PageContainer>
-    </OrgAppShell>
   );
 };
 

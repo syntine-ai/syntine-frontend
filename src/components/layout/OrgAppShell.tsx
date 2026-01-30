@@ -14,7 +14,8 @@ interface OrgAppShellProps {
 }
 
 function OrgAppShellContent({ children }: OrgAppShellProps) {
-  const { isCollapsed, toggleSidebar } = useSidebar();
+  // Force sidebar to be always collapsed as per user request
+  const isCollapsed = true;
   const { organization, isLoading } = useAuth();
 
   // Get initials from organization name
@@ -38,67 +39,26 @@ function OrgAppShellContent({ children }: OrgAppShellProps) {
       {/* Sidebar */}
       <motion.aside
         initial={false}
-        animate={{ width: isCollapsed ? 72 : 240 }}
+        animate={{ width: 72 }}
         transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
         className="bg-sidebar flex flex-col fixed h-screen z-40 overflow-hidden"
       >
         {/* Header */}
-        <div className="h-16 flex items-center justify-between px-3 border-b border-sidebar-border">
+        <div className="h-16 flex items-center justify-center px-3 border-b border-sidebar-border">
           <motion.div
             className="flex items-center gap-3 overflow-hidden"
-            animate={{ justifyContent: isCollapsed ? "center" : "flex-start" }}
+            animate={{ justifyContent: "center" }}
           >
-            <div className="h-9 w-9 rounded-xl bg-primary flex items-center justify-center shrink-0">
-              <Zap className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <AnimatePresence mode="wait">
-              {!isCollapsed && (
-                <motion.span
-                  initial={{ opacity: 0, width: 0 }}
-                  animate={{ opacity: 1, width: "auto" }}
-                  exit={{ opacity: 0, width: 0 }}
-                  transition={{ duration: 0.2 }}
-                  className="text-lg font-semibold text-sidebar-foreground tracking-tight whitespace-nowrap"
-                >
-                  Syntine
-                </motion.span>
-              )}
-            </AnimatePresence>
+            <img
+              src="/logo.png"
+              alt="Syntine"
+              className="h-8 w-8 rounded-lg shrink-0"
+            />
           </motion.div>
-          
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={toggleSidebar}
-            className={cn(
-              "h-8 w-8 text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent shrink-0",
-              isCollapsed && "hidden"
-            )}
-          >
-            <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-              <PanelLeftClose className="h-5 w-5" />
-            </motion.div>
-          </Button>
         </div>
 
-        {/* Collapsed Toggle */}
-        {isCollapsed && (
-          <div className="flex justify-center py-3 border-b border-sidebar-border">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleSidebar}
-              className="h-8 w-8 text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent"
-            >
-              <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-                <Menu className="h-5 w-5" />
-              </motion.div>
-            </Button>
-          </div>
-        )}
-
         {/* Navigation */}
-        <SidebarNavigation variant="org" />
+        <SidebarNavigation isCollapsed={true} />
 
         {/* Footer - Organization Info */}
         <div className="p-3 border-t border-sidebar-border">
@@ -168,17 +128,16 @@ function OrgAppShellContent({ children }: OrgAppShellProps) {
         </div>
       </motion.aside>
 
-      {/* Main content area */}
-      <motion.div
-        className="flex-1"
-        animate={{ marginLeft: isCollapsed ? 72 : 240 }}
-        transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-      >
-        <TopBar workspaceName={organization?.name || "Organization"} variant="org" />
-        <main className="bg-background min-h-[calc(100vh-64px)]">
+      {/* Main content area - static margin since sidebar is fixed */}
+      <div className="flex-1 flex flex-col min-h-screen ml-[72px]">
+        {/* Sticky Header */}
+        <div className="sticky top-0 z-30 bg-background">
+          <TopBar workspaceName={organization?.name || "Organization"} variant="org" />
+        </div>
+        <main className="bg-background flex-1">
           {children}
         </main>
-      </motion.div>
+      </div>
     </div>
   );
 }

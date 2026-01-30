@@ -59,17 +59,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select("*")
         .eq("user_id", userId)
         .maybeSingle();
-      
+
       if (profileData) {
         setProfile(profileData as Profile);
-        
+
         // Fetch organization using the profile's organization_id
         const { data: orgData } = await supabase
           .from("organizations")
           .select("id, name, plan, status, email, domain")
           .eq("id", profileData.organization_id)
           .maybeSingle();
-        
+
         if (orgData) {
           setOrganization(orgData as Organization);
         }
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .from("user_roles")
         .select("role")
         .eq("user_id", userId);
-      
+
       if (rolesData) {
         setRoles(rolesData.map(r => r.role as AppRole));
       }
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (event, currentSession) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
-        
+
         // Defer Supabase calls with setTimeout to prevent deadlock
         if (currentSession?.user) {
           setTimeout(() => {
@@ -105,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setProfile(null);
           setRoles([]);
         }
-        
+
         setIsLoading(false);
       }
     );
@@ -114,11 +114,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: existingSession } }) => {
       setSession(existingSession);
       setUser(existingSession?.user ?? null);
-      
+
       if (existingSession?.user) {
         fetchUserData(existingSession.user.id);
       }
-      
+
       setIsLoading(false);
     });
 
@@ -149,13 +149,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (
-    email: string, 
-    password: string, 
+    email: string,
+    password: string,
     metadata: { firstName: string; lastName: string; organizationName: string }
   ): Promise<{ error: string | null }> => {
     try {
       const redirectUrl = `${window.location.origin}/auth`;
-      
+
       const { error } = await supabase.auth.signUp({
         email: email.trim().toLowerCase(),
         password,
@@ -195,19 +195,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isOrgMember = roles.some(r => ["org_owner", "org_admin", "org_member"].includes(r));
 
   return (
-    <AuthContext.Provider 
-      value={{ 
-        user, 
-        session, 
-        profile, 
+    <AuthContext.Provider
+      value={{
+        user,
+        session,
+        profile,
         organization,
-        roles, 
-        isLoading, 
+        roles,
+        isLoading,
         isAdmin,
         isOrgMember,
-        signIn, 
-        signUp, 
-        signOut 
+        signIn,
+        signUp,
+        signOut
       }}
     >
       {children}

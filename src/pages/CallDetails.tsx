@@ -1,6 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -73,21 +72,19 @@ const CallDetails = () => {
 
   if (!callData) {
     return (
-      <OrgAppShell>
-        <PageContainer title="Call Details" subtitle="Call not found">
+      <PageContainer title="Call Details" subtitle="Call not found">
           <div className="flex flex-col items-center justify-center py-16">
             <p className="text-muted-foreground mb-4">
               The requested call could not be found.
             </p>
             <Button asChild>
-              <Link to="/app/calls">
+              <Link to="/calls">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Call Logs
               </Link>
             </Button>
           </div>
         </PageContainer>
-      </OrgAppShell>
     );
   }
 
@@ -102,8 +99,7 @@ const CallDetails = () => {
   };
 
   return (
-    <OrgAppShell>
-      <PageContainer title="Call Details" subtitle="View call outcome, context, and transcript">
+    <PageContainer title="Call Details" subtitle="View call outcome, context, and transcript">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -111,7 +107,7 @@ const CallDetails = () => {
         >
           {/* Back Button */}
           <Button variant="ghost" asChild className="-ml-2">
-            <Link to="/app/calls">
+            <Link to="/calls">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Call Logs
             </Link>
@@ -157,7 +153,7 @@ const CallDetails = () => {
                       {callData.relatedTo === "order" ? "Order" : "Cart"}
                     </p>
                     <Link
-                      to={callData.relatedTo === "order" ? `/app/orders` : `/app/abandoned-carts`}
+                      to={callData.relatedTo === "order" ? `/orders` : `/abandoned-carts`}
                       className="text-primary hover:underline font-mono font-medium"
                     >
                       {callData.relatedId}
@@ -177,7 +173,7 @@ const CallDetails = () => {
                     <div>
                       <p className="text-xs text-muted-foreground uppercase tracking-wide">Campaign</p>
                       <Link
-                        to={`/app/campaigns/${callData.campaign.toLowerCase().replace(/ /g, "_")}_campaign`}
+                        to={`/campaigns/${callData.campaign.toLowerCase().replace(/ /g, "_")}_campaign`}
                         className="text-foreground hover:text-primary font-medium"
                       >
                         {callData.campaign}
@@ -196,7 +192,7 @@ const CallDetails = () => {
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wide">Agent</p>
                   <Link
-                    to={`/app/agents/${callData.agent.toLowerCase().replace(/ /g, "_")}`}
+                    to={`/agents/${callData.agent.toLowerCase().replace(/ /g, "_")}`}
                     className="text-foreground hover:text-primary font-medium"
                   >
                     {callData.agent}
@@ -355,7 +351,6 @@ const CallDetails = () => {
           </motion.div>
         </motion.div>
       </PageContainer>
-    </OrgAppShell>
   );
 };
 

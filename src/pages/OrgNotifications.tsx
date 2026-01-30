@@ -1,4 +1,3 @@
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { NotificationList } from "@/components/notifications/NotificationList";
 import { NotificationData } from "@/components/notifications/NotificationItem";
@@ -56,8 +55,7 @@ const mockNotifications: NotificationData[] = [
 
 export default function OrgNotifications() {
   return (
-    <OrgAppShell>
-      <PageContainer
+    <PageContainer
         title="Notifications"
         subtitle="Your activity updates and alerts"
       >
@@ -65,6 +63,5 @@ export default function OrgNotifications() {
           <NotificationList notifications={mockNotifications} variant="org" />
         </div>
       </PageContainer>
-    </OrgAppShell>
   );
 }

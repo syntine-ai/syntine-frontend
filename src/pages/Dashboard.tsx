@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { GlobalDateFilter } from "@/components/dashboard/GlobalDateFilter";
@@ -37,116 +36,114 @@ const Dashboard = () => {
   const [dateFilter, setDateFilter] = useState<DashboardDatePreset>("7d");
 
   return (
-    <OrgAppShell>
-      <PageContainer
-        title="Outcomes Overview"
-        subtitle="Track how AI voice calls impact orders, carts, and revenue."
+    <PageContainer
+      title="Outcomes Overview"
+      subtitle="Track how AI voice calls impact orders, carts, and revenue."
+    >
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-6"
       >
+        {/* Header Row */}
         <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="space-y-6"
+          variants={itemVariants}
+          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
         >
-          {/* Header Row */}
-          <motion.div
-            variants={itemVariants}
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-          >
-            <div className="flex items-center gap-4">
-              <GlobalDateFilter
-                value={dateFilter}
-                onChange={(v) => {
-                  if (v === "7d" || v === "30d" || v === "90d") {
-                    setDateFilter(v);
-                  }
-                }}
-              />
-              <SystemStatusPills compact />
-            </div>
-          </motion.div>
-
-          {/* Primary KPI Cards */}
-          <motion.div variants={itemVariants}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-              <MetricCard
-                label="Revenue Recovered"
-                value={formatCurrency(demoOutcomeMetrics.revenueRecovered)}
-                caption="From confirmed orders & recovered carts"
-                icon={IndianRupee}
-                variant="primary"
-              />
-              <MetricCard
-                label="COD Orders Confirmed"
-                value={demoOutcomeMetrics.codOrdersConfirmed.toString()}
-                caption="Voice-confirmed before dispatch"
-                icon={CheckCircle2}
-              />
-              <MetricCard
-                label="Carts Recovered"
-                value={demoOutcomeMetrics.abandonedCartsRecovered.toString()}
-                caption="Customers returned to checkout"
-                icon={ShoppingCart}
-              />
-              <MetricCard
-                label="RTO Prevented"
-                value={formatCurrency(demoOutcomeMetrics.estimatedRtoPrevented)}
-                caption="Orders confirmed via voice"
-                icon={ShieldCheck}
-              />
-              <MetricCard
-                label="Calls Connected"
-                value={`${demoOutcomeMetrics.callsConnectedRate}%`}
-                caption="Of total outbound calls"
-                icon={PhoneCall}
-              />
-            </div>
-          </motion.div>
-
-          {/* Secondary KPI Row */}
-          <motion.div variants={itemVariants}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <MetricCard
-                label="Total Calls Made"
-                value={demoOutcomeMetrics.totalCallsMade.toString()}
-                icon={PhoneCall}
-                variant="secondary"
-              />
-              <MetricCard
-                label="No Response"
-                value={`${demoOutcomeMetrics.noResponseRate}%`}
-                icon={PhoneOff}
-                variant="secondary"
-              />
-              <MetricCard
-                label="Inbound Handled"
-                value={demoOutcomeMetrics.inboundCallsHandled.toString()}
-                icon={PhoneIncoming}
-                variant="secondary"
-              />
-            </div>
-          </motion.div>
-
-          {/* Outcomes Chart */}
-          <motion.div variants={itemVariants}>
-            <OutcomePerformanceChart />
-          </motion.div>
-
-          {/* Campaign Performance Cards */}
-          <motion.div variants={itemVariants}>
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold text-foreground">
-                Campaign Performance
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Transactional campaigns for orders and carts
-              </p>
-            </div>
-            <CampaignPerformanceCards />
-          </motion.div>
+          <div className="flex items-center gap-4">
+            <GlobalDateFilter
+              value={dateFilter}
+              onChange={(v) => {
+                if (v === "7d" || v === "30d" || v === "90d") {
+                  setDateFilter(v);
+                }
+              }}
+            />
+            <SystemStatusPills compact />
+          </div>
         </motion.div>
-      </PageContainer>
-    </OrgAppShell>
+
+        {/* Primary KPI Cards */}
+        <motion.div variants={itemVariants}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <MetricCard
+              label="Revenue Recovered"
+              value={formatCurrency(demoOutcomeMetrics.revenueRecovered)}
+              caption="From confirmed orders & recovered carts"
+              icon={IndianRupee}
+              variant="primary"
+            />
+            <MetricCard
+              label="COD Orders Confirmed"
+              value={demoOutcomeMetrics.codOrdersConfirmed.toString()}
+              caption="Voice-confirmed before dispatch"
+              icon={CheckCircle2}
+            />
+            <MetricCard
+              label="Carts Recovered"
+              value={demoOutcomeMetrics.abandonedCartsRecovered.toString()}
+              caption="Customers returned to checkout"
+              icon={ShoppingCart}
+            />
+            <MetricCard
+              label="RTO Prevented"
+              value={formatCurrency(demoOutcomeMetrics.estimatedRtoPrevented)}
+              caption="Orders confirmed via voice"
+              icon={ShieldCheck}
+            />
+            <MetricCard
+              label="Calls Connected"
+              value={`${demoOutcomeMetrics.callsConnectedRate}%`}
+              caption="Of total outbound calls"
+              icon={PhoneCall}
+            />
+          </div>
+        </motion.div>
+
+        {/* Secondary KPI Row */}
+        <motion.div variants={itemVariants}>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <MetricCard
+              label="Total Calls Made"
+              value={demoOutcomeMetrics.totalCallsMade.toString()}
+              icon={PhoneCall}
+              variant="secondary"
+            />
+            <MetricCard
+              label="No Response"
+              value={`${demoOutcomeMetrics.noResponseRate}%`}
+              icon={PhoneOff}
+              variant="secondary"
+            />
+            <MetricCard
+              label="Inbound Handled"
+              value={demoOutcomeMetrics.inboundCallsHandled.toString()}
+              icon={PhoneIncoming}
+              variant="secondary"
+            />
+          </div>
+        </motion.div>
+
+        {/* Outcomes Chart */}
+        <motion.div variants={itemVariants}>
+          <OutcomePerformanceChart />
+        </motion.div>
+
+        {/* Campaign Performance Cards */}
+        <motion.div variants={itemVariants}>
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-foreground">
+              Campaign Performance
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Transactional campaigns for orders and carts
+            </p>
+          </div>
+          <CampaignPerformanceCards />
+        </motion.div>
+      </motion.div>
+    </PageContainer>
   );
 };
 

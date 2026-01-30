@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { UserPlus, Users, UserCheck, ThumbsUp, PhoneOff } from "lucide-react";
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer, pageItemVariants } from "@/components/layout/PageContainer";
 import { StatCard } from "@/components/shared/StatCard";
 import { ContactsFiltersBar } from "@/components/contacts/ContactsFiltersBar";
@@ -178,8 +177,7 @@ export default function Contacts() {
   };
 
   return (
-    <OrgAppShell>
-      <PageContainer
+    <PageContainer
         title="Contacts"
         subtitle="Manage people your AI agents call"
         actions={
@@ -318,6 +316,5 @@ export default function Contacts() {
           onImport={handleImportContacts}
         />
       </PageContainer>
-    </OrgAppShell>
   );
 }

@@ -5,11 +5,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { OrgLayout } from "@/components/layout/OrgLayout";
 
 // Public Pages
-import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
-import AdminLogin from "./pages/AdminLogin";
 
 // Org Pages
 import Dashboard from "./pages/Dashboard";
@@ -31,21 +30,9 @@ import Orders from "./pages/Orders";
 import AbandonedCarts from "./pages/AbandonedCarts";
 import SystemLogs from "./pages/SystemLogs";
 
-// Admin Pages
-import AdminDashboard from "./pages/AdminDashboard";
-import Organizations from "./pages/Organizations";
-import OrganizationDetail from "./pages/OrganizationDetail";
-import Subscriptions from "./pages/Subscriptions";
-import Sessions from "./pages/Sessions";
-import System from "./pages/System";
-import AdminActivity from "./pages/AdminActivity";
-import AdminProfile from "./pages/AdminProfile";
-import AdminSettings from "./pages/AdminSettings";
-
 // Account Pages
 import Account from "./pages/Account";
 import OrgNotifications from "./pages/OrgNotifications";
-import AdminNotifications from "./pages/AdminNotifications";
 
 import NotFound from "./pages/NotFound";
 
@@ -60,170 +47,40 @@ const App = () => (
         <AuthProvider>
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<Landing />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/login" element={<Navigate to="/auth" replace />} />
-            <Route path="/admin/login" element={<AdminLogin />} />
-            
-            {/* Protected Organization Routes - /app/* */}
-            <Route path="/app" element={
+            <Route path="/" element={<Auth />} />
+            <Route path="/auth" element={<Navigate to="/" replace />} />
+            <Route path="/login" element={<Navigate to="/" replace />} />
+            {/* Admin login deleted, redirect to home */}
+            <Route path="/admin/login" element={<Navigate to="/" replace />} />
+
+            {/* Protected Organization Routes - direct paths without /app prefix */}
+            {/* Layout wraps all org pages via Outlet */}
+            <Route element={
               <ProtectedRoute requiredRole="org">
-                <Navigate to="/app/dashboard" replace />
+                <OrgLayout />
               </ProtectedRoute>
-            } />
-            <Route path="/app/dashboard" element={
-              <ProtectedRoute requiredRole="org">
-                <Dashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/campaigns" element={
-              <ProtectedRoute requiredRole="org">
-                <Campaigns />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/campaigns/:id" element={
-              <ProtectedRoute requiredRole="org">
-                <CampaignDetail />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/agents" element={
-              <ProtectedRoute requiredRole="org">
-                <Agents />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/agents/:id" element={
-              <ProtectedRoute requiredRole="org">
-                <AgentDetail />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/calls" element={
-              <ProtectedRoute requiredRole="org">
-                <RecentCalls />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/calls/:callId" element={
-              <ProtectedRoute requiredRole="org">
-                <CallDetails />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/calls/logs" element={
-              <ProtectedRoute requiredRole="org">
-                <CallLogs />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/calls/callers" element={
-              <ProtectedRoute requiredRole="org">
-                <CallerList />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/contacts" element={
-              <ProtectedRoute requiredRole="org">
-                <Contacts />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/contacts/lists" element={
-              <ProtectedRoute requiredRole="org">
-                <ContactLists />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/integrations" element={
-              <ProtectedRoute requiredRole="org">
-                <Integrations />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/products" element={
-              <ProtectedRoute requiredRole="org">
-                <Products />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/orders" element={
-              <ProtectedRoute requiredRole="org">
-                <Orders />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/abandoned-carts" element={
-              <ProtectedRoute requiredRole="org">
-                <AbandonedCarts />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/settings" element={
-              <ProtectedRoute requiredRole="org">
-                <Settings />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/settings/system-logs" element={
-              <ProtectedRoute requiredRole="org">
-                <SystemLogs />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/account" element={
-              <ProtectedRoute requiredRole="org">
-                <Account />
-              </ProtectedRoute>
-            } />
-            <Route path="/app/notifications" element={
-              <ProtectedRoute requiredRole="org">
-                <OrgNotifications />
-              </ProtectedRoute>
-            } />
-            
-            {/* Protected Admin Routes - /admin/* */}
-            <Route path="/admin" element={
-              <ProtectedRoute requiredRole="admin">
-                <Navigate to="/admin/dashboard" replace />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/dashboard" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/organizations" element={
-              <ProtectedRoute requiredRole="admin">
-                <Organizations />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/organizations/:id" element={
-              <ProtectedRoute requiredRole="admin">
-                <OrganizationDetail />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/subscriptions" element={
-              <ProtectedRoute requiredRole="admin">
-                <Subscriptions />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/sessions" element={
-              <ProtectedRoute requiredRole="admin">
-                <Sessions />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/system" element={
-              <ProtectedRoute requiredRole="admin">
-                <System />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/activity" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminActivity />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/profile" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminProfile />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/settings" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminSettings />
-              </ProtectedRoute>
-            } />
-            <Route path="/admin/notifications" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminNotifications />
-              </ProtectedRoute>
-            } />
-            
+            }>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/campaigns" element={<Campaigns />} />
+              <Route path="/campaigns/:id" element={<CampaignDetail />} />
+              <Route path="/agents" element={<Agents />} />
+              <Route path="/agents/:id" element={<AgentDetail />} />
+              <Route path="/calls" element={<RecentCalls />} />
+              <Route path="/calls/:callId" element={<CallDetails />} />
+              <Route path="/calls/logs" element={<CallLogs />} />
+              <Route path="/calls/callers" element={<CallerList />} />
+              <Route path="/contacts" element={<Contacts />} />
+              <Route path="/contacts/lists" element={<ContactLists />} />
+              <Route path="/integrations" element={<Integrations />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/abandoned-carts" element={<AbandonedCarts />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/settings/system-logs" element={<SystemLogs />} />
+              <Route path="/account" element={<Account />} />
+              <Route path="/notifications" element={<OrgNotifications />} />
+            </Route>
+
             {/* Catch-all */}
             <Route path="*" element={<NotFound />} />
           </Routes>

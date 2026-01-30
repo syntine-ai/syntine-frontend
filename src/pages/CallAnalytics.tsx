@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { GlobalDateFilter, DatePreset } from "@/components/dashboard/GlobalDateFilter";
@@ -93,8 +92,7 @@ const CallAnalytics = () => {
   const [agent, setAgent] = useState("all");
 
   return (
-    <OrgAppShell>
-      <PageContainer
+    <PageContainer
         title="Call Analytics"
         subtitle="Comprehensive insights into your call performance"
       >
@@ -134,13 +132,13 @@ const CallAnalytics = () => {
             <div className="flex items-center gap-3">
               <GlobalDateFilter value={dateFilter} onChange={setDateFilter} />
               <Button variant="outline" asChild>
-                <Link to="/app/calls/logs">
+                <Link to="/calls/logs">
                   <List className="h-4 w-4 mr-2" />
                   View Logs
                 </Link>
               </Button>
               <Button variant="outline" asChild>
-                <Link to="/app/calls/callers">
+                <Link to="/calls/callers">
                   <Users className="h-4 w-4 mr-2" />
                   Callers
                 </Link>
@@ -291,7 +289,6 @@ const CallAnalytics = () => {
           </motion.div>
         </motion.div>
       </PageContainer>
-    </OrgAppShell>
   );
 };
 

@@ -79,7 +79,7 @@ export function CampaignPerformanceCards() {
             </div>
 
             <Link
-              to="/app/campaigns/order_confirmation_campaign"
+              to="/campaigns/order_confirmation_campaign"
               className="block text-sm text-primary hover:underline pt-2"
             >
               View campaign details →
@@ -146,7 +146,7 @@ export function CampaignPerformanceCards() {
             </div>
 
             <Link
-              to="/app/campaigns/cart_abandonment_campaign"
+              to="/campaigns/cart_abandonment_campaign"
               className="block text-sm text-primary hover:underline pt-2"
             >
               View campaign details →

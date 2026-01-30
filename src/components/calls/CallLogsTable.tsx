@@ -99,7 +99,7 @@ export function CallLogsTable({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.02 }}
               className="border-border/50 hover:bg-muted/30 cursor-pointer transition-colors"
-              onClick={() => navigate(`/app/calls/${log.id}`)}
+              onClick={() => navigate(`/calls/${log.id}`)}
             >
               <TableCell className="font-medium text-foreground">{log.caller}</TableCell>
               <TableCell>
@@ -134,7 +134,7 @@ export function CallLogsTable({
                   size="sm"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/app/calls/${log.id}`);
+                    navigate(`/calls/${log.id}`);
                   }}
                   className="gap-1 text-muted-foreground hover:text-primary"
                 >

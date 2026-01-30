@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { Button } from "@/components/ui/button";
@@ -168,8 +167,7 @@ const CallLogs = () => {
   };
 
   return (
-    <OrgAppShell>
-      <PageContainer
+    <PageContainer
         title="Call Logs"
         subtitle="Review voice calls linked to orders and carts."
       >
@@ -304,7 +302,7 @@ const CallLogs = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.02 }}
                         className="border-border/50 hover:bg-muted/30 cursor-pointer"
-                        onClick={() => navigate(`/app/calls/${call.id}`)}
+                        onClick={() => navigate(`/calls/${call.id}`)}
                       >
                         <TableCell className="text-muted-foreground">
                           {formatTime(call.createdAt)}
@@ -326,7 +324,7 @@ const CallLogs = () => {
                         <TableCell>
                           {call.relatedId ? (
                             <Link
-                              to={call.relatedTo === "order" ? `/app/orders` : `/app/abandoned-carts`}
+                              to={call.relatedTo === "order" ? `/orders` : `/abandoned-carts`}
                               onClick={(e) => e.stopPropagation()}
                               className="text-primary hover:underline font-mono text-sm"
                             >
@@ -349,7 +347,7 @@ const CallLogs = () => {
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           <Link
-                            to={`/app/agents/${call.agent.toLowerCase().replace(/ /g, "_")}`}
+                            to={`/agents/${call.agent.toLowerCase().replace(/ /g, "_")}`}
                             onClick={(e) => e.stopPropagation()}
                             className="hover:text-primary hover:underline"
                           >
@@ -365,7 +363,7 @@ const CallLogs = () => {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              navigate(`/app/calls/${call.id}`);
+                              navigate(`/calls/${call.id}`);
                             }}
                           >
                             <FileText className="h-4 w-4 mr-1" />
@@ -381,7 +379,6 @@ const CallLogs = () => {
           </motion.div>
         </motion.div>
       </PageContainer>
-    </OrgAppShell>
   );
 };
 

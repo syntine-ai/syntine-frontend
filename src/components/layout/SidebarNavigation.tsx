@@ -6,11 +6,6 @@ import {
   LayoutGrid,
   Bot,
   Phone,
-  Settings,
-  Building,
-  CreditCard,
-  Users,
-  Activity,
   Link2,
   ShoppingCart,
   ShoppingBag,
@@ -27,43 +22,33 @@ interface NavItem {
 }
 
 const orgNavItems: NavItem[] = [
-  { icon: Zap, label: "Dashboard", route: "/app/dashboard" },
-  { icon: LayoutGrid, label: "Campaigns", route: "/app/campaigns" },
-  { icon: Bot, label: "Agents", route: "/app/agents" },
-  { icon: Phone, label: "Call Logs", route: "/app/calls" },
-  { icon: Package, label: "Products", route: "/app/products" },
-  { icon: ShoppingCart, label: "Orders", route: "/app/orders" },
-  { icon: ShoppingBag, label: "Abandoned Carts", route: "/app/abandoned-carts" },
-  { icon: Link2, label: "Integrations", route: "/app/integrations" },
-  { icon: Settings, label: "Settings", route: "/app/settings" },
-];
-
-const adminNavItems: NavItem[] = [
-  { icon: Building, label: "Organizations", route: "/admin/organizations" },
-  { icon: CreditCard, label: "Subscriptions", route: "/admin/subscriptions" },
-  { icon: Users, label: "Sessions", route: "/admin/sessions" },
-  { icon: Activity, label: "System", route: "/admin/system" },
+  { icon: Zap, label: "Dashboard", route: "/dashboard" },
+  { icon: LayoutGrid, label: "Campaigns", route: "/campaigns" },
+  { icon: Bot, label: "Agents", route: "/agents" },
+  { icon: Phone, label: "Call Logs", route: "/calls" },
+  { icon: Package, label: "Products", route: "/products" },
+  { icon: ShoppingCart, label: "Orders", route: "/orders" },
+  { icon: ShoppingBag, label: "Abandoned Carts", route: "/abandoned-carts" },
+  { icon: Link2, label: "Integrations", route: "/integrations" },
 ];
 
 interface SidebarNavigationProps {
-  variant: "org" | "admin";
+  isCollapsed?: boolean;
 }
 
-export function SidebarNavigation({ variant }: SidebarNavigationProps) {
+export function SidebarNavigation({ isCollapsed: propCollapsed }: SidebarNavigationProps) {
   const location = useLocation();
-  const { isCollapsed } = useSidebar();
-  const items = variant === "org" ? orgNavItems : adminNavItems;
-  const isAdmin = variant === "admin";
+  const context = useSidebar();
+  const isCollapsed = propCollapsed ?? context.isCollapsed;
+  const items = orgNavItems;
 
   const isActiveRoute = (route: string) => {
-    if (variant === "org") {
-      if (route === "/app/dashboard") {
-        return location.pathname === "/app" || location.pathname === "/app/dashboard";
-      }
+    if (route === "/dashboard") {
+      return location.pathname === "/" || location.pathname === "/dashboard";
     }
     return (
       location.pathname === route ||
-      (route !== "/app/dashboard" && location.pathname.startsWith(route))
+      (route !== "/dashboard" && location.pathname.startsWith(route))
     );
   };
 
@@ -80,37 +65,25 @@ export function SidebarNavigation({ variant }: SidebarNavigationProps) {
                 "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200",
                 isCollapsed && "justify-center px-2",
                 isActive
-                  ? isAdmin
-                    ? "bg-admin-accent/10 text-admin-accent"
-                    : "bg-primary/10 text-primary"
+                  ? "bg-primary/10 text-primary"
                   : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
               )}
             >
               {isActive && (
-                <motion.div
-                  layoutId={`sidebar-indicator-${variant}`}
+                <div
                   className={cn(
-                    "absolute left-0 top-0 bottom-0 w-0.5 rounded-full",
-                    isAdmin ? "bg-admin-accent" : "bg-primary"
+                    "absolute left-0 top-0 bottom-0 w-0.5 rounded-full bg-primary"
                   )}
-                  transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 />
               )}
-              <motion.div
-                animate={{ scale: isCollapsed ? 1.05 : 1 }}
-                transition={{ duration: 0.2 }}
-              >
-                <item.icon
-                  className={cn(
-                    "h-5 w-5 shrink-0 transition-colors",
-                    isActive
-                      ? isAdmin
-                        ? "text-admin-accent"
-                        : "text-primary"
-                      : "text-icon group-hover:text-sidebar-foreground"
-                  )}
-                />
-              </motion.div>
+              <item.icon
+                className={cn(
+                  "h-5 w-5 shrink-0 transition-colors",
+                  isActive
+                    ? "text-primary"
+                    : "text-icon group-hover:text-sidebar-foreground"
+                )}
+              />
               <AnimatePresence mode="wait">
                 {!isCollapsed && (
                   <motion.span
@@ -128,12 +101,7 @@ export function SidebarNavigation({ variant }: SidebarNavigationProps) {
           );
 
           return (
-            <motion.li
-              key={item.route}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05, duration: 0.3 }}
-            >
+            <li key={item.route}>
               {isCollapsed ? (
                 <Tooltip delayDuration={0}>
                   <TooltipTrigger asChild>
@@ -146,7 +114,7 @@ export function SidebarNavigation({ variant }: SidebarNavigationProps) {
               ) : (
                 linkContent
               )}
-            </motion.li>
+            </li>
           );
         })}
       </ul>

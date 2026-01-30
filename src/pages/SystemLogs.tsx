@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,8 +79,7 @@ const SystemLogs = () => {
   });
 
   return (
-    <OrgAppShell>
-      <PageContainer
+    <PageContainer
         title="System Logs"
         subtitle="Internal system events and diagnostics"
       >
@@ -93,7 +91,7 @@ const SystemLogs = () => {
           {/* Header */}
           <div className="flex flex-wrap items-center justify-between gap-4">
             <Button variant="ghost" asChild>
-              <Link to="/app/settings">
+              <Link to="/settings">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back to Settings
               </Link>
@@ -205,7 +203,6 @@ const SystemLogs = () => {
           </div>
         </motion.div>
       </PageContainer>
-    </OrgAppShell>
   );
 };
 

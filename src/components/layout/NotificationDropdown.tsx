@@ -128,7 +128,7 @@ export function NotificationDropdown({ variant }: NotificationDropdownProps) {
   };
 
   const viewAll = () => {
-    navigate(variant === "org" ? "/app/notifications" : "/admin/notifications");
+    navigate(variant === "org" ? "/notifications" : "/admin/notifications");
   };
 
   return (

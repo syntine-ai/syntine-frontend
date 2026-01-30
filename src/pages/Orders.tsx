@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
@@ -97,8 +96,7 @@ const Orders = () => {
   };
 
   return (
-    <OrgAppShell>
-      <PageContainer
+    <PageContainer
         title="Orders"
         subtitle="Real-time view of your synced orders with trigger readiness"
       >
@@ -239,7 +237,6 @@ const Orders = () => {
           onOpenChange={setDrawerOpen}
         />
       </PageContainer>
-    </OrgAppShell>
   );
 };
 

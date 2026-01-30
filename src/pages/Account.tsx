@@ -1,12 +1,10 @@
-import { OrgAppShell } from "@/components/layout/OrgAppShell";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { AccountProfileCard } from "@/components/account/AccountProfileCard";
 import { SecuritySettingsCard } from "@/components/account/SecuritySettingsCard";
 
 export default function Account() {
   return (
-    <OrgAppShell>
-      <PageContainer
+    <PageContainer
         title="My Account"
         subtitle="Manage your personal details and preferences"
       >
@@ -15,6 +13,5 @@ export default function Account() {
           <SecuritySettingsCard variant="org" />
         </div>
       </PageContainer>
-    </OrgAppShell>
   );
 }

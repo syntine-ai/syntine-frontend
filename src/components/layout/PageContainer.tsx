@@ -36,7 +36,7 @@ export function PageContainer({ children, title, subtitle, actions }: PageContai
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="p-5 lg:p-8 max-w-[1600px] mx-auto"
+      className="p-5 lg:p-8 w-full"
     >
       {(title || actions) && (
         <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
