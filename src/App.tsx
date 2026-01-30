@@ -29,6 +29,7 @@ import Products from "./pages/Products";
 import Orders from "./pages/Orders";
 import AbandonedCarts from "./pages/AbandonedCarts";
 import SystemLogs from "./pages/SystemLogs";
+import KnowledgeBase from "./pages/KnowledgeBase";
 
 // Account Pages
 import Account from "./pages/Account";
@@ -71,6 +72,7 @@ const App = () => (
               <Route path="/calls/callers" element={<CallerList />} />
               <Route path="/contacts" element={<Contacts />} />
               <Route path="/contacts/lists" element={<ContactLists />} />
+              <Route path="/knowledge-base" element={<KnowledgeBase />} />
               <Route path="/integrations" element={<Integrations />} />
               <Route path="/products" element={<Products />} />
               <Route path="/orders" element={<Orders />} />

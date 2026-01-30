@@ -10,6 +10,7 @@ import {
   ShoppingCart,
   ShoppingBag,
   Package,
+  BookOpen,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -26,6 +27,7 @@ const orgNavItems: NavItem[] = [
   { icon: LayoutGrid, label: "Campaigns", route: "/campaigns" },
   { icon: Bot, label: "Agents", route: "/agents" },
   { icon: Phone, label: "Call Logs", route: "/calls" },
+  { icon: BookOpen, label: "Knowledge Base", route: "/knowledge-base" },
   { icon: Package, label: "Products", route: "/products" },
   { icon: ShoppingCart, label: "Orders", route: "/orders" },
   { icon: ShoppingBag, label: "Abandoned Carts", route: "/abandoned-carts" },
