@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -5,21 +6,41 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
-  CheckCircle2,
   Clock,
   TrendingUp,
   Phone,
   Zap,
-  Bot
+  Bot,
+  Loader2
 } from "lucide-react";
-import { getCampaignById, getAgentById } from "@/data/demoAgentCampaignData";
+import { useCampaigns } from "@/hooks/useCampaigns";
+import { format } from "date-fns";
 
 const CampaignDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { campaigns, isLoading, refetch } = useCampaigns();
 
-  const campaign = id ? getCampaignById(id) : undefined;
-  const agent = campaign ? getAgentById(campaign.agentId) : undefined;
+  const campaign = campaigns.find((c) => c.id === id);
+  // Find primary agent or first linked agent
+  const agent = campaign?.agents?.find(a => a.is_primary) || campaign?.agents?.[0];
+
+  useEffect(() => {
+    // Determine if we need to refetch to get fresh stats
+    if (campaigns.length === 0 && !isLoading) {
+      refetch();
+    }
+  }, [campaigns.length, isLoading, refetch]);
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </PageContainer>
+    );
+  }
 
   if (!campaign) {
     return (
@@ -35,7 +56,7 @@ const CampaignDetail = () => {
     );
   }
 
-  const isEnabled = campaign.status === "Enabled";
+  const isEnabled = campaign.status === "running";
 
   return (
     <PageContainer>
@@ -60,39 +81,40 @@ const CampaignDetail = () => {
                 </h1>
                 {isEnabled ? (
                   <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
-                    Enabled
+                    Running
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="bg-muted text-muted-foreground border-border">
-                    Paused
+                    {campaign.status}
                   </Badge>
                 )}
               </div>
+              <p className="text-muted-foreground">{campaign.description}</p>
             </div>
           </div>
         </div>
 
         {/* Minimal Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Trigger Card */}
+          {/* Trigger Card - Using ID as proxy for trigger type until we have that field or use config */}
           <div className="p-4 rounded-xl border border-border bg-card shadow-sm">
             <div className="flex items-start justify-between mb-2">
-              <p className="text-sm font-medium text-muted-foreground">Trigger</p>
+              <p className="text-sm font-medium text-muted-foreground">Concurrency</p>
               <Zap className="h-4 w-4 text-amber-500" />
             </div>
-            <p className="font-semibold text-foreground truncate" title={campaign.trigger}>
-              {campaign.trigger}
+            <p className="font-semibold text-foreground truncate">
+              {campaign.concurrency} concurrent calls
             </p>
           </div>
 
-          {/* Last Triggered */}
+          {/* Last Updated */}
           <div className="p-4 rounded-xl border border-border bg-card shadow-sm">
             <div className="flex items-start justify-between mb-2">
-              <p className="text-sm font-medium text-muted-foreground">Last Run</p>
+              <p className="text-sm font-medium text-muted-foreground">Latest Activity</p>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </div>
             <p className="font-semibold text-foreground">
-              {campaign.metrics.lastTriggered}
+              {campaign.updated_at ? format(new Date(campaign.updated_at), "MMM d, h:mm a") : "N/A"}
             </p>
           </div>
 
@@ -104,7 +126,7 @@ const CampaignDetail = () => {
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-lg font-bold text-foreground">
-                {campaign.metrics.successRate}
+                {Math.round(campaign.successRate)}%
               </span>
               <span className="text-sm text-muted-foreground">success</span>
             </div>
@@ -113,12 +135,12 @@ const CampaignDetail = () => {
           {/* Volume */}
           <div className="p-4 rounded-xl border border-border bg-card shadow-sm">
             <div className="flex items-start justify-between mb-2">
-              <p className="text-sm font-medium text-muted-foreground">Total Volume</p>
+              <p className="text-sm font-medium text-muted-foreground">Today's Volume</p>
               <Phone className="h-4 w-4 text-primary" />
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-lg font-bold text-foreground">
-                {campaign.metrics.totalCalls}
+                {campaign.callsToday}
               </span>
               <span className="text-sm text-muted-foreground">calls</span>
             </div>
@@ -132,17 +154,21 @@ const CampaignDetail = () => {
               <Bot className="h-4 w-4 text-primary" />
             </div>
             <div>
-              <p className="text-sm font-medium text-foreground">Agent: {campaign.agentUsed}</p>
+              <p className="text-sm font-medium text-foreground">
+                Agent: {agent ? agent.name : "No agent assigned"}
+              </p>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-primary"
-            onClick={() => navigate(`/agents/${campaign.agentId}`)}
-          >
-            View Agent
-          </Button>
+          {agent && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground hover:text-primary"
+              onClick={() => navigate(`/agents/${agent.id}`)}
+            >
+              View Agent
+            </Button>
+          )}
         </div>
 
         {/* Minimal Hint */}

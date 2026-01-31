@@ -7,11 +7,52 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
-import { demoOutcomesByDay } from "@/data/demoOutcomesData";
+import { useQuery } from "@tanstack/react-query";
+import { getCallAnalytics } from "@/api/services/analytics.service";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 export function OutcomePerformanceChart() {
+  const { profile } = useAuth();
+
+  const { data: analyticsData, isLoading } = useQuery({
+    queryKey: ["call-analytics", profile?.organization_id],
+    queryFn: () => getCallAnalytics(profile?.organization_id!, { period: 'last_30_days', group_by: 'day' }),
+    enabled: !!profile?.organization_id,
+  });
+
+  const chartData = analyticsData?.data?.map(item => ({
+    date: new Date(item.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+    ordersConfirmed: item.answered // Mapping 'answered' to 'ordersConfirmed' for this chart context
+  })) || [];
+
+  if (isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-card rounded-lg border border-border p-6 h-[400px] flex items-center justify-center"
+      >
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mr-2" />
+        <span className="text-muted-foreground">Loading chart data...</span>
+      </motion.div>
+    );
+  }
+
+  if (chartData.length === 0) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-card rounded-lg border border-border p-6 h-[400px] flex flex-col items-center justify-center"
+      >
+        <h2 className="text-lg font-semibold text-foreground mb-2">Outcomes Over Time</h2>
+        <p className="text-muted-foreground">No data available for the selected period.</p>
+      </motion.div>
+    )
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -25,7 +66,7 @@ export function OutcomePerformanceChart() {
             Outcomes Over Time
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Orders confirmed per day
+            Orders confirmed per day (Answered Calls)
           </p>
         </div>
       </div>
@@ -40,7 +81,7 @@ export function OutcomePerformanceChart() {
 
       <div className="h-[320px]">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={demoOutcomesByDay}>
+          <AreaChart data={chartData}>
             <defs>
               <linearGradient id="gradientOrders" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3} />

@@ -10,7 +10,7 @@ import { CallLogsTable, CallLogEntry } from "@/components/calls/CallLogsTable";
 import { Phone, PhoneIncoming, PhoneMissed, Clock, Download, PhoneOff } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { demoCallLogs, DemoCallLog } from "@/data/demoOutcomesData";
+import { useCallLogs } from "@/hooks/useCallLogs";
 
 const defaultFilters: CallLogsFilters = {
   search: "",
@@ -21,30 +21,36 @@ const defaultFilters: CallLogsFilters = {
   dateRange: { from: undefined, to: undefined },
 };
 
-// Map demo outcome to display status
-const outcomeToStatus = (outcome: string): "answered" | "ended" | "missed" | "failed" => {
+// Map real outcome to display status
+const outcomeToStatus = (outcome: string | null): "answered" | "ended" | "missed" | "failed" => {
+  if (!outcome) return "ended";
   switch (outcome) {
     case "confirmed":
     case "rejected":
     case "recovered":
     case "not_recovered":
+    case "answered":
     case "handled":
       return "answered";
     case "no_response":
+    case "missed":
+    case "busy":
       return "missed";
+    case "failed":
+      return "failed";
     default:
       return "ended";
   }
 };
 
-// Map demo call_type to display format
-const mapCallType = (callType: string): "inbound" | "outbound" | "webcall" => {
+// Map real call_type to display format
+const mapCallType = (callType: string | null): "inbound" | "outbound" | "webcall" => {
   if (callType === "inbound") return "inbound";
   return "outbound";
 };
 
 // Format duration from seconds to "M:SS" string
-const formatDuration = (seconds: number): string => {
+const formatDuration = (seconds: number | null): string => {
   if (!seconds) return "0:00";
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -56,8 +62,7 @@ const RecentCalls = () => {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
-  // Loading state simulation (optional, can be removed for instant load)
-  const isLoading = false;
+  const { calls, isLoading } = useCallLogs();
 
   const handleSort = (column: string) => {
     if (sortColumn === column) {
@@ -68,32 +73,33 @@ const RecentCalls = () => {
     }
   };
 
-  // Transform demo calls to CallLogEntry format
+  // Transform real calls to CallLogEntry format
   const callLogs: CallLogEntry[] = useMemo(() => {
-    return demoCallLogs.map((call) => ({
+    return calls.map((call) => ({
       id: call.id,
-      caller: call.customerName || "Unknown",
-      fromNumber: call.fromNumber,
-      toNumber: call.toNumber,
-      callType: mapCallType(call.callType),
+      caller: call.contact_name || call.to_number || "Unknown",
+      fromNumber: call.from_number || undefined,
+      toNumber: call.to_number || undefined,
+      callType: mapCallType(call.call_type),
       status: outcomeToStatus(call.outcome),
-      duration: formatDuration(call.duration),
-      agent: call.agent,
-      startedAt: format(new Date(call.createdAt), "dd/MM/yyyy, hh:mm a"),
+      duration: formatDuration(call.duration_seconds),
+      agent: call.agent_name || "System",
+      startedAt: call.created_at ? format(new Date(call.created_at), "dd/MM/yyyy, hh:mm a") : "N/A",
+      rawDate: call.created_at, // for sorting
     }));
-  }, []);
+  }, [calls]);
 
   // Get unique agents for filter
   const agentOptions = useMemo(() => {
     const uniqueAgents = new Set<string>();
     uniqueAgents.add("All Agents");
-    demoCallLogs.forEach((call) => {
+    callLogs.forEach((call) => {
       if (call.agent) {
         uniqueAgents.add(call.agent);
       }
     });
     return Array.from(uniqueAgents);
-  }, []);
+  }, [callLogs]);
 
   const filteredLogs = useMemo(() => {
     let result = [...callLogs];
@@ -135,13 +141,8 @@ const RecentCalls = () => {
     // Date range filter
     if (filters.dateRange.from || filters.dateRange.to) {
       result = result.filter((log) => {
-        // Parse the date from "dd/MM/yyyy, hh:mm a" format
-        const parts = log.startedAt.split(",")[0].split("/");
-        const logDate = new Date(
-          parseInt(parts[2]),
-          parseInt(parts[1]) - 1,
-          parseInt(parts[0])
-        );
+        if (!log.rawDate) return false;
+        const logDate = new Date(log.rawDate);
         if (filters.dateRange.from && logDate < filters.dateRange.from) return false;
         if (filters.dateRange.to && logDate > filters.dateRange.to) return false;
         return true;
@@ -156,12 +157,14 @@ const RecentCalls = () => {
           aVal = a.duration ? parseInt(a.duration.replace(":", "")) : 0;
           bVal = b.duration ? parseInt(b.duration.replace(":", "")) : 0;
         } else if (sortColumn === "startedAt") {
-          const aParts = a.startedAt.split(",")[0].split("/");
-          const bParts = b.startedAt.split(",")[0].split("/");
-          aVal = new Date(parseInt(aParts[2]), parseInt(aParts[1]) - 1, parseInt(aParts[0])).getTime();
-          bVal = new Date(parseInt(bParts[2]), parseInt(bParts[1]) - 1, parseInt(bParts[0])).getTime();
+          // Use rawDate for accurate sorting
+          aVal = a.rawDate ? new Date(a.rawDate).getTime() : 0;
+          bVal = b.rawDate ? new Date(b.rawDate).getTime() : 0;
         } else {
-          return 0;
+          // generic string sort
+          const aStr = (a as any)[sortColumn]?.toString() || "";
+          const bStr = (b as any)[sortColumn]?.toString() || "";
+          return sortDirection === "asc" ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
         }
         return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
       });
