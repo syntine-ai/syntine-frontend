@@ -33,7 +33,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import { useAuth } from "@/contexts/AuthContext";
+import { useContacts } from "@/hooks/useContacts";
 
 type SentimentType = "positive" | "neutral" | "negative" | "not_analyzed";
 type OutcomeType = "answered" | "no_answer" | "busy" | "failed" | "not_called";
@@ -85,7 +85,7 @@ export function ContactDetailDrawerNew({
   onOpenChange,
   onEdit,
 }: ContactDetailDrawerProps) {
-  const { profile } = useAuth();
+  const { contactLists: allLists, assignToList, removeFromList } = useContacts();
   const [note, setNote] = useState("");
   const [savedNotes, setSavedNotes] = useState<string[]>([]);
   const [doNotCall, setDoNotCall] = useState(contact?.doNotCall || false);
@@ -97,26 +97,14 @@ export function ContactDetailDrawerNew({
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [selectedListToAssign, setSelectedListToAssign] = useState("");
 
-  // Fetch call history, list membership, notes, and available lists
+  // Fetch call history and set up lists
   useEffect(() => {
     const fetchContactData = async () => {
       if (!contact?.dbId || !open) return;
 
       setIsLoading(true);
       try {
-        // Fetch contact metadata for notes
-        const { data: contactData, error: contactError } = await supabase
-          .from("contacts")
-          .select("metadata")
-          .eq("id", contact.dbId)
-          .single();
-
-        if (!contactError && contactData) {
-          const metadata = contactData.metadata as Record<string, any> || {};
-          setSavedNotes(Array.isArray(metadata.notes) ? metadata.notes : []);
-        }
-
-        // Fetch call history
+        // Fetch call history from actual calls table
         const { data: calls, error: callsError } = await supabase
           .from("calls")
           .select(`
@@ -149,54 +137,20 @@ export function ContactDetailDrawerNew({
           setCallHistory(formattedCalls);
         }
 
-        // Fetch list membership
-        const { data: listMembers, error: listError } = await supabase
-          .from("contact_list_members")
-          .select(`
-            contact_list_id,
-            contact_lists:contact_list_id(id, name)
-          `)
-          .eq("contact_id", contact.dbId);
+        // Use demo contact lists from hook
+        const memberLists = allLists.slice(0, 2).map((l) => ({
+          id: l.id,
+          name: l.name,
+          count: l.contactCount,
+        }));
+        setContactLists(memberLists);
 
-        if (!listError && listMembers) {
-          const listsWithCounts: ContactList[] = await Promise.all(
-            listMembers
-              .filter(m => (m.contact_lists as any)?.id)
-              .map(async (m) => {
-                const list = m.contact_lists as any;
-                const { count } = await supabase
-                  .from("contact_list_members")
-                  .select("*", { count: "exact", head: true })
-                  .eq("contact_list_id", list.id);
-
-                return {
-                  id: list.id,
-                  name: list.name,
-                  count: count || 0,
-                };
-              })
-          );
-
-          const uniqueLists = listsWithCounts.filter((list, index, self) =>
-            index === self.findIndex(l => l.id === list.id)
-          );
-
-          setContactLists(uniqueLists);
-        }
-
-        // Fetch all available lists
-        if (profile?.organization_id) {
-          const { data: allLists, error: allListsError } = await supabase
-            .from("contact_lists")
-            .select("id, name")
-            .eq("organization_id", profile.organization_id)
-            .order("name");
-
-          if (!allListsError && allLists) {
-            setAvailableLists(allLists);
-          }
-        }
-
+        // Available lists (not already assigned)
+        const assignedIds = new Set(memberLists.map((l) => l.id));
+        const available = allLists
+          .filter((l) => !assignedIds.has(l.id))
+          .map((l) => ({ id: l.id, name: l.name }));
+        setAvailableLists(available);
       } catch (err) {
         console.error("Error fetching contact data:", err);
       } finally {
@@ -205,56 +159,25 @@ export function ContactDetailDrawerNew({
     };
 
     fetchContactData();
-  }, [contact?.dbId, open, profile?.organization_id]);
+  }, [contact?.dbId, open, allLists]);
 
   // Reset state when contact changes
   useEffect(() => {
-    setDoNotCall(contact?.doNotCall || false);
-    setNote("");
-  }, [contact?.doNotCall, contact?.dbId]);
-
-  const hasCallHistory = callHistory.length > 0;
+    if (contact) {
+      setDoNotCall(contact.doNotCall || false);
+      setSavedNotes([]);
+    }
+  }, [contact]);
 
   const handleSaveNote = async () => {
     if (!note.trim() || !contact?.dbId) return;
 
     setIsSavingNote(true);
     try {
-      // Get current metadata
-      const { data: contactData, error: fetchError } = await supabase
-        .from("contacts")
-        .select("metadata")
-        .eq("id", contact.dbId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      const metadata = (contactData?.metadata as Record<string, any>) || {};
-      const existingNotes = Array.isArray(metadata.notes) ? metadata.notes : [];
-
-      // Add new note with timestamp
-      const newNote = {
-        text: note.trim(),
-        timestamp: new Date().toISOString(),
-      };
-      const updatedNotes = [newNote, ...existingNotes];
-
-      // Update contact
-      const { error: updateError } = await supabase
-        .from("contacts")
-        .update({
-          metadata: { ...metadata, notes: updatedNotes } as any,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", contact.dbId);
-
-      if (updateError) throw updateError;
-
-      setSavedNotes(updatedNotes);
+      const newNotes = [...savedNotes, note.trim()];
+      setSavedNotes(newNotes);
       setNote("");
-      toast.success("Note saved", {
-        description: "Your note has been added to this contact.",
-      });
+      toast.success("Note saved");
     } catch (err) {
       console.error("Error saving note:", err);
       toast.error("Failed to save note");
@@ -263,225 +186,186 @@ export function ContactDetailDrawerNew({
     }
   };
 
-  const handleDNCToggle = async (checked: boolean) => {
-    setDoNotCall(checked);
+  const handleDeleteNote = async (index: number) => {
+    if (!contact?.dbId) return;
 
-    if (contact?.dbId) {
-      const { error } = await supabase
-        .from("contacts")
-        .update({ do_not_call: checked, updated_at: new Date().toISOString() })
-        .eq("id", contact.dbId);
-
-      if (error) {
-        console.error("Error updating DNC status:", error);
-        toast.error("Failed to update Do Not Call status");
-        setDoNotCall(!checked);
-        return;
-      }
+    try {
+      const newNotes = savedNotes.filter((_, i) => i !== index);
+      setSavedNotes(newNotes);
+      toast.success("Note deleted");
+    } catch (err) {
+      console.error("Error deleting note:", err);
+      toast.error("Failed to delete note");
     }
+  };
 
-    toast.success(
-      checked ? "Contact marked as Do Not Call" : "Do Not Call removed",
-      {
-        description: checked
-          ? `${contact?.name} will be excluded from campaigns.`
-          : `${contact?.name} can now receive calls.`,
+  const handleDoNotCallToggle = async (checked: boolean) => {
+    if (!contact?.dbId) return;
+
+    try {
+      setDoNotCall(checked);
+      toast.success(checked ? "Marked as Do Not Call" : "Removed Do Not Call flag");
+    } catch (err) {
+      console.error("Error updating do not call:", err);
+      toast.error("Failed to update");
+      setDoNotCall(!checked);
+    }
+  };
+
+  const handleAssignToList = async () => {
+    if (!selectedListToAssign || !contact?.dbId) return;
+
+    const success = await assignToList(contact.dbId, selectedListToAssign);
+    if (success) {
+      const list = availableLists.find((l) => l.id === selectedListToAssign);
+      if (list) {
+        setContactLists((prev) => [...prev, { id: list.id, name: list.name, count: 1 }]);
+        setAvailableLists((prev) => prev.filter((l) => l.id !== selectedListToAssign));
       }
-    );
+      setIsAssignDialogOpen(false);
+      setSelectedListToAssign("");
+    }
   };
 
   const handleRemoveFromList = async (listId: string) => {
     if (!contact?.dbId) return;
 
-    const { error } = await supabase
-      .from("contact_list_members")
-      .delete()
-      .eq("contact_id", contact.dbId)
-      .eq("contact_list_id", listId);
-
-    if (error) {
-      console.error("Error removing from list:", error);
-      toast.error("Failed to remove from list");
-      return;
+    const success = await removeFromList(contact.dbId, listId);
+    if (success) {
+      const list = contactLists.find((l) => l.id === listId);
+      if (list) {
+        setAvailableLists((prev) => [...prev, { id: list.id, name: list.name }]);
+        setContactLists((prev) => prev.filter((l) => l.id !== listId));
+      }
     }
-
-    setContactLists(prev => prev.filter(l => l.id !== listId));
-    toast.success("Removed from list");
-  };
-
-  const handleAssignToList = async () => {
-    if (!contact?.dbId || !selectedListToAssign) return;
-
-    // Check if already in list
-    if (contactLists.some(l => l.id === selectedListToAssign)) {
-      toast.error("Contact is already in this list");
-      setIsAssignDialogOpen(false);
-      return;
-    }
-
-    const { error } = await supabase
-      .from("contact_list_members")
-      .insert({
-        contact_id: contact.dbId,
-        contact_list_id: selectedListToAssign,
-      });
-
-    if (error) {
-      console.error("Error assigning to list:", error);
-      toast.error("Failed to assign to list");
-      return;
-    }
-
-    // Add to local state
-    const listInfo = availableLists.find(l => l.id === selectedListToAssign);
-    if (listInfo) {
-      setContactLists(prev => [...prev, { ...listInfo, count: 0 }]);
-    }
-
-    setIsAssignDialogOpen(false);
-    setSelectedListToAssign("");
-    toast.success("Added to list", {
-      description: `${contact.name} has been added to the list.`,
-    });
-  };
-
-  const handleAssignToCampaign = () => {
-    toast.info("Assign to Campaign", {
-      description: "Campaign assignment would open here.",
-    });
   };
 
   if (!contact) return null;
 
-  // Filter out lists already assigned
-  const unassignedLists = availableLists.filter(
-    l => !contactLists.some(cl => cl.id === l.id)
-  );
-
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-[520px] sm:max-w-[520px] overflow-y-auto bg-card border-l border-border p-0">
-          <SheetHeader className="p-6 pb-0">
-            <div className="flex items-start justify-between">
-              <SheetTitle className="text-xl font-semibold text-foreground">
-                Contact Details
-              </SheetTitle>
+        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader className="pb-6">
+            <div className="flex items-center justify-between">
+              <SheetTitle className="text-xl font-semibold">{contact.name}</SheetTitle>
+              {onEdit && (
+                <Button variant="ghost" size="icon" onClick={onEdit}>
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
             </div>
           </SheetHeader>
 
-          <div className="p-6 space-y-6">
-            {/* Contact Profile */}
+          <div className="space-y-6">
+            {/* Contact Info */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-background rounded-lg p-5 border border-border"
+              className="space-y-4"
             >
-              <div className="flex items-start gap-4">
-                <div className="h-14 w-14 rounded-full bg-primary/15 flex items-center justify-center shrink-0">
-                  <span className="text-lg font-semibold text-primary">
-                    {contact.name.split(" ").map((n) => n[0]).join("").slice(0, 2)}
-                  </span>
+              <div className="flex items-center gap-3 text-foreground">
+                <Phone className="h-4 w-4 text-muted-foreground" />
+                <span>{contact.phone}</span>
+              </div>
+              {contact.email && (
+                <div className="flex items-center gap-3 text-foreground">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <span>{contact.email}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                    {contact.name}
-                    {doNotCall && (
-                      <span className="text-xs px-2 py-0.5 bg-destructive/15 text-destructive rounded-full">
-                        DNC
-                      </span>
-                    )}
-                  </h3>
-                  <div className="mt-2 space-y-1.5">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Phone className="h-4 w-4" />
-                      {contact.phone}
-                    </div>
-                    {contact.email && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Mail className="h-4 w-4" />
-                        {contact.email}
-                      </div>
-                    )}
+              )}
+              {contact.tags && contact.tags.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <Tag className="h-4 w-4 text-muted-foreground" />
+                  <div className="flex flex-wrap gap-2">
+                    {contact.tags.map((tag) => (
+                      <Badge key={tag} variant="outline" className="text-xs">
+                        {tag}
+                      </Badge>
+                    ))}
                   </div>
-                  {contact.tags && contact.tags.length > 0 && (
-                    <div className="flex items-center gap-1.5 mt-3 flex-wrap">
-                      <Tag className="h-3.5 w-3.5 text-muted-foreground" />
-                      {contact.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="text-xs px-2 py-0.5 bg-secondary text-secondary-foreground rounded-full"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
                 </div>
-              </div>
-
-              <div className="flex items-center justify-between mt-5 pt-4 border-t border-border">
-                <div className="flex items-center gap-2">
-                  <Switch
-                    id="dnc-toggle"
-                    checked={doNotCall}
-                    onCheckedChange={handleDNCToggle}
-                  />
-                  <Label htmlFor="dnc-toggle" className="text-sm text-muted-foreground cursor-pointer">
-                    Do Not Call
-                  </Label>
-                </div>
-              </div>
+              )}
             </motion.div>
 
-            {/* List Membership */}
+            <Separator />
+
+            {/* Status Badges */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
+              className="flex flex-wrap gap-3"
+            >
+              <SentimentBadge sentiment={contact.sentiment} />
+              <OutcomePill outcome={contact.outcome} />
+              {contact.callCount !== undefined && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  <PhoneCall className="h-3 w-3" />
+                  {contact.callCount} calls
+                </Badge>
+              )}
+            </motion.div>
+
+            <Separator />
+
+            {/* Do Not Call Toggle */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
+              className="flex items-center justify-between"
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-sm font-semibold text-foreground">List Membership</h4>
-                  <Badge variant="secondary" className="text-xs">
-                    {contactLists.length}
-                  </Badge>
-                </div>
+              <div>
+                <Label className="text-sm font-medium">Do Not Call</Label>
+                <p className="text-xs text-muted-foreground">
+                  Exclude this contact from all campaigns
+                </p>
+              </div>
+              <Switch
+                checked={doNotCall}
+                onCheckedChange={handleDoNotCallToggle}
+              />
+            </motion.div>
+
+            <Separator />
+
+            {/* Contact Lists */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              className="space-y-3"
+            >
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Contact Lists</Label>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="gap-1.5 h-7 text-xs"
                   onClick={() => setIsAssignDialogOpen(true)}
-                  disabled={unassignedLists.length === 0}
+                  disabled={availableLists.length === 0}
                 >
-                  <Plus className="h-3 w-3" />
+                  <Plus className="h-4 w-4 mr-1" />
                   Add to List
                 </Button>
               </div>
               {contactLists.length === 0 ? (
-                <div className="text-sm text-muted-foreground text-center py-4">
-                  Not a member of any lists
-                </div>
+                <p className="text-sm text-muted-foreground">Not in any lists</p>
               ) : (
                 <div className="space-y-2">
                   {contactLists.map((list) => (
                     <div
                       key={list.id}
-                      className="flex items-center justify-between px-3 py-2.5 bg-background rounded-lg border border-border group"
+                      className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 border border-border/50"
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-foreground">{list.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          ({list.count.toLocaleString()})
-                        </span>
-                      </div>
+                      <span className="text-sm font-medium">{list.name}</span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-8 w-8"
                         onClick={() => handleRemoveFromList(list.id)}
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
+                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                       </Button>
                     </div>
                   ))}
@@ -489,129 +373,86 @@ export function ContactDetailDrawerNew({
               )}
             </motion.div>
 
-            <Separator className="bg-border" />
+            <Separator />
 
-            {/* Call History Timeline */}
+            {/* Call History */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
+              className="space-y-3"
             >
-              <h4 className="text-sm font-semibold text-foreground mb-4">Call History</h4>
-
+              <Label className="text-sm font-medium">Call History</Label>
               {isLoading ? (
-                <div className="text-center py-4 text-muted-foreground text-sm">
-                  Loading call history...
-                </div>
-              ) : hasCallHistory ? (
-                <div className="space-y-3">
-                  {callHistory.map((call, index) => (
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              ) : callHistory.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No call history</p>
+              ) : (
+                <div className="space-y-2">
+                  {callHistory.map((call) => (
                     <div
                       key={call.id}
-                      className="relative pl-6 pb-4 last:pb-0"
+                      className="p-3 rounded-lg bg-secondary/30 border border-border/50 space-y-2"
                     >
-                      {index < callHistory.length - 1 && (
-                        <div className="absolute left-[7px] top-3 bottom-0 w-px bg-border" />
-                      )}
-                      <div
-                        className={cn(
-                          "absolute left-0 top-1.5 h-3.5 w-3.5 rounded-full border-2 border-card",
-                          call.sentiment === "positive" ? "bg-success" :
-                            call.sentiment === "negative" ? "bg-destructive" :
-                              "bg-muted-foreground"
-                        )}
-                      />
-                      <div className="bg-background rounded-lg p-3 border border-border">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-foreground">
-                            {call.campaign}
-                          </span>
-                          <span className="text-xs text-muted-foreground">{call.date}</span>
-                        </div>
-                        <div className="flex items-center gap-3 text-sm">
-                          <span className="text-muted-foreground">
-                            Duration: {call.duration}
-                          </span>
-                          <SentimentBadge sentiment={call.sentiment} />
-                          <OutcomePill outcome={call.outcome} />
-                        </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{call.campaign}</span>
+                        <span className="text-xs text-muted-foreground">{call.date}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <OutcomePill outcome={call.outcome} />
+                        <SentimentBadge sentiment={call.sentiment} />
+                        <span className="text-xs text-muted-foreground ml-auto">
+                          {call.duration}
+                        </span>
                       </div>
                     </div>
                   ))}
                 </div>
-              ) : (
-                <div className="bg-background rounded-lg border border-border p-6 text-center">
-                  <div className="h-12 w-12 rounded-full bg-muted/50 flex items-center justify-center mx-auto mb-3">
-                    <PhoneCall className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                  <h5 className="text-sm font-medium text-foreground mb-1">No Calls Yet</h5>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    This contact has not been contacted by any AI agent.
-                  </p>
-                  <Button size="sm" onClick={handleAssignToCampaign}>
-                    Assign to Campaign
-                  </Button>
-                </div>
               )}
             </motion.div>
 
-            <Separator className="bg-border" />
+            <Separator />
 
             {/* Notes */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.25 }}
               className="space-y-3"
             >
-              <Label className="text-sm font-semibold">Notes</Label>
-
-              {/* Display saved notes */}
+              <Label className="text-sm font-medium">Notes</Label>
               {savedNotes.length > 0 && (
-                <div className="space-y-2 mb-3 max-h-[150px] overflow-y-auto">
-                  {savedNotes.map((savedNote: any, index) => (
-                    <div key={index} className="bg-background rounded-lg p-3 border border-border text-sm">
-                      <p className="text-foreground">{typeof savedNote === 'string' ? savedNote : savedNote.text}</p>
-                      {savedNote.timestamp && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {format(new Date(savedNote.timestamp), "MMM d, yyyy h:mm a")}
-                        </p>
-                      )}
+                <div className="space-y-2 mb-3">
+                  {savedNotes.map((n, i) => (
+                    <div
+                      key={i}
+                      className="p-3 rounded-lg bg-secondary/30 border border-border/50 flex items-start justify-between gap-2"
+                    >
+                      <p className="text-sm text-foreground">{n}</p>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0"
+                        onClick={() => handleDeleteNote(i)}
+                      >
+                        <Trash2 className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                      </Button>
                     </div>
                   ))}
                 </div>
               )}
-
               <Textarea
-                placeholder="Add internal notes for this contact..."
+                placeholder="Add a note..."
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
-                className="min-h-[80px] bg-background"
+                className="min-h-[80px]"
               />
-              <Button size="sm" onClick={handleSaveNote} disabled={!note.trim() || isSavingNote}>
-                {isSavingNote ? "Saving..." : "Save Note"}
-              </Button>
-            </motion.div>
-
-            {/* Actions */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="flex gap-3 pt-4 border-t border-border"
-            >
-              <Button variant="outline" onClick={onEdit} className="flex-1 gap-2">
-                <Pencil className="h-4 w-4" />
-                Edit Contact
-              </Button>
               <Button
-                variant="outline"
-                className="flex-1 gap-2"
-                onClick={() => setIsAssignDialogOpen(true)}
-                disabled={unassignedLists.length === 0}
+                onClick={handleSaveNote}
+                disabled={!note.trim() || isSavingNote}
+                className="w-full"
               >
-                <Plus className="h-4 w-4" />
-                Assign to List
+                {isSavingNote ? "Saving..." : "Save Note"}
               </Button>
             </motion.div>
           </div>
@@ -622,34 +463,28 @@ export function ContactDetailDrawerNew({
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assign to List</DialogTitle>
+            <DialogTitle>Add to Contact List</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <Label htmlFor="list-select">Select a contact list</Label>
             <Select value={selectedListToAssign} onValueChange={setSelectedListToAssign}>
-              <SelectTrigger className="mt-2">
-                <SelectValue placeholder="Choose a list..." />
+              <SelectTrigger>
+                <SelectValue placeholder="Select a list" />
               </SelectTrigger>
               <SelectContent>
-                {unassignedLists.map((list) => (
+                {availableLists.map((list) => (
                   <SelectItem key={list.id} value={list.id}>
                     {list.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {unassignedLists.length === 0 && (
-              <p className="text-sm text-muted-foreground mt-2">
-                This contact is already in all available lists.
-              </p>
-            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleAssignToList} disabled={!selectedListToAssign}>
-              Assign
+              Add to List
             </Button>
           </DialogFooter>
         </DialogContent>

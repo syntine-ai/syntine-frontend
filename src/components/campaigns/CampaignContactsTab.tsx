@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,10 +18,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Users, Link as LinkIcon, RefreshCw, Trash2 } from "lucide-react";
+import { Users, Link as LinkIcon, Trash2 } from "lucide-react";
 import { CampaignWithDetails, useCampaigns } from "@/hooks/useCampaigns";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useContacts } from "@/hooks/useContacts";
 import { cn } from "@/lib/utils";
 
 interface CampaignContactsTabProps {
@@ -29,116 +28,56 @@ interface CampaignContactsTabProps {
   campaign?: CampaignWithDetails;
 }
 
-interface ContactList {
-  id: string;
-  name: string;
-  contactCount: number;
-}
-
 interface Contact {
   id: string;
   first_name: string | null;
   last_name: string | null;
   phone: string;
-  tags: any;
+  tags: string[];
 }
 
 export function CampaignContactsTab({ campaignId, campaign }: CampaignContactsTabProps) {
-  const { profile } = useAuth();
-  const { linkContactList, unlinkContactList, refetch } = useCampaigns();
+  const { linkContactList, unlinkContactList } = useCampaigns();
+  const { contacts: allContacts, contactLists: allLists, isLoading: listsLoading } = useContacts();
   const [previewContacts, setPreviewContacts] = useState<Contact[]>([]);
-  const [loadingPreview, setLoadingPreview] = useState(false);
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
-  const [availableLists, setAvailableLists] = useState<ContactList[]>([]);
   const [isLinking, setIsLinking] = useState(false);
 
   // Get linked contact lists from campaign
   const linkedLists = campaign?.contactLists || [];
+  const linkedListIds = new Set(linkedLists.map((l) => l.id));
 
-  // Fetch preview contacts from linked lists
+  // Available lists to link (not already linked)
+  const availableLists = allLists.filter((l) => !linkedListIds.has(l.id));
+
+  // Preview contacts from linked lists
   useEffect(() => {
-    const fetchPreviewContacts = async () => {
-      if (linkedLists.length === 0) {
-        setPreviewContacts([]);
-        return;
+    if (linkedLists.length === 0) {
+      setPreviewContacts([]);
+      return;
+    }
+
+    // Filter contacts that belong to any linked list
+    const linkedContactIds = new Set<string>();
+    allContacts.forEach((contact) => {
+      if (contact.contactLists?.some((listId) => linkedListIds.has(listId))) {
+        linkedContactIds.add(contact.id);
       }
+    });
 
-      setLoadingPreview(true);
-      try {
-        const listIds = linkedLists.map((l) => l.id);
+    const preview: Contact[] = allContacts
+      .filter((c) => linkedContactIds.has(c.id))
+      .slice(0, 10)
+      .map((c) => ({
+        id: c.id,
+        first_name: c.first_name,
+        last_name: c.last_name,
+        phone: c.phone,
+        tags: c.tags || [],
+      }));
 
-        // Get contact IDs from list members
-        const { data: memberData } = await supabase
-          .from("contact_list_members")
-          .select("contact_id")
-          .in("contact_list_id", listIds)
-          .limit(10);
-
-        if (memberData && memberData.length > 0) {
-          const contactIds = memberData.map((m) => m.contact_id);
-
-          // Fetch contact details
-          const { data: contacts } = await supabase
-            .from("contacts")
-            .select("id, first_name, last_name, phone, tags")
-            .in("id", contactIds);
-
-          setPreviewContacts(contacts || []);
-        } else {
-          setPreviewContacts([]);
-        }
-      } catch (err) {
-        console.error("Error fetching preview contacts:", err);
-      } finally {
-        setLoadingPreview(false);
-      }
-    };
-
-    fetchPreviewContacts();
-  }, [linkedLists]);
-
-  // Fetch available contact lists when modal opens
-  useEffect(() => {
-    const fetchAvailableLists = async () => {
-      if (!isLinkModalOpen || !profile?.organization_id) return;
-
-      try {
-        const { data: lists } = await supabase
-          .from("contact_lists")
-          .select("id, name")
-          .eq("organization_id", profile.organization_id)
-          .is("deleted_at", null);
-
-        if (lists) {
-          // Get member counts
-          const { data: members } = await supabase
-            .from("contact_list_members")
-            .select("contact_list_id");
-
-          const counts: Record<string, number> = {};
-          members?.forEach((m) => {
-            counts[m.contact_list_id] = (counts[m.contact_list_id] || 0) + 1;
-          });
-
-          // Filter out already linked lists
-          const linkedIds = new Set(linkedLists.map((l) => l.id));
-          const available = lists
-            .filter((l) => !linkedIds.has(l.id))
-            .map((l) => ({
-              id: l.id,
-              name: l.name,
-              contactCount: counts[l.id] || 0,
-            }));
-
-          setAvailableLists(available);
-        }
-      } catch (err) {
-        console.error("Error fetching available lists:", err);
-      }
-    };
-
-    fetchAvailableLists();
-  }, [isLinkModalOpen, profile?.organization_id, linkedLists]);
+    setPreviewContacts(preview);
+  }, [linkedLists, allContacts, linkedListIds]);
 
   const handleLinkList = async (listId: string) => {
     setIsLinking(true);
@@ -229,7 +168,7 @@ export function CampaignContactsTab({ campaignId, campaign }: CampaignContactsTa
           <CardDescription>Sample contacts from linked lists</CardDescription>
         </CardHeader>
         <CardContent>
-          {loadingPreview ? (
+          {listsLoading ? (
             <p className="text-muted-foreground text-center py-8">Loading contacts...</p>
           ) : previewContacts.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">No contacts to preview</p>
