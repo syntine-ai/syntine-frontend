@@ -51,11 +51,13 @@ export async function listProducts(
         const { data, error } = await query;
         if (error) throw error;
 
-        // Transform data
+        // Transform data with type safety
         return (data || []).map((product: any) => ({
             ...product,
+            images: Array.isArray(product.images) ? product.images : [],
+            tags: Array.isArray(product.tags) ? product.tags : [],
             variants: product.commerce_product_variants || [],
-        }));
+        })) as ProductWithVariants[];
     }, 'listProducts');
 }
 
@@ -82,8 +84,10 @@ export async function getProduct(
 
         return {
             ...data,
+            images: Array.isArray(data.images) ? data.images : [],
+            tags: Array.isArray(data.tags) ? data.tags : [],
             variants: data.commerce_product_variants || [],
-        };
+        } as ProductWithVariants;
     }, 'getProduct');
 }
 

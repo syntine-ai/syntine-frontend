@@ -26,7 +26,12 @@ export async function listIntegrations(
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        return data || [];
+        
+        // Transform to ensure type compatibility
+        return (data || []).map(item => ({
+            ...item,
+            settings: (item.settings as Record<string, any>) || {},
+        })) as Integration[];
     }, 'listIntegrations');
 }
 
@@ -48,7 +53,10 @@ export async function getIntegration(
         if (error) throw error;
         if (!data) throw new Error('Integration not found');
 
-        return data;
+        return {
+            ...data,
+            settings: (data.settings as Record<string, any>) || {},
+        } as Integration;
     }, 'getIntegration');
 }
 

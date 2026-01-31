@@ -61,11 +61,14 @@ export async function listOrders(
         const { data, error } = await query;
         if (error) throw error;
 
-        // Transform data
+        // Transform data with type safety
         return (data || []).map((order: any) => ({
             ...order,
+            shipping_address: (order.shipping_address as Record<string, any>) || undefined,
+            billing_address: (order.billing_address as Record<string, any>) || undefined,
+            tags: Array.isArray(order.tags) ? order.tags : [],
             items: order.commerce_order_items || [],
-        }));
+        })) as OrderWithItems[];
     }, 'listOrders');
 }
 
@@ -92,8 +95,11 @@ export async function getOrder(
 
         return {
             ...data,
+            shipping_address: (data.shipping_address as Record<string, any>) || undefined,
+            billing_address: (data.billing_address as Record<string, any>) || undefined,
+            tags: Array.isArray(data.tags) ? data.tags : [],
             items: data.commerce_order_items || [],
-        };
+        } as OrderWithItems;
     }, 'getOrder');
 }
 
