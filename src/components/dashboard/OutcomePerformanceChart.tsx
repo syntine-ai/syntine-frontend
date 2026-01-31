@@ -25,7 +25,7 @@ export function OutcomePerformanceChart() {
             Outcomes Over Time
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Orders confirmed & carts recovered per day
+            Orders confirmed per day
           </p>
         </div>
       </div>
@@ -36,10 +36,6 @@ export function OutcomePerformanceChart() {
           <div className="h-3 w-3 rounded-full bg-success" />
           <span className="text-sm text-muted-foreground">Orders Confirmed</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="h-3 w-3 rounded-full bg-primary" />
-          <span className="text-sm text-muted-foreground">Carts Recovered</span>
-        </div>
       </div>
 
       <div className="h-[320px]">
@@ -49,10 +45,6 @@ export function OutcomePerformanceChart() {
               <linearGradient id="gradientOrders" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3} />
                 <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
-              </linearGradient>
-              <linearGradient id="gradientCarts" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid
@@ -90,14 +82,6 @@ export function OutcomePerformanceChart() {
               strokeWidth={2}
               fill="url(#gradientOrders)"
               name="Orders Confirmed"
-            />
-            <Area
-              type="monotone"
-              dataKey="cartsRecovered"
-              stroke="hsl(var(--primary))"
-              strokeWidth={2}
-              fill="url(#gradientCarts)"
-              name="Carts Recovered"
             />
           </AreaChart>
         </ResponsiveContainer>

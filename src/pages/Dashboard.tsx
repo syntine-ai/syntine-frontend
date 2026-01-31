@@ -9,7 +9,6 @@ import { SystemStatusPills } from "@/components/shared/SystemStatusPills";
 import {
   IndianRupee,
   CheckCircle2,
-  ShoppingCart,
   ShieldCheck,
   PhoneCall,
   PhoneOff,
@@ -38,7 +37,7 @@ const Dashboard = () => {
   return (
     <PageContainer
       title="Outcomes Overview"
-      subtitle="Track how AI voice calls impact orders, carts, and revenue."
+      subtitle="Track how AI voice calls impact orders and revenue."
     >
       <motion.div
         variants={containerVariants}
@@ -66,11 +65,11 @@ const Dashboard = () => {
 
         {/* Primary KPI Cards */}
         <motion.div variants={itemVariants}>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <MetricCard
               label="Revenue Recovered"
               value={formatCurrency(demoOutcomeMetrics.revenueRecovered)}
-              caption="From confirmed orders & recovered carts"
+              caption="From confirmed orders"
               icon={IndianRupee}
               variant="primary"
             />
@@ -79,12 +78,6 @@ const Dashboard = () => {
               value={demoOutcomeMetrics.codOrdersConfirmed.toString()}
               caption="Voice-confirmed before dispatch"
               icon={CheckCircle2}
-            />
-            <MetricCard
-              label="Carts Recovered"
-              value={demoOutcomeMetrics.abandonedCartsRecovered.toString()}
-              caption="Customers returned to checkout"
-              icon={ShoppingCart}
             />
             <MetricCard
               label="RTO Prevented"
@@ -137,7 +130,7 @@ const Dashboard = () => {
               Campaign Performance
             </h2>
             <p className="text-sm text-muted-foreground">
-              Transactional campaigns for orders and carts
+              Transactional campaigns for orders
             </p>
           </div>
           <CampaignPerformanceCards />

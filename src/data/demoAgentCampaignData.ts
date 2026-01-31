@@ -73,32 +73,6 @@ export const mockAgents: MockAgent[] = [
     },
   },
   {
-    id: "cart_abandonment_agent",
-    name: "Cart Abandonment Agent",
-    type: "Outbound",
-    purpose: "Recovers abandoned carts via automated voice calls to help customers complete their purchase.",
-    usedBy: ["Cart Abandonment Campaign"],
-    status: "Active",
-    metrics: {
-      callsHandled: 67,
-      successRate: "42%",
-    },
-    canToggle: true,
-    editedBy: "System",
-    lastUpdated: "01/25/2026, 10:15",
-    details: {
-      scenarios: [
-        "Reminds customer about items left in cart",
-        "Offers assistance with checkout issues",
-        "Answers product-related questions",
-        "Provides limited-time recovery incentives (if configured)",
-      ],
-      dataUsed: ["Cart items", "Customer name", "Phone number", "Product details", "Cart value"],
-      complianceNote:
-        "This agent contacts customers who initiated checkout but didn't complete. Customers can opt-out at any time. All calls follow a transactional recovery pattern.",
-    },
-  },
-  {
     id: "inbound_support_agent",
     name: "Inbound Support Agent",
     type: "Inbound",
@@ -154,36 +128,6 @@ export const mockCampaigns: MockCampaign[] = [
       ],
       disclaimer:
         "This is a transactional campaign designed for order verification. It is not intended for marketing or promotional purposes. All calls are recorded and comply with telecom regulations.",
-    },
-  },
-  {
-    id: "cart_abandonment_campaign",
-    name: "Cart Abandonment",
-    trigger: "Cart abandoned",
-    triggerDescription: "Automatically calls customers who left items in their cart without completing checkout",
-    agentUsed: "Cart Abandonment Agent",
-    agentId: "cart_abandonment_agent",
-    status: "Disabled",
-    metrics: {
-      lastTriggered: "—",
-      successRate: "—",
-      totalCalls: 0,
-    },
-    details: {
-      whatTriggers:
-        "This campaign is triggered when a customer adds items to their cart, initiates checkout with their phone number, but doesn't complete the purchase within 1 hour.",
-      stepByStep: [
-        "Customer adds items to cart and enters phone number during checkout",
-        "Customer leaves without completing the purchase",
-        "After 1 hour, cart is marked as abandoned",
-        "System verifies cart has a valid phone number (Trigger Ready)",
-        "Cart Abandonment Agent initiates an outbound call",
-        "Agent reminds customer about their cart and offers assistance",
-        "If customer wants to proceed, they receive a recovery link via SMS",
-        "Cart recovery is tracked and reported",
-      ],
-      disclaimer:
-        "This is a cart recovery campaign. Customers can opt-out at any time during the call. The campaign follows transactional patterns and is not used for cold marketing.",
     },
   },
 ];

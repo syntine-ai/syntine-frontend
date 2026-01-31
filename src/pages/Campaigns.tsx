@@ -19,12 +19,6 @@ const campaigns: Campaign[] = [
         lastUpdated: "01/28/2026, 14:30",
         defaultEnabled: true,
     },
-    {
-        id: "cart_abandonment_campaign",
-        name: "Cart Abandonment",
-        lastUpdated: "01/25/2026, 10:15",
-        defaultEnabled: false,
-    },
 ];
 
 const Campaigns = () => {
