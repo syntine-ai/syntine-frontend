@@ -29,16 +29,13 @@ import {
   ShoppingCart,
   PhoneIncoming,
   FileText,
+  Loader2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import {
-  demoCallLogs,
-  demoCallLogStats,
-  formatCurrency,
-  type DemoCallLog,
-} from "@/data/demoOutcomesData";
+import { useCallLogs, CallLogWithDetails } from "@/hooks/useCallLogs";
+import { toast } from "sonner";
 
 const outcomeConfig: Record<string, { label: string; className: string }> = {
   confirmed: {
@@ -65,6 +62,18 @@ const outcomeConfig: Record<string, { label: string; className: string }> = {
     label: "Handled",
     className: "bg-primary/15 text-primary border-primary/30",
   },
+  answered: {
+    label: "Answered",
+    className: "bg-primary/15 text-primary border-primary/30",
+  },
+  failed: {
+    label: "Failed",
+    className: "bg-destructive/15 text-destructive border-destructive/30",
+  },
+  voicemail: {
+    label: "Voicemail",
+    className: "bg-warning/15 text-warning border-warning/30",
+  },
 };
 
 const relatedToConfig: Record<string, { label: string; className: string }> = {
@@ -80,6 +89,10 @@ const relatedToConfig: Record<string, { label: string; className: string }> = {
     label: "Inbound",
     className: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
   },
+  unknown: {
+    label: "Unknown",
+    className: "bg-muted text-muted-foreground border-border",
+  },
 };
 
 const containerVariants = {
@@ -94,30 +107,49 @@ const itemVariants = {
 
 const CallLogs = () => {
   const navigate = useNavigate();
+  const { calls, isLoading, error } = useCallLogs();
+
   const [search, setSearch] = useState("");
   const [outcomeFilter, setOutcomeFilter] = useState("all");
   const [relatedToFilter, setRelatedToFilter] = useState("all");
   const [campaignFilter, setCampaignFilter] = useState("all");
 
+  // Calculate dynamic stats from real data
+  const stats = useMemo(() => {
+    return {
+      callsLinkedToOrders: calls.filter((c: any) => c.metadata?.related_to === "order").length,
+      callsLinkedToCarts: calls.filter((c: any) => c.metadata?.related_to === "cart").length,
+      inboundCallsHandled: calls.filter((c) => c.call_type === "inbound" && c.outcome === "answered").length,
+      noResponseCalls: calls.filter((c) => ["no_answer", "no_response", "failed"].includes(c.outcome || "")).length,
+    };
+  }, [calls]);
+
   const filteredLogs = useMemo(() => {
-    return demoCallLogs.filter((call) => {
+    return calls.filter((call: CallLogWithDetails & { metadata?: any }) => {
+      // Determine relatedTo safely
+      const relatedTo = (call.metadata?.related_to || "unknown").toLowerCase();
+      const relatedId = call.metadata?.related_id || "";
+
       if (search) {
         const searchLower = search.toLowerCase();
-        const matchesPhone = call.customerPhone.toLowerCase().includes(searchLower);
-        const matchesName = call.customerName.toLowerCase().includes(searchLower);
-        const matchesId = call.relatedId?.toLowerCase().includes(searchLower);
+        const matchesPhone = (call.to_number || "").toLowerCase().includes(searchLower) ||
+          (call.from_number || "").toLowerCase().includes(searchLower);
+        const matchesName = (call.contact_name || "").toLowerCase().includes(searchLower);
+        const matchesId = relatedId.toLowerCase().includes(searchLower);
         if (!matchesPhone && !matchesName && !matchesId) return false;
       }
+
       if (outcomeFilter !== "all" && call.outcome !== outcomeFilter) return false;
-      if (relatedToFilter !== "all" && call.relatedTo !== relatedToFilter) return false;
+      if (relatedToFilter !== "all" && relatedTo !== relatedToFilter) return false;
+
       if (campaignFilter !== "all") {
-        if (campaignFilter === "order" && call.campaign !== "Order Confirmation") return false;
-        if (campaignFilter === "cart" && call.campaign !== "Cart Abandonment") return false;
-        if (campaignFilter === "inbound" && call.campaign !== null) return false;
+        if (campaignFilter === "order" && (!call.campaign_name?.toLowerCase().includes("order"))) return false;
+        if (campaignFilter === "cart" && (!call.campaign_name?.toLowerCase().includes("cart"))) return false;
+        if (campaignFilter === "inbound" && call.call_type !== "inbound") return false;
       }
       return true;
     });
-  }, [search, outcomeFilter, relatedToFilter, campaignFilter]);
+  }, [calls, search, outcomeFilter, relatedToFilter, campaignFilter]);
 
   const clearFilters = () => {
     setSearch("");
@@ -129,30 +161,31 @@ const CallLogs = () => {
   const hasActiveFilters =
     search || outcomeFilter !== "all" || relatedToFilter !== "all" || campaignFilter !== "all";
 
-  const formatDuration = (seconds: number) => {
+  const formatDuration = (seconds?: number | null) => {
     if (!seconds) return "-";
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const formatTime = (date: string) => {
+  const formatTime = (date?: string | null) => {
+    if (!date) return "-";
     return format(new Date(date), "MMM d, h:mm a");
   };
 
   const handleExport = () => {
     const csvContent = [
       ["Time", "Customer", "Related To", "ID", "Campaign", "Agent", "Duration", "Outcome"].join(","),
-      ...filteredLogs.map((call) =>
+      ...filteredLogs.map((call: any) =>
         [
-          call.createdAt,
-          call.customerName,
-          call.relatedTo,
-          call.relatedId || "-",
-          call.campaign || "Inbound",
-          call.agent,
-          call.duration,
-          call.outcome,
+          call.created_at,
+          call.contact_name || "Unknown",
+          call.metadata?.related_to || "Unknown",
+          call.metadata?.related_id || "-",
+          call.campaign_name || "Direct Call",
+          call.agent_name || "Unknown",
+          call.duration_seconds || 0,
+          call.outcome || "unknown",
         ].join(",")
       ),
     ].join("\n");
@@ -164,138 +197,166 @@ const CallLogs = () => {
     a.download = `call-logs-${format(new Date(), "yyyy-MM-dd")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    toast.success("Export downloaded");
   };
+
+  if (isLoading) {
+    return (
+      <PageContainer title="Call Logs" subtitle="Review voice calls linked to orders and carts.">
+        <div className="flex items-center justify-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (error) {
+    return (
+      <PageContainer title="Call Logs">
+        <div className="flex items-center justify-center h-64 text-destructive">
+          Error loading call logs: {error}
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer
-        title="Call Logs"
-        subtitle="Review voice calls linked to orders and carts."
+      title="Call Logs"
+      subtitle="Review voice calls linked to orders and carts."
+    >
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-6"
       >
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="space-y-6"
-        >
-          {/* Summary Cards */}
-          <motion.div variants={itemVariants}>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <MetricCard
-                label="Calls Linked to Orders"
-                value={demoCallLogStats.callsLinkedToOrders.toString()}
-                icon={ShoppingBag}
-              />
-              <MetricCard
-                label="Calls Linked to Carts"
-                value={demoCallLogStats.callsLinkedToCarts.toString()}
-                icon={ShoppingCart}
-              />
-              <MetricCard
-                label="Inbound Handled"
-                value={demoCallLogStats.inboundCallsHandled.toString()}
-                icon={PhoneIncoming}
-              />
-              <MetricCard
-                label="No Response"
-                value={demoCallLogStats.noResponseCalls.toString()}
-                icon={PhoneOff}
+        {/* Summary Cards */}
+        <motion.div variants={itemVariants}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <MetricCard
+              label="Calls Linked to Orders"
+              value={stats.callsLinkedToOrders.toString()}
+              icon={ShoppingBag}
+            />
+            <MetricCard
+              label="Calls Linked to Carts"
+              value={stats.callsLinkedToCarts.toString()}
+              icon={ShoppingCart}
+            />
+            <MetricCard
+              label="Inbound Handled"
+              value={stats.inboundCallsHandled.toString()}
+              icon={PhoneIncoming}
+            />
+            <MetricCard
+              label="No Response"
+              value={stats.noResponseCalls.toString()}
+              icon={PhoneOff}
+            />
+          </div>
+        </motion.div>
+
+        {/* Filters */}
+        <motion.div variants={itemVariants}>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, phone, or ID..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
               />
             </div>
-          </motion.div>
-
-          {/* Filters */}
-          <motion.div variants={itemVariants}>
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by name, phone, or ID..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={relatedToFilter} onValueChange={setRelatedToFilter}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue placeholder="Related To" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="order">Order</SelectItem>
-                  <SelectItem value="cart">Cart</SelectItem>
-                  <SelectItem value="inbound">Inbound</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
-                <SelectTrigger className="w-[150px]">
-                  <SelectValue placeholder="Outcome" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Outcomes</SelectItem>
-                  <SelectItem value="confirmed">Confirmed</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                  <SelectItem value="recovered">Recovered</SelectItem>
-                  <SelectItem value="not_recovered">Not Recovered</SelectItem>
-                  <SelectItem value="no_response">No Response</SelectItem>
-                  <SelectItem value="handled">Handled</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={campaignFilter} onValueChange={setCampaignFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Campaign" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Campaigns</SelectItem>
-                  <SelectItem value="order">Order Confirmation</SelectItem>
-                  <SelectItem value="cart">Cart Abandonment</SelectItem>
-                  <SelectItem value="inbound">Inbound</SelectItem>
-                </SelectContent>
-              </Select>
-              {hasActiveFilters && (
-                <Button variant="ghost" size="sm" onClick={clearFilters}>
-                  Clear filters
-                </Button>
-              )}
-              <div className="flex-1" />
-              <Button variant="outline" onClick={handleExport}>
-                <Download className="h-4 w-4 mr-2" />
-                Export CSV
+            <Select value={relatedToFilter} onValueChange={setRelatedToFilter}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Related To" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="order">Order</SelectItem>
+                <SelectItem value="cart">Cart</SelectItem>
+                <SelectItem value="inbound">Inbound</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={outcomeFilter} onValueChange={setOutcomeFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Outcome" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Outcomes</SelectItem>
+                <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
+                <SelectItem value="recovered">Recovered</SelectItem>
+                <SelectItem value="not_recovered">Not Recovered</SelectItem>
+                <SelectItem value="no_response">No Response</SelectItem>
+                <SelectItem value="handled">Handled</SelectItem>
+                <SelectItem value="answered">Answered</SelectItem>
+                <SelectItem value="failed">Failed</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={campaignFilter} onValueChange={setCampaignFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Campaign" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Campaigns</SelectItem>
+                <SelectItem value="order">Order Confirmation</SelectItem>
+                <SelectItem value="cart">Cart Abandonment</SelectItem>
+                <SelectItem value="inbound">Inbound</SelectItem>
+              </SelectContent>
+            </Select>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                Clear filters
               </Button>
-            </div>
-          </motion.div>
+            )}
+            <div className="flex-1" />
+            <Button variant="outline" onClick={handleExport}>
+              <Download className="h-4 w-4 mr-2" />
+              Export CSV
+            </Button>
+          </div>
+        </motion.div>
 
-          {/* Table */}
-          <motion.div variants={itemVariants}>
-            {filteredLogs.length === 0 ? (
-              <EmptyState
-                icon={PhoneOff}
-                title="No call logs found"
-                description={
-                  hasActiveFilters
-                    ? "Try adjusting your filters to find what you're looking for."
-                    : "Call logs will appear here once your campaigns start making calls."
-                }
-                actionLabel={hasActiveFilters ? "Clear Filters" : undefined}
-                onAction={hasActiveFilters ? clearFilters : undefined}
-              />
-            ) : (
-              <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border/50 hover:bg-transparent">
-                      <TableHead className="text-muted-foreground font-medium">Time</TableHead>
-                      <TableHead className="text-muted-foreground font-medium">Customer</TableHead>
-                      <TableHead className="text-muted-foreground font-medium">Related To</TableHead>
-                      <TableHead className="text-muted-foreground font-medium">Order / Cart ID</TableHead>
-                      <TableHead className="text-muted-foreground font-medium">Outcome</TableHead>
-                      <TableHead className="text-muted-foreground font-medium">Campaign</TableHead>
-                      <TableHead className="text-muted-foreground font-medium">Agent</TableHead>
-                      <TableHead className="text-muted-foreground font-medium">Duration</TableHead>
-                      <TableHead className="text-muted-foreground font-medium w-[100px]">Details</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredLogs.map((call, index) => (
+        {/* Table */}
+        <motion.div variants={itemVariants}>
+          {filteredLogs.length === 0 ? (
+            <EmptyState
+              icon={PhoneOff}
+              title="No call logs found"
+              description={
+                hasActiveFilters
+                  ? "Try adjusting your filters to find what you're looking for."
+                  : "Call logs will appear here once your campaigns start making calls."
+              }
+              actionLabel={hasActiveFilters ? "Clear Filters" : undefined}
+              onAction={hasActiveFilters ? clearFilters : undefined}
+            />
+          ) : (
+            <div className="bg-card rounded-xl border border-border/50 overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/50 hover:bg-transparent">
+                    <TableHead className="text-muted-foreground font-medium">Time</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Customer</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Related To</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Order / Cart ID</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Outcome</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Campaign</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Agent</TableHead>
+                    <TableHead className="text-muted-foreground font-medium">Duration</TableHead>
+                    <TableHead className="text-muted-foreground font-medium w-[100px]">Details</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredLogs.map((call, index) => {
+                    const relatedTo = (call as any).metadata?.related_to || "unknown";
+                    const config = relatedToConfig[relatedTo] || relatedToConfig.unknown;
+                    const outcomeConf = outcomeConfig[call.outcome || ""] || outcomeConfig.no_response;
+
+                    return (
                       <motion.tr
                         key={call.id}
                         initial={{ opacity: 0, y: 10 }}
@@ -305,30 +366,32 @@ const CallLogs = () => {
                         onClick={() => navigate(`/calls/${call.id}`)}
                       >
                         <TableCell className="text-muted-foreground">
-                          {formatTime(call.createdAt)}
+                          {formatTime(call.created_at)}
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium text-foreground">{call.customerName}</span>
-                            <span className="text-xs text-muted-foreground">{call.customerPhone}</span>
+                            <span className="font-medium text-foreground">{call.contact_name || "Unknown"}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {call.call_type === "inbound" ? call.from_number : call.to_number}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className={cn("font-medium", relatedToConfig[call.relatedTo].className)}
+                            className={cn("font-medium", config.className)}
                           >
-                            {relatedToConfig[call.relatedTo].label}
+                            {config.label}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {call.relatedId ? (
+                          {(call as any).metadata?.related_id ? (
                             <Link
-                              to={call.relatedTo === "order" ? `/orders` : `/abandoned-carts`}
+                              to={relatedTo === "order" ? `/orders` : `/abandoned-carts`}
                               onClick={(e) => e.stopPropagation()}
                               className="text-primary hover:underline font-mono text-sm"
                             >
-                              {call.relatedId}
+                              {(call as any).metadata.related_id}
                             </Link>
                           ) : (
                             <span className="text-muted-foreground">—</span>
@@ -337,25 +400,25 @@ const CallLogs = () => {
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className={cn("font-medium", outcomeConfig[call.outcome].className)}
+                            className={cn("font-medium", outcomeConf.className)}
                           >
-                            {outcomeConfig[call.outcome].label}
+                            {outcomeConf.label}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {call.campaign || "Inbound"}
+                          {call.campaign_name || "Inbound"}
                         </TableCell>
                         <TableCell className="text-muted-foreground text-sm">
                           <Link
-                            to={`/agents/${call.agent.toLowerCase().replace(/ /g, "_")}`}
+                            to={`/agents/${call.agent_id}`}
                             onClick={(e) => e.stopPropagation()}
                             className="hover:text-primary hover:underline"
                           >
-                            {call.agent}
+                            {call.agent_name}
                           </Link>
                         </TableCell>
                         <TableCell className="text-foreground">
-                          {formatDuration(call.duration)}
+                          {formatDuration(call.duration_seconds)}
                         </TableCell>
                         <TableCell>
                           <Button
@@ -371,14 +434,15 @@ const CallLogs = () => {
                           </Button>
                         </TableCell>
                       </motion.tr>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </motion.div>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </motion.div>
-      </PageContainer>
+      </motion.div>
+    </PageContainer>
   );
 };
 
