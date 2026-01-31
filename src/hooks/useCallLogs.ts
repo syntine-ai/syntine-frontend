@@ -10,7 +10,6 @@ type CallTranscript = Database["public"]["Tables"]["call_transcripts"]["Row"];
 export interface CallLogWithDetails extends Call {
   agent_name?: string;
   campaign_name?: string;
-  contact_name?: string;
   transcripts?: CallTranscript[];
 }
 
@@ -30,14 +29,14 @@ export function useCallLogs() {
       const { data: callsData, error: callsError } = await supabase
         .from("calls")
         .select(`
-          id, organization_id, campaign_id, agent_id, contact_id,
+          id, organization_id, campaign_id, agent_id,
           call_type, from_number, to_number, status, outcome, 
           duration_seconds, sentiment, sentiment_score, 
           attempt_number, error_message, summary, tags, metadata,
           started_at, ended_at, created_at, external_call_id,
+          order_id, cart_id,
           agents:agent_id(name),
-          campaigns:campaign_id(name),
-          contacts:contact_id(first_name, last_name)
+          campaigns:campaign_id(name)
         `)
         .eq("organization_id", profile.organization_id)
         .order("created_at", { ascending: false })
@@ -49,9 +48,6 @@ export function useCallLogs() {
         ...call,
         agent_name: call.agents?.name || "Unknown Agent",
         campaign_name: call.campaigns?.name || "Direct Call",
-        contact_name: call.contacts
-          ? `${call.contacts.first_name || ""} ${call.contacts.last_name || ""}`.trim() || "Unknown"
-          : "Unknown",
       }));
 
       setCalls(callsWithDetails);
@@ -129,14 +125,14 @@ export function useCallLogs() {
       const { data: callData, error } = await supabase
         .from("calls")
         .select(`
-          id, organization_id, campaign_id, agent_id, contact_id,
+          id, organization_id, campaign_id, agent_id,
           call_type, from_number, to_number, status, outcome, 
           duration_seconds, sentiment, sentiment_score, 
           attempt_number, error_message, summary, tags, metadata,
           started_at, ended_at, created_at, external_call_id,
+          order_id, cart_id,
           agents:agent_id(name),
-          campaigns:campaign_id(name),
-          contacts:contact_id(first_name, last_name)
+          campaigns:campaign_id(name)
         `)
         .eq("id", callId)
         .single();
@@ -149,9 +145,6 @@ export function useCallLogs() {
         ...call,
         agent_name: call.agents?.name || "Unknown Agent",
         campaign_name: call.campaigns?.name || "Direct Call",
-        contact_name: call.contacts
-          ? `${call.contacts.first_name || ""} ${call.contacts.last_name || ""}`.trim() || "Unknown"
-          : "Unknown",
       };
     } catch (err: any) {
       console.error("Error fetching call:", err);

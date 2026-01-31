@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { TriggerReadyBadge } from "./TriggerReadyBadge";
-import { demoOrders } from "@/data/demoCommerceData";
+import { useOrder } from "@/hooks/useOrders";
 
 interface OrderDetailDrawerProps {
   orderId: string | null;
@@ -29,7 +29,7 @@ export function OrderDetailDrawer({
   open,
   onOpenChange,
 }: OrderDetailDrawerProps) {
-  const order = orderId ? demoOrders.find(o => o.id === orderId) : null;
+  const { data: order, isLoading } = useOrder(orderId);
 
   const getPaymentBadge = (paymentType: string) => {
     switch (paymentType) {
@@ -87,7 +87,11 @@ export function OrderDetailDrawer({
           </SheetTitle>
         </SheetHeader>
 
-        {order ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : order ? (
           <div className="space-y-6">
             {/* Order Header */}
             <div>

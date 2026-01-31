@@ -152,8 +152,10 @@ const CallDetails = () => {
     return (callData.metadata as any)?.[key];
   };
 
-  const relatedTo = getMetadata('related_to') || 'N/A';
-  const relatedId = getMetadata('related_id');
+  // derived from direct columns first, falling back to metadata
+  const relatedId = callData.order_id || callData.cart_id || getMetadata('related_id');
+  const relatedTo = callData.order_id ? "order" : (callData.cart_id ? "cart" : (getMetadata('related_to') || 'N/A'));
+
   const orderValue = getMetadata('order_value');
   const cartValue = getMetadata('cart_value');
   const items = getMetadata('items') || [];

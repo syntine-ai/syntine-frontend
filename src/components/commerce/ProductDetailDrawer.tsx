@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Package, ShoppingBag, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
-import { demoProducts } from "@/data/demoCommerceData";
+import { useProduct } from "@/hooks/useProducts";
 
 interface ProductDetailDrawerProps {
   productId: string | null;
@@ -21,7 +21,7 @@ export function ProductDetailDrawer({
   open,
   onOpenChange,
 }: ProductDetailDrawerProps) {
-  const product = productId ? demoProducts.find(p => p.id === productId) : null;
+  const { data: product, isLoading } = useProduct(productId);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -68,7 +68,11 @@ export function ProductDetailDrawer({
           </SheetTitle>
         </SheetHeader>
 
-        {product ? (
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : product ? (
           <div className="space-y-6">
             {/* Product Image */}
             <div className="h-48 w-full rounded-lg bg-muted flex items-center justify-center overflow-hidden">
