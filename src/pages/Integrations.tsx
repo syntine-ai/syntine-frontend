@@ -57,7 +57,7 @@ const Integrations = () => {
                   {/* Top Row: Icon & Status */}
                   <div className="flex items-start justify-between mb-4">
                     <div className="h-12 w-12 rounded-lg bg-muted/50 border border-border flex items-center justify-center overflow-hidden p-2">
-                      {integration.platform === "shopify" ? (
+                      {integration.source === "shopify" ? (
                         <img
                           src="https://cdn.shopify.com/shopifycloud/brochure/assets/brand-assets/shopify-logo-primary-logo-456baa801ee66a0a435671082365958316831c9960c480451dd0330bcdae304f.svg"
                           alt="Shopify logo"
@@ -65,7 +65,7 @@ const Integrations = () => {
                         />
                       ) : (
                         <span className="text-lg font-bold text-muted-foreground">
-                          {integration.platform[0].toUpperCase()}
+                          {integration.source[0].toUpperCase()}
                         </span>
                       )}
                     </div>
@@ -82,12 +82,12 @@ const Integrations = () => {
 
                   {/* App Name */}
                   <h3 className="text-base font-semibold text-foreground mb-1">
-                    {integration.platform.charAt(0).toUpperCase() + integration.platform.slice(1)}
+                    {integration.source.charAt(0).toUpperCase() + integration.source.slice(1)}
                   </h3>
 
                   {/* Description */}
                   <p className="text-sm text-muted-foreground mb-4 line-clamp-2 flex-1">
-                    {integration.shop_domain && `Shop: ${integration.shop_domain}`}
+                    {integration.store_domain && `Shop: ${integration.store_domain}`}
                     {integration.last_sync_at && ` • Last synced: ${new Date(integration.last_sync_at).toLocaleDateString()}`}
                   </p>
 
