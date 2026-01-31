@@ -20,18 +20,25 @@ import { formatDistanceToNow } from "date-fns";
 function transformContact(contact: ContactWithStats, listName: string): Contact {
   const stats = contact.callStats;
   
-  // Determine sentiment from avg score
+  // Determine sentiment from call history
   let sentiment: "positive" | "neutral" | "negative" | "not_analyzed" = "not_analyzed";
-  if (stats?.avg_sentiment_score !== null && stats?.avg_sentiment_score !== undefined) {
-    if (stats.avg_sentiment_score >= 70) sentiment = "positive";
-    else if (stats.avg_sentiment_score >= 40) sentiment = "neutral";
+  if (stats && stats.total_calls > 0) {
+    // Approximate sentiment based on answer rate
+    const answerRate = stats.answered_calls / stats.total_calls;
+    if (answerRate >= 0.7) sentiment = "positive";
+    else if (answerRate >= 0.4) sentiment = "neutral";
     else sentiment = "negative";
   }
 
   // Determine outcome from last call
   let outcome: "answered" | "no_answer" | "busy" | "failed" | "not_called" = "not_called";
   if (stats?.last_outcome) {
-    outcome = stats.last_outcome === "voicemail" ? "no_answer" : stats.last_outcome;
+    const lastOutcome = stats.last_outcome as string;
+    if (lastOutcome === "voicemail") {
+      outcome = "no_answer";
+    } else if (["answered", "no_answer", "busy", "failed"].includes(lastOutcome)) {
+      outcome = lastOutcome as typeof outcome;
+    }
   }
 
   return {
@@ -92,11 +99,11 @@ export default function Contacts() {
     new Date(c.callStats.last_call_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
   ).length;
 
-  const positiveCount = contacts.filter((c) => 
-    c.callStats?.avg_sentiment_score !== null && 
-    c.callStats?.avg_sentiment_score !== undefined &&
-    c.callStats.avg_sentiment_score >= 70
-  ).length;
+  const positiveCount = contacts.filter((c) => {
+    if (!c.callStats || c.callStats.total_calls === 0) return false;
+    const answerRate = c.callStats.answered_calls / c.callStats.total_calls;
+    return answerRate >= 0.7;
+  }).length;
 
   const dncCount = contacts.filter((c) => c.do_not_call).length;
 

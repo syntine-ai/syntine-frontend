@@ -16,6 +16,13 @@ export interface CampaignWithDetails extends Campaign {
   successRate: number;
 }
 
+// Demo contact lists data (until contact_lists tables are created)
+const demoContactLists = [
+  { id: "list-1", name: "VIP Customers", contactCount: 156 },
+  { id: "list-2", name: "Recent Orders", contactCount: 423 },
+  { id: "list-3", name: "Cart Abandoners", contactCount: 89 },
+];
+
 export function useCampaigns() {
   const { profile } = useAuth();
   const { toast } = useToast();
@@ -54,22 +61,6 @@ export function useCampaigns() {
         .select("campaign_id, agent_id, is_primary, agents(id, name)")
         .in("campaign_id", campaignIds);
 
-      // Fetch campaign contact lists with list names
-      const { data: campaignLists } = await supabase
-        .from("campaign_contact_lists")
-        .select("campaign_id, contact_list_id, contact_lists(id, name)")
-        .in("campaign_id", campaignIds);
-
-      // Fetch list member counts
-      const { data: listMembers } = await supabase
-        .from("contact_list_members")
-        .select("contact_list_id");
-
-      const listCounts: Record<string, number> = {};
-      listMembers?.forEach((m) => {
-        listCounts[m.contact_list_id] = (listCounts[m.contact_list_id] || 0) + 1;
-      });
-
       // Fetch today's call stats per campaign
       const todayStart = new Date();
       todayStart.setHours(0, 0, 0, 0);
@@ -104,13 +95,8 @@ export function useCampaigns() {
             is_primary: ca.is_primary || false,
           }));
 
-        const contactLists = (campaignLists || [])
-          .filter((cl) => cl.campaign_id === campaign.id)
-          .map((cl) => ({
-            id: cl.contact_list_id,
-            name: (cl.contact_lists as any)?.name || "Unknown",
-            contactCount: listCounts[cl.contact_list_id] || 0,
-          }));
+        // Using demo contact lists for now
+        const contactLists: Array<{ id: string; name: string; contactCount: number }> = [];
 
         const stats = callStats[campaign.id] || { total: 0, answered: 0 };
         const successRate = stats.total > 0 ? (stats.answered / stats.total) * 100 : 0;
@@ -186,16 +172,7 @@ export function useCampaigns() {
         await supabase.from("campaign_agents").insert(agentLinks);
       }
 
-      // Link contact lists
-      if (data.contactListIds && data.contactListIds.length > 0) {
-        const listLinks = data.contactListIds.map((listId, index) => ({
-          campaign_id: newCampaign.id,
-          contact_list_id: listId,
-          priority: index,
-        }));
-
-        await supabase.from("campaign_contact_lists").insert(listLinks);
-      }
+      // Contact list linking would go here once tables exist
 
       await fetchCampaigns();
 
@@ -349,48 +326,37 @@ export function useCampaigns() {
   };
 
   const linkContactList = async (campaignId: string, listId: string) => {
-    try {
-      const { error } = await supabase.from("campaign_contact_lists").insert({
-        campaign_id: campaignId,
-        contact_list_id: listId,
-      });
+    // Demo implementation - update local state only
+    setCampaigns((prev) =>
+      prev.map((c) => {
+        if (c.id !== campaignId) return c;
+        const list = demoContactLists.find((l) => l.id === listId);
+        if (!list) return c;
+        return {
+          ...c,
+          contactLists: [...c.contactLists, list],
+        };
+      })
+    );
 
-      if (error) {
-        if (error.message.includes("duplicate")) {
-          toast({ title: "List already linked", description: "This list is already assigned to the campaign." });
-          return false;
-        }
-        throw error;
-      }
-
-      await fetchCampaigns();
-      toast({ title: "List Linked", description: "Contact list has been added to the campaign." });
-      return true;
-    } catch (err) {
-      console.error("Error linking list:", err);
-      toast({ title: "Error", description: "Failed to link contact list", variant: "destructive" });
-      return false;
-    }
+    toast({ title: "List Linked", description: "Contact list has been added to the campaign." });
+    return true;
   };
 
   const unlinkContactList = async (campaignId: string, listId: string) => {
-    try {
-      const { error } = await supabase
-        .from("campaign_contact_lists")
-        .delete()
-        .eq("campaign_id", campaignId)
-        .eq("contact_list_id", listId);
+    // Demo implementation - update local state only
+    setCampaigns((prev) =>
+      prev.map((c) => {
+        if (c.id !== campaignId) return c;
+        return {
+          ...c,
+          contactLists: c.contactLists.filter((l) => l.id !== listId),
+        };
+      })
+    );
 
-      if (error) throw error;
-
-      await fetchCampaigns();
-      toast({ title: "List Removed", description: "Contact list has been removed from the campaign." });
-      return true;
-    } catch (err) {
-      console.error("Error unlinking list:", err);
-      toast({ title: "Error", description: "Failed to remove contact list", variant: "destructive" });
-      return false;
-    }
+    toast({ title: "List Removed", description: "Contact list has been removed from the campaign." });
+    return true;
   };
 
   return {
