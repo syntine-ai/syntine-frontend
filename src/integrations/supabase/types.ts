@@ -208,6 +208,7 @@ export type Database = {
           attempt_number: number | null
           call_type: Database["public"]["Enums"]["call_type"]
           campaign_id: string | null
+          cart_id: string | null
           contact_id: string | null
           created_at: string | null
           duration_seconds: number | null
@@ -217,6 +218,7 @@ export type Database = {
           from_number: string | null
           id: string
           metadata: Json | null
+          order_id: string | null
           organization_id: string
           outcome: Database["public"]["Enums"]["call_outcome"] | null
           sentiment: Database["public"]["Enums"]["call_sentiment"] | null
@@ -232,6 +234,7 @@ export type Database = {
           attempt_number?: number | null
           call_type?: Database["public"]["Enums"]["call_type"]
           campaign_id?: string | null
+          cart_id?: string | null
           contact_id?: string | null
           created_at?: string | null
           duration_seconds?: number | null
@@ -241,6 +244,7 @@ export type Database = {
           from_number?: string | null
           id?: string
           metadata?: Json | null
+          order_id?: string | null
           organization_id: string
           outcome?: Database["public"]["Enums"]["call_outcome"] | null
           sentiment?: Database["public"]["Enums"]["call_sentiment"] | null
@@ -256,6 +260,7 @@ export type Database = {
           attempt_number?: number | null
           call_type?: Database["public"]["Enums"]["call_type"]
           campaign_id?: string | null
+          cart_id?: string | null
           contact_id?: string | null
           created_at?: string | null
           duration_seconds?: number | null
@@ -265,6 +270,7 @@ export type Database = {
           from_number?: string | null
           id?: string
           metadata?: Json | null
+          order_id?: string | null
           organization_id?: string
           outcome?: Database["public"]["Enums"]["call_outcome"] | null
           sentiment?: Database["public"]["Enums"]["call_sentiment"] | null
@@ -288,6 +294,20 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_cart_id_fkey"
+            columns: ["cart_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_abandoned_carts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calls_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_orders"
             referencedColumns: ["id"]
           },
           {
