@@ -10,6 +10,7 @@ type CallTranscript = Database["public"]["Tables"]["call_transcripts"]["Row"];
 export interface CallLogWithDetails extends Call {
   agent_name?: string;
   campaign_name?: string;
+  contact_name?: string;
   transcripts?: CallTranscript[];
 }
 
@@ -48,6 +49,7 @@ export function useCallLogs() {
         ...call,
         agent_name: call.agents?.name || "Unknown Agent",
         campaign_name: call.campaigns?.name || "Direct Call",
+        contact_name: call.metadata?.customer_name || "Unknown Customer",
       }));
 
       setCalls(callsWithDetails);
@@ -145,6 +147,7 @@ export function useCallLogs() {
         ...call,
         agent_name: call.agents?.name || "Unknown Agent",
         campaign_name: call.campaigns?.name || "Direct Call",
+        contact_name: call.metadata?.customer_name || "Unknown Customer",
       };
     } catch (err: any) {
       console.error("Error fetching call:", err);

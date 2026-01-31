@@ -35,8 +35,8 @@ const outcomeConfig: Record<string, { label: string; icon: any; className: strin
     icon: XCircle,
     className: "bg-destructive/15 text-destructive border-destructive/30",
   },
-  no_response: {
-    label: "No Response",
+  no_answer: {
+    label: "No Answer",
     icon: PhoneOff,
     className: "bg-muted text-muted-foreground border-border",
   },
@@ -344,10 +344,10 @@ const CallDetails = () => {
           >
             {/* Real recording URL would come from database/storage */}
             <CallRecordingPlayer
-              recordingUrl={callData.outcome !== "no_response" ? "demo-recording" : undefined}
+              recordingUrl={callData.outcome !== "no_answer" ? "demo-recording" : undefined}
               duration={formatDuration(callData.duration_seconds)}
             />
-            {callData.outcome === "no_response" && (
+            {callData.outcome === "no_answer" && (
               <p className="text-xs text-muted-foreground mt-2 italic">
                 Recording not available — call was not answered.
               </p>

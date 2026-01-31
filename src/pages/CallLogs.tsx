@@ -46,8 +46,8 @@ const outcomeConfig: Record<string, { label: string; className: string }> = {
     label: "Rejected",
     className: "bg-destructive/15 text-destructive border-destructive/30",
   },
-  no_response: {
-    label: "No Response",
+  no_answer: {
+    label: "No Answer",
     className: "bg-muted text-muted-foreground border-border",
   },
   recovered: {
@@ -120,7 +120,7 @@ const CallLogs = () => {
       callsLinkedToOrders: calls.filter((c: any) => c.metadata?.related_to === "order").length,
       callsLinkedToCarts: calls.filter((c: any) => c.metadata?.related_to === "cart").length,
       inboundCallsHandled: calls.filter((c) => c.call_type === "inbound" && c.outcome === "answered").length,
-      noResponseCalls: calls.filter((c) => ["no_answer", "no_response", "failed"].includes(c.outcome || "")).length,
+      noResponseCalls: calls.filter((c) => ["no_answer", "failed"].includes(c.outcome || "")).length,
     };
   }, [calls]);
 
@@ -290,7 +290,7 @@ const CallLogs = () => {
                 <SelectItem value="rejected">Rejected</SelectItem>
                 <SelectItem value="recovered">Recovered</SelectItem>
                 <SelectItem value="not_recovered">Not Recovered</SelectItem>
-                <SelectItem value="no_response">No Response</SelectItem>
+                <SelectItem value="no_answer">No Answer</SelectItem>
                 <SelectItem value="handled">Handled</SelectItem>
                 <SelectItem value="answered">Answered</SelectItem>
                 <SelectItem value="failed">Failed</SelectItem>
@@ -354,7 +354,7 @@ const CallLogs = () => {
                   {filteredLogs.map((call, index) => {
                     const relatedTo = (call as any).metadata?.related_to || "unknown";
                     const config = relatedToConfig[relatedTo] || relatedToConfig.unknown;
-                    const outcomeConf = outcomeConfig[call.outcome || ""] || outcomeConfig.no_response;
+                    const outcomeConf = outcomeConfig[call.outcome || ""] || outcomeConfig.no_answer;
 
                     return (
                       <motion.tr
