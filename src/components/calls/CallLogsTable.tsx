@@ -23,6 +23,7 @@ export interface CallLogEntry {
   duration: string | null;
   agent: string;
   startedAt: string;
+  rawDate?: string | null;
 }
 
 interface CallLogsTableProps {

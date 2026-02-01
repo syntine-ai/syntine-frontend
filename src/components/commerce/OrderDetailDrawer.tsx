@@ -180,10 +180,10 @@ export function OrderDetailDrawer({
             {/* Order Items */}
             <div>
               <h4 className="text-sm font-medium text-foreground mb-3">
-                Items ({order.commerce_order_items?.length || 0})
+                Items ({order.items?.length || 0})
               </h4>
               <div className="space-y-2">
-                {order.commerce_order_items?.map((item) => (
+                {order.items?.map((item) => (
                   <div
                     key={item.id}
                     className="flex items-center justify-between p-3 rounded-lg bg-muted/50"

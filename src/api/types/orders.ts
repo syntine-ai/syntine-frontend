@@ -45,6 +45,7 @@ export interface Order {
     trigger_ready: TriggerReadyStatus;
     shipping_address?: Record<string, any>;
     billing_address?: Record<string, any>;
+    items_count?: number;
     notes?: string;
     tags?: string[];
     order_created_at?: string;
