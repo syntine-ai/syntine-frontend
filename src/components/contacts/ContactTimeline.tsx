@@ -44,67 +44,59 @@ export function ContactTimeline({ contactId }: ContactTimelineProps) {
       }
 
       try {
-        const { data, error } = await supabase
-          .from("calls")
-          .select(`
-            id,
-            outcome,
-            sentiment,
-            duration_seconds,
-            created_at,
-            campaigns:campaign_id(name)
-          `)
-          .eq("contact_id", contactId)
-          .order("created_at", { ascending: false })
-          .limit(10);
+        // Note: contact_id column doesn't exist yet in calls table
+        // Using empty array until the contacts feature is fully implemented
+        const callData: Array<{
+          id: string;
+          outcome: string | null;
+          sentiment: string | null;
+          duration_seconds: number | null;
+          created_at: string | null;
+          campaign_name: string | null;
+        }> = [];
 
-        if (error) {
-          console.error("Error fetching call history:", error);
-          setEvents([]);
-        } else if (data) {
-          const formattedEvents: TimelineEvent[] = data.map((call) => {
-            // Map outcome to type
-            let type: TimelineEvent["type"] = "call";
-            if (call.outcome === "answered") type = "answered";
-            else if (call.outcome === "no_answer" || call.outcome === "voicemail") type = "no_answer";
-            else if (call.outcome === "failed" || call.outcome === "busy") type = "failed";
+        const formattedEvents: TimelineEvent[] = callData.map((call) => {
+          // Map outcome to type
+          let type: TimelineEvent["type"] = "call";
+          if (call.outcome === "answered") type = "answered";
+          else if (call.outcome === "no_answer" || call.outcome === "voicemail") type = "no_answer";
+          else if (call.outcome === "failed" || call.outcome === "busy") type = "failed";
 
-            // Format duration
-            let duration: string | undefined;
-            if (call.duration_seconds) {
-              const mins = Math.floor(call.duration_seconds / 60);
-              const secs = call.duration_seconds % 60;
-              duration = `${mins}:${secs.toString().padStart(2, "0")}`;
-            }
+          // Format duration
+          let duration: string | undefined;
+          if (call.duration_seconds) {
+            const mins = Math.floor(call.duration_seconds / 60);
+            const secs = call.duration_seconds % 60;
+            duration = `${mins}:${secs.toString().padStart(2, "0")}`;
+          }
 
-            // Format date
-            const callDate = new Date(call.created_at || Date.now());
-            const today = new Date();
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
+          // Format date
+          const callDate = new Date(call.created_at || Date.now());
+          const today = new Date();
+          const yesterday = new Date(today);
+          yesterday.setDate(yesterday.getDate() - 1);
 
-            let dateLabel: string;
-            if (callDate.toDateString() === today.toDateString()) {
-              dateLabel = "Today";
-            } else if (callDate.toDateString() === yesterday.toDateString()) {
-              dateLabel = "Yesterday";
-            } else {
-              dateLabel = format(callDate, "MMM d");
-            }
+          let dateLabel: string;
+          if (callDate.toDateString() === today.toDateString()) {
+            dateLabel = "Today";
+          } else if (callDate.toDateString() === yesterday.toDateString()) {
+            dateLabel = "Yesterday";
+          } else {
+            dateLabel = format(callDate, "MMM d");
+          }
 
-            return {
-              id: call.id,
-              type,
-              campaign: (call.campaigns as any)?.name || "Direct Call",
-              duration,
-              sentiment: call.sentiment as TimelineEvent["sentiment"] | undefined,
-              timestamp: format(callDate, "h:mm a"),
-              date: dateLabel,
-            };
-          });
+          return {
+            id: call.id,
+            type,
+            campaign: call.campaign_name || "Direct Call",
+            duration,
+            sentiment: call.sentiment as TimelineEvent["sentiment"] | undefined,
+            timestamp: format(callDate, "h:mm a"),
+            date: dateLabel,
+          };
+        });
 
-          setEvents(formattedEvents);
-        }
+        setEvents(formattedEvents);
       } catch (err) {
         console.error("Error:", err);
         setEvents([]);

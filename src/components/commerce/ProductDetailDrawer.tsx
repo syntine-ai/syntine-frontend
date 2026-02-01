@@ -49,8 +49,8 @@ export function ProductDetailDrawer({
   };
 
   const getPriceRange = () => {
-    if (!product?.commerce_product_variants?.length) return "--";
-    const prices = product.commerce_product_variants.map(v => v.price).filter(p => p != null);
+    if (!product?.variants?.length) return "--";
+    const prices = product.variants.map(v => v.price).filter((p): p is number => p != null);
     if (prices.length === 0) return "--";
     const min = Math.min(...prices);
     const max = Math.max(...prices);
@@ -135,10 +135,10 @@ export function ProductDetailDrawer({
             {/* Variants */}
             <div>
               <h4 className="text-sm font-medium text-foreground mb-3">
-                Variants ({product.commerce_product_variants?.length || 0})
+                Variants ({product.variants?.length || 0})
               </h4>
               <div className="space-y-2">
-                {product.commerce_product_variants?.map((variant) => (
+                {product.variants?.map((variant) => (
                   <div
                     key={variant.id}
                     className="flex items-center justify-between p-3 rounded-lg bg-muted/50"

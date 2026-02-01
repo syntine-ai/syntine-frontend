@@ -209,7 +209,6 @@ export type Database = {
           call_type: Database["public"]["Enums"]["call_type"]
           campaign_id: string | null
           cart_id: string | null
-          contact_id: string | null
           created_at: string | null
           duration_seconds: number | null
           ended_at: string | null
@@ -235,7 +234,6 @@ export type Database = {
           call_type?: Database["public"]["Enums"]["call_type"]
           campaign_id?: string | null
           cart_id?: string | null
-          contact_id?: string | null
           created_at?: string | null
           duration_seconds?: number | null
           ended_at?: string | null
@@ -261,7 +259,6 @@ export type Database = {
           call_type?: Database["public"]["Enums"]["call_type"]
           campaign_id?: string | null
           cart_id?: string | null
-          contact_id?: string | null
           created_at?: string | null
           duration_seconds?: number | null
           ended_at?: string | null
