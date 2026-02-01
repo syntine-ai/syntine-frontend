@@ -78,6 +78,7 @@ export type Database = {
           language: string | null
           name: string
           organization_id: string
+          phone_number_id: string | null
           sentiment_rules: Json | null
           status: Database["public"]["Enums"]["agent_status"] | null
           system_prompt: string | null
@@ -92,6 +93,7 @@ export type Database = {
           language?: string | null
           name: string
           organization_id: string
+          phone_number_id?: string | null
           sentiment_rules?: Json | null
           status?: Database["public"]["Enums"]["agent_status"] | null
           system_prompt?: string | null
@@ -106,6 +108,7 @@ export type Database = {
           language?: string | null
           name?: string
           organization_id?: string
+          phone_number_id?: string | null
           sentiment_rules?: Json | null
           status?: Database["public"]["Enums"]["agent_status"] | null
           system_prompt?: string | null
@@ -119,6 +122,13 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "agents_phone_number_id_fkey"
+            columns: ["phone_number_id"]
+            isOneToOne: false
+            referencedRelation: "phone_numbers"
             referencedColumns: ["id"]
           },
         ]
@@ -1107,6 +1117,66 @@ export type Database = {
         }
         Relationships: []
       }
+      phone_numbers: {
+        Row: {
+          agent_id: string | null
+          capabilities: Json | null
+          country: string
+          created_at: string | null
+          id: string
+          monthly_cost: number | null
+          organization_id: string | null
+          phone_number: string
+          provider: string | null
+          region: string | null
+          status: Database["public"]["Enums"]["phone_number_status"]
+          updated_at: string | null
+        }
+        Insert: {
+          agent_id?: string | null
+          capabilities?: Json | null
+          country: string
+          created_at?: string | null
+          id?: string
+          monthly_cost?: number | null
+          organization_id?: string | null
+          phone_number: string
+          provider?: string | null
+          region?: string | null
+          status?: Database["public"]["Enums"]["phone_number_status"]
+          updated_at?: string | null
+        }
+        Update: {
+          agent_id?: string | null
+          capabilities?: Json | null
+          country?: string
+          created_at?: string | null
+          id?: string
+          monthly_cost?: number | null
+          organization_id?: string | null
+          phone_number?: string
+          provider?: string | null
+          region?: string | null
+          status?: Database["public"]["Enums"]["phone_number_status"]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phone_numbers_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phone_numbers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1263,6 +1333,7 @@ export type Database = {
       organization_plan: "starter" | "pro" | "enterprise"
       organization_status: "active" | "trial" | "suspended" | "cancelled"
       payment_type: "cod" | "prepaid" | "unknown"
+      phone_number_status: "available" | "assigned" | "reserved"
       product_status: "active" | "draft" | "archived"
       transcript_speaker: "agent" | "caller" | "system"
       trigger_ready_status: "ready" | "missing_phone" | "not_applicable"
@@ -1439,6 +1510,7 @@ export const Constants = {
       organization_plan: ["starter", "pro", "enterprise"],
       organization_status: ["active", "trial", "suspended", "cancelled"],
       payment_type: ["cod", "prepaid", "unknown"],
+      phone_number_status: ["available", "assigned", "reserved"],
       product_status: ["active", "draft", "archived"],
       transcript_speaker: ["agent", "caller", "system"],
       trigger_ready_status: ["ready", "missing_phone", "not_applicable"],
