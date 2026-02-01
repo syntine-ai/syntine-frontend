@@ -1,11 +1,23 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Bot, Search, Loader2 } from "lucide-react";
+import { Bot, Search, Loader2, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAgents } from "@/hooks/useAgents";
 import { format } from "date-fns";
 import { toast } from "sonner";
+
+const getCountryFlag = (countryCode: string) => {
+  try {
+    const codePoints = countryCode
+      .toUpperCase()
+      .split("")
+      .map((char) => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+  } catch {
+    return "🌐";
+  }
+};
 
 const Agents = () => {
   const navigate = useNavigate();
@@ -70,8 +82,11 @@ const Agents = () => {
                 <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3">
                   Agent Name
                 </th>
-                <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">
+              <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">
                   Last Updated
+                </th>
+                <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">
+                  Phone Number
                 </th>
                 <th className="text-center text-sm font-medium text-muted-foreground px-4 py-3 w-24">
                   Enabled
@@ -109,6 +124,18 @@ const Agents = () => {
                     <span className="text-sm text-muted-foreground">
                       {format(new Date(agent.updated_at || agent.created_at), "MMM d, yyyy h:mm a")}
                     </span>
+                  </td>
+                  <td
+                    className="px-4 py-3 hidden md:table-cell cursor-pointer"
+                    onClick={() => navigate(`/agents/${agent.id}`)}
+                  >
+                    {agent.phone_number ? (
+                      <span className="text-sm font-mono">
+                        {getCountryFlag(agent.phone_number.country)} {agent.phone_number.phone_number}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <Switch

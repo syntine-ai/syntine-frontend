@@ -4,18 +4,32 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { useParams, useNavigate } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Bot,
   ArrowLeft,
   Phone,
-  PhoneIncoming,
   CheckCircle2,
   Loader2,
+  PhoneCall,
+  ExternalLink,
 } from "lucide-react";
 import { useAgents } from "@/hooks/useAgents";
 import { toast } from "sonner";
+
+const getCountryFlag = (countryCode: string) => {
+  try {
+    const codePoints = countryCode
+      .toUpperCase()
+      .split("")
+      .map((char) => 127397 + char.charCodeAt(0));
+    return String.fromCodePoint(...codePoints);
+  } catch {
+    return "🌐";
+  }
+};
 
 const AgentDetail = () => {
   const { id } = useParams();
@@ -125,11 +139,77 @@ const AgentDetail = () => {
         </div>
       </motion.div>
 
-      {/* Agent Prompt Section */}
+      {/* Phone Number Section */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
+        className="mb-6"
+      >
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-medium flex items-center gap-2">
+                  <PhoneCall className="h-4 w-4 text-primary" />
+                  Phone Number
+                </CardTitle>
+                <CardDescription>
+                  The phone number this agent uses for calls
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {agent.phone_number_id && agent.phone_number ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-success/10 flex items-center justify-center">
+                    <Phone className="h-5 w-5 text-success" />
+                  </div>
+                  <div>
+                    <p className="font-mono text-lg">
+                      {getCountryFlag(agent.phone_number.country)} {agent.phone_number.phone_number}
+                    </p>
+                    <p className="text-sm text-muted-foreground">Connected</p>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" asChild>
+                  <Link to="/phone-numbers">
+                    Manage
+                    <ExternalLink className="h-3 w-3 ml-1" />
+                  </Link>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-4 border border-dashed border-border rounded-lg">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center">
+                    <Phone className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground">No phone number connected</p>
+                    <p className="text-sm text-muted-foreground">
+                      Connect a phone number to enable calls
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" asChild>
+                  <Link to="/phone-numbers">
+                    Connect Number
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Agent Prompt Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
       >
         <div className="space-y-3">
           <div className="flex items-center justify-between">

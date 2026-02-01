@@ -30,6 +30,7 @@ import Orders from "./pages/Orders";
 import AbandonedCarts from "./pages/AbandonedCarts";
 import SystemLogs from "./pages/SystemLogs";
 import KnowledgeBase from "./pages/KnowledgeBase";
+import PhoneNumbers from "./pages/PhoneNumbers";
 
 // Account Pages
 import Account from "./pages/Account";
@@ -66,6 +67,7 @@ const App = () => (
               <Route path="/campaigns/:id" element={<CampaignDetail />} />
               <Route path="/agents" element={<Agents />} />
               <Route path="/agents/:id" element={<AgentDetail />} />
+              <Route path="/phone-numbers" element={<PhoneNumbers />} />
               <Route path="/calls" element={<RecentCalls />} />
               <Route path="/calls/:callId" element={<CallDetails />} />
               <Route path="/calls/logs" element={<CallLogs />} />

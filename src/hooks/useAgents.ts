@@ -12,6 +12,11 @@ type AgentStatus = Database["public"]["Enums"]["agent_status"];
 
 export interface AgentWithCampaigns extends Agent {
   linkedCampaigns: number;
+  phone_number?: {
+    id: string;
+    phone_number: string;
+    country: string;
+  } | null;
 }
 
 export function useAgents() {
@@ -28,10 +33,13 @@ export function useAgents() {
       setIsLoading(true);
       setError(null);
 
-      // Fetch agents
+      // Fetch agents with phone number info
       const { data: agentsData, error: agentsError } = await supabase
         .from("agents")
-        .select("*")
+        .select(`
+          *,
+          phone_numbers!agents_phone_number_id_fkey(id, phone_number, country)
+        `)
         .eq("organization_id", profile.organization_id)
         .is("deleted_at", null)
         .order("updated_at", { ascending: false });
@@ -55,6 +63,11 @@ export function useAgents() {
       const agentsWithCampaigns: AgentWithCampaigns[] = (agentsData || []).map((agent) => ({
         ...agent,
         linkedCampaigns: campaignCounts[agent.id] || 0,
+        phone_number: agent.phone_numbers ? {
+          id: agent.phone_numbers.id,
+          phone_number: agent.phone_numbers.phone_number,
+          country: agent.phone_numbers.country,
+        } : null,
       }));
 
       setAgents(agentsWithCampaigns);
