@@ -94,9 +94,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    let authSubscription: { unsubscribe: () => void } | null = null;
 
-    async function initializeAuth() {
+    async function init() {
       try {
+        // 1. Get initial session
         const { data: { session: initialSession } } = await supabase.auth.getSession();
 
         if (mounted) {
@@ -120,41 +122,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setIsLoading(false);
         }
       }
+
+      // 2. Subscribe to changes AFTER initialization is complete
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(
+        async (event, currentSession) => {
+          if (!mounted) return;
+
+          const previousUserId = userRef.current?.id;
+          const currentUserId = currentSession?.user?.id;
+
+          // Check if this is just a confirmation of what we already have
+          // (Supabase can fire INITIAL_SESSION or SIGNED_IN simply on subscription)
+          if (currentUserId === previousUserId) {
+            // Update session/user objects just in case they're fresher, but don't trigger loading/fetch
+            setSession(currentSession);
+            setUser(currentSession?.user ?? null);
+            userRef.current = currentSession?.user ?? null;
+            return;
+          }
+
+          // Case: User explicitly changed
+          userRef.current = currentSession?.user ?? null;
+          setSession(currentSession);
+          setUser(currentSession?.user ?? null);
+
+          // If user changed (e.g. login)
+          if (currentUserId && currentUserId !== previousUserId) {
+            setIsLoading(true);
+            await fetchUserData(currentUserId);
+            if (mounted) setIsLoading(false);
+          }
+          // If logged out
+          else if (!currentSession && previousUserId) {
+            setProfile(null);
+            setOrganization(null);
+            setRoles([]);
+            setIsLoading(false);
+          }
+        }
+      );
+
+      authSubscription = subscription;
     }
 
-    initializeAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        if (!mounted) return;
-
-        const previousUserId = userRef.current?.id;
-        const currentUserId = currentSession?.user?.id;
-
-        // Update refs and state
-        userRef.current = currentSession?.user ?? null;
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-
-        // If user changed (e.g. login)
-        if (currentUserId && currentUserId !== previousUserId) {
-          setIsLoading(true);
-          await fetchUserData(currentUserId);
-          if (mounted) setIsLoading(false);
-        }
-        // If logged out
-        else if (!currentSession && previousUserId) {
-          setProfile(null);
-          setOrganization(null);
-          setRoles([]);
-          setIsLoading(false);
-        }
-      }
-    );
+    init();
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.unsubscribe();
+      }
     };
   }, []);
 
