@@ -104,38 +104,32 @@ export function ContactDetailDrawerNew({
 
       setIsLoading(true);
       try {
-        // Fetch call history from actual calls table
-        const { data: calls, error: callsError } = await supabase
-          .from("calls")
-          .select(`
-            id,
-            outcome,
-            sentiment,
-            duration_seconds,
-            created_at,
-            campaigns:campaign_id(name)
-          `)
-          .eq("contact_id", contact.dbId)
-          .order("created_at", { ascending: false })
-          .limit(5);
+        // Note: contact_id column doesn't exist yet in calls table
+        // Using empty array until the contacts feature is fully implemented
+        const calls: Array<{
+          id: string;
+          outcome: string | null;
+          sentiment: string | null;
+          duration_seconds: number | null;
+          created_at: string | null;
+          campaign_name: string | null;
+        }> = [];
 
-        if (!callsError && calls) {
-          const formattedCalls: CallHistoryItem[] = calls.map((call) => {
-            const duration = call.duration_seconds
-              ? `${Math.floor(call.duration_seconds / 60)}:${(call.duration_seconds % 60).toString().padStart(2, "0")}`
-              : "0:00";
+        const formattedCalls: CallHistoryItem[] = calls.map((call) => {
+          const duration = call.duration_seconds
+            ? `${Math.floor(call.duration_seconds / 60)}:${(call.duration_seconds % 60).toString().padStart(2, "0")}`
+            : "0:00";
 
-            return {
-              id: call.id,
-              date: call.created_at ? format(new Date(call.created_at), "MMM d, yyyy") : "Unknown",
-              campaign: (call.campaigns as any)?.name || "Direct Call",
-              duration,
-              sentiment: (call.sentiment as SentimentType) || "not_analyzed",
-              outcome: (call.outcome as OutcomeType) || "not_called",
-            };
-          });
-          setCallHistory(formattedCalls);
-        }
+          return {
+            id: call.id,
+            date: call.created_at ? format(new Date(call.created_at), "MMM d, yyyy") : "Unknown",
+            campaign: call.campaign_name || "Direct Call",
+            duration,
+            sentiment: (call.sentiment as SentimentType) || "not_analyzed",
+            outcome: (call.outcome as OutcomeType) || "not_called",
+          };
+        });
+        setCallHistory(formattedCalls);
 
         // Use demo contact lists from hook
         const memberLists = allLists.slice(0, 2).map((l) => ({
