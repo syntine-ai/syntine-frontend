@@ -15,9 +15,11 @@ import {
   Loader2,
   PhoneCall,
   ExternalLink,
+  PhoneOutgoing,
 } from "lucide-react";
 import { useAgents } from "@/hooks/useAgents";
 import { toast } from "sonner";
+import { TestCallDialog } from "@/components/agents/TestCallDialog";
 
 const getCountryFlag = (countryCode: string) => {
   try {
@@ -37,6 +39,7 @@ const AgentDetail = () => {
   const { agents, isLoading, updateAgent } = useAgents();
   const [prompt, setPrompt] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+  const [testCallOpen, setTestCallOpen] = useState(false);
 
   const agent = agents.find((a) => a.id === id);
 
@@ -135,7 +138,15 @@ const AgentDetail = () => {
               </div>
             </div>
           </div>
-          {/* Add more status actions here later */}
+          {/* Test Call Button */}
+          <Button
+            onClick={() => setTestCallOpen(true)}
+            className="gap-2"
+            disabled={!agent.phone_number_id}
+          >
+            <PhoneOutgoing className="h-4 w-4" />
+            Test Call
+          </Button>
         </div>
       </motion.div>
 
@@ -234,6 +245,15 @@ const AgentDetail = () => {
           />
         </div>
       </motion.div>
+
+      {/* Test Call Dialog */}
+      <TestCallDialog
+        open={testCallOpen}
+        onOpenChange={setTestCallOpen}
+        agentId={agent.id}
+        agentName={agent.name}
+        hasPhoneNumber={!!agent.phone_number_id}
+      />
     </PageContainer>
   );
 };
