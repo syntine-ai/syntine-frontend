@@ -85,9 +85,11 @@ const CallDetails = () => {
           // Map DB transcript to UI format
           const mappedTranscript = t.map((item: any) => ({
             id: item.id,
-            speaker: item.role === "assistant" || item.role === "agent" ? "agent" : "caller",
+            speaker: item.speaker === "agent" ? "agent" : "caller",
             text: item.content,
-            timestamp: new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) // Simple timestamp for now
+            timestamp: item.timestamp
+              ? new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+              : ""
           }));
           setTranscript(mappedTranscript);
         }
