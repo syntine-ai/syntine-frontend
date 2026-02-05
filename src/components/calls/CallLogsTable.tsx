@@ -19,7 +19,10 @@ export interface CallLogEntry {
   fromNumber: string | null;
   toNumber: string | null;
   callType: "inbound" | "outbound" | "webcall";
-  status: "answered" | "ended" | "missed" | "failed";
+  status: "answered" | "ended" | "missed" | "failed"; // Kept for logic compatibility
+  displayStatus: string; // Pre-calculated label or raw status
+  outcome: string | null;
+  rawStatus: string | null; // database status (ringing, in_progress, ended)
   duration: string | null;
   agent: string;
   startedAt: string;
@@ -33,11 +36,23 @@ interface CallLogsTableProps {
   onSort: (column: string) => void;
 }
 
-const statusConfig = {
-  answered: { label: "Answered", className: "bg-success/15 text-success border-success/30" },
-  ended: { label: "Ended", className: "bg-muted text-muted-foreground border-border" },
-  missed: { label: "Missed", className: "bg-warning/15 text-warning border-warning/30" },
+// Configs copied for consistency
+const outcomeConfig: Record<string, { label: string; className: string }> = {
+  confirmed: { label: "Confirmed", className: "bg-success/15 text-success border-success/30" },
+  rejected: { label: "Rejected", className: "bg-destructive/15 text-destructive border-destructive/30" },
+  no_answer: { label: "No Answer", className: "bg-muted text-muted-foreground border-border" },
+  recovered: { label: "Recovered", className: "bg-success/15 text-success border-success/30" },
+  not_recovered: { label: "Not Recovered", className: "bg-warning/15 text-warning border-warning/30" },
+  handled: { label: "Handled", className: "bg-primary/15 text-primary border-primary/30" },
+  answered: { label: "Answered", className: "bg-primary/15 text-primary border-primary/30" },
   failed: { label: "Failed", className: "bg-destructive/15 text-destructive border-destructive/30" },
+  voicemail: { label: "Voicemail", className: "bg-warning/15 text-warning border-warning/30" },
+};
+
+const statusConfig: Record<string, { label: string; className: string }> = {
+  queued: { label: "Queued", className: "bg-muted text-muted-foreground border-border animate-pulse" },
+  ringing: { label: "Ringing", className: "bg-blue-500/15 text-blue-600 border-blue-500/30 animate-pulse" },
+  in_progress: { label: "In Progress", className: "bg-green-500/15 text-green-600 border-green-500/30 animate-pulse" },
 };
 
 const callTypeConfig = {
@@ -85,7 +100,7 @@ export function CallLogsTable({
             <TableHead className="text-muted-foreground font-medium">Caller</TableHead>
             <TableHead className="text-muted-foreground font-medium">Type</TableHead>
             <TableHead className="text-muted-foreground font-medium">From → To</TableHead>
-            <TableHead className="text-muted-foreground font-medium">Status</TableHead>
+            <TableHead className="text-muted-foreground font-medium">Outcome</TableHead>
             <SortableHeader column="duration" label="Duration" />
             <TableHead className="text-muted-foreground font-medium">Agent</TableHead>
             <SortableHeader column="startedAt" label="Started At" />
@@ -93,58 +108,74 @@ export function CallLogsTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {logs.map((log, index) => (
-            <motion.tr
-              key={log.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.02 }}
-              className="border-border/50 hover:bg-muted/30 cursor-pointer transition-colors"
-              onClick={() => navigate(`/calls/${log.id}`)}
-            >
-              <TableCell className="font-medium text-foreground">{log.caller}</TableCell>
-              <TableCell>
-                <Badge
-                  variant="outline"
-                  className={cn("font-medium", callTypeConfig[log.callType].className)}
-                >
-                  {callTypeConfig[log.callType].label}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-muted-foreground font-mono text-sm">
-                <span className="text-foreground">{log.fromNumber || "—"}</span>
-                <span className="mx-1.5 text-muted-foreground/50">→</span>
-                <span className="text-foreground">{log.toNumber || "—"}</span>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant="outline"
-                  className={cn("font-medium", statusConfig[log.status].className)}
-                >
-                  {statusConfig[log.status].label}
-                </Badge>
-              </TableCell>
-              <TableCell className="text-foreground">
-                {log.duration || "N/A"}
-              </TableCell>
-              <TableCell className="text-muted-foreground">{log.agent}</TableCell>
-              <TableCell className="text-muted-foreground">{log.startedAt}</TableCell>
-              <TableCell>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/calls/${log.id}`);
-                  }}
-                  className="gap-1 text-muted-foreground hover:text-primary"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  View
-                </Button>
-              </TableCell>
-            </motion.tr>
-          ))}
+          {logs.map((log, index) => {
+            // Determine badge style
+            let badgeConfig;
+            let displayValue;
+
+            if (log.rawStatus !== "ended") {
+              // Active
+              badgeConfig = statusConfig[log.rawStatus || "queued"] || statusConfig.queued;
+              displayValue = badgeConfig.label;
+            } else {
+              // Ended - Show Outcome
+              badgeConfig = outcomeConfig[log.outcome || ""] || outcomeConfig.no_answer;
+              displayValue = badgeConfig.label;
+            }
+
+            return (
+              <motion.tr
+                key={log.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.02 }}
+                className="border-border/50 hover:bg-muted/30 cursor-pointer transition-colors"
+                onClick={() => navigate(`/calls/${log.id}`)}
+              >
+                <TableCell className="font-medium text-foreground">{log.caller}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className={cn("font-medium", callTypeConfig[log.callType].className)}
+                  >
+                    {callTypeConfig[log.callType].label}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-muted-foreground font-mono text-sm">
+                  <span className="text-foreground">{log.fromNumber || "—"}</span>
+                  <span className="mx-1.5 text-muted-foreground/50">→</span>
+                  <span className="text-foreground">{log.toNumber || "—"}</span>
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className={cn("font-medium", badgeConfig.className)}
+                  >
+                    {displayValue}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-foreground">
+                  {log.duration || "N/A"}
+                </TableCell>
+                <TableCell className="text-muted-foreground">{log.agent}</TableCell>
+                <TableCell className="text-muted-foreground">{log.startedAt}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/calls/${log.id}`);
+                    }}
+                    className="gap-1 text-muted-foreground hover:text-primary"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    View
+                  </Button>
+                </TableCell>
+              </motion.tr>
+            )
+          })}
         </TableBody>
       </Table>
     </div>

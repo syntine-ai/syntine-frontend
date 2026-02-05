@@ -76,6 +76,21 @@ const outcomeConfig: Record<string, { label: string; className: string }> = {
   },
 };
 
+const statusConfig: Record<string, { label: string; className: string }> = {
+  queued: {
+    label: "Queued",
+    className: "bg-muted text-muted-foreground border-border animate-pulse",
+  },
+  ringing: {
+    label: "Ringing",
+    className: "bg-blue-500/15 text-blue-600 border-blue-500/30 animate-pulse",
+  },
+  in_progress: {
+    label: "In Progress",
+    className: "bg-green-500/15 text-green-600 border-green-500/30 animate-pulse",
+  },
+};
+
 const relatedToConfig: Record<string, { label: string; className: string }> = {
   order: {
     label: "Order",
@@ -354,7 +369,20 @@ const CallLogs = () => {
                   {filteredLogs.map((call, index) => {
                     const relatedTo = (call as any).metadata?.related_to || "unknown";
                     const config = relatedToConfig[relatedTo] || relatedToConfig.unknown;
-                    const outcomeConf = outcomeConfig[call.outcome || ""] || outcomeConfig.no_answer;
+
+                    // Logic: Show Status if active, Outcome if ended
+                    let badgeConfig;
+                    let displayValue;
+
+                    if (call.status !== "ended") {
+                      // Active call
+                      badgeConfig = statusConfig[call.status || "queued"] || statusConfig.queued;
+                      displayValue = badgeConfig.label;
+                    } else {
+                      // Ended call
+                      badgeConfig = outcomeConfig[call.outcome || ""] || outcomeConfig.no_answer;
+                      displayValue = badgeConfig.label;
+                    }
 
                     return (
                       <motion.tr
@@ -400,9 +428,9 @@ const CallLogs = () => {
                         <TableCell>
                           <Badge
                             variant="outline"
-                            className={cn("font-medium", outcomeConf.className)}
+                            className={cn("font-medium", badgeConfig.className)}
                           >
-                            {outcomeConf.label}
+                            {displayValue}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground">

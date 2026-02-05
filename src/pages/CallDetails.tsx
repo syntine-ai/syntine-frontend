@@ -60,6 +60,11 @@ const outcomeConfig: Record<string, { label: string; icon: any; className: strin
     icon: XCircle,
     className: "bg-destructive/15 text-destructive border-destructive/30",
   },
+  unknown: {
+    label: "Unknown Outcome",
+    icon: PhoneOff,
+    className: "bg-muted text-muted-foreground border-border",
+  },
 };
 
 const CallDetails = () => {
@@ -131,7 +136,7 @@ const CallDetails = () => {
     );
   }
 
-  const outcomeData = outcomeConfig[callData.outcome] || outcomeConfig["answered"];
+  const outcomeData = outcomeConfig[callData.outcome || ""] || outcomeConfig["unknown"];
   const OutcomeIcon = outcomeData.icon;
 
   const formatDuration = (seconds?: number | null): string => {

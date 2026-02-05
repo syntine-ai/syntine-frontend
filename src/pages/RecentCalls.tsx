@@ -82,6 +82,9 @@ const RecentCalls = () => {
       toNumber: call.to_number || undefined,
       callType: mapCallType(call.call_type),
       status: outcomeToStatus(call.outcome),
+      outcome: call.outcome,
+      rawStatus: call.status,
+      displayStatus: "", // Handled by table logic
       duration: formatDuration(call.duration_seconds),
       agent: call.agent_name || "System",
       startedAt: call.created_at ? format(new Date(call.created_at), "dd/MM/yyyy, hh:mm a") : "N/A",
