@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ConcurrencySlider } from "./ConcurrencySlider";
 import { AgentSelector } from "./AgentSelector";
+ import { AutoTriggerSettingsCard } from "./AutoTriggerSettingsCard";
 import { useCampaigns, CampaignWithDetails } from "@/hooks/useCampaigns";
 
 interface CampaignControlsTabProps {
@@ -50,6 +51,15 @@ export function CampaignControlsTab({ campaign }: CampaignControlsTabProps) {
     setSelectedAgent(agentId);
   };
 
+   const handleAutoTriggerUpdate = async (data: {
+     auto_trigger_enabled?: boolean;
+     max_retry_attempts?: number;
+     retry_delay_minutes?: number;
+   }) => {
+     if (!campaign) return;
+     await updateCampaign(campaign.id, data);
+   };
+ 
   return (
     <div className="space-y-6">
       {/* Concurrency Control */}
@@ -101,6 +111,12 @@ export function CampaignControlsTab({ campaign }: CampaignControlsTabProps) {
           </CardContent>
         </Card>
       </motion.div>
+ 
+       {/* Auto-Trigger Settings (only for order_conversion/cart_recovery types) */}
+       <AutoTriggerSettingsCard
+         campaign={campaign}
+         onUpdate={handleAutoTriggerUpdate}
+       />
     </div>
   );
 }
