@@ -33,6 +33,10 @@ interface NewCampaignModalProps {
     concurrency?: number;
     agentIds?: string[];
     contactListIds?: string[];
+    campaign_type?: string;
+    auto_trigger_enabled?: boolean;
+    max_retry_attempts?: number;
+    retry_delay_minutes?: number;
   }) => Promise<void>;
 }
 
@@ -52,6 +56,10 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
     agent: "",
     contactList: "",
     concurrency: 3,
+    campaign_type: "outbound",
+    auto_trigger_enabled: false,
+    max_retry_attempts: 3,
+    retry_delay_minutes: 60,
   });
 
   const { agents, isLoading: agentsLoading } = useAgents();
@@ -81,11 +89,25 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
           concurrency: formData.concurrency,
           agentIds: formData.agent ? [formData.agent] : undefined,
           contactListIds: formData.contactList ? [formData.contactList] : undefined,
+          campaign_type: formData.campaign_type,
+          auto_trigger_enabled: formData.auto_trigger_enabled,
+          max_retry_attempts: formData.max_retry_attempts,
+          retry_delay_minutes: formData.retry_delay_minutes,
         });
       }
       // Reset form
       setCurrentStep(1);
-      setFormData({ name: "", description: "", agent: "", contactList: "", concurrency: 3 });
+      setFormData({
+        name: "",
+        description: "",
+        agent: "",
+        contactList: "",
+        concurrency: 3,
+        campaign_type: "outbound",
+        auto_trigger_enabled: false,
+        max_retry_attempts: 3,
+        retry_delay_minutes: 60,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -94,7 +116,17 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
   const handleClose = (isOpen: boolean) => {
     if (!isOpen) {
       setCurrentStep(1);
-      setFormData({ name: "", description: "", agent: "", contactList: "", concurrency: 3 });
+      setFormData({
+        name: "",
+        description: "",
+        agent: "",
+        contactList: "",
+        concurrency: 3,
+        campaign_type: "outbound",
+        auto_trigger_enabled: false,
+        max_retry_attempts: 3,
+        retry_delay_minutes: 60,
+      });
     }
     onOpenChange(isOpen);
   };
@@ -117,6 +149,23 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="campaign_type">Campaign Type</Label>
+              <Select
+                value={formData.campaign_type}
+                onValueChange={(value) => setFormData({ ...formData, campaign_type: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="outbound">Outbound (Manual)</SelectItem>
+                  <SelectItem value="order_conversion">Order Conversion (Auto)</SelectItem>
+                  <SelectItem value="cart_recovery">Cart Recovery (Auto)</SelectItem>
+                  <SelectItem value="general">General</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
@@ -222,6 +271,57 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
                 <span>10</span>
               </div>
             </div>
+
+            {/* Auto Trigger Settings */}
+            {(formData.campaign_type === "order_conversion" || formData.campaign_type === "cart_recovery") && (
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Auto-Trigger Enabled</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Automatically start calls when new orders arrive
+                    </p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="auto_trigger"
+                      className="h-4 w-4 rounded border-gray-300"
+                      checked={formData.auto_trigger_enabled}
+                      onChange={(e) => setFormData({ ...formData, auto_trigger_enabled: e.target.checked })}
+                    />
+                  </div>
+                </div>
+
+                {formData.auto_trigger_enabled && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="max_retry">Max Retries</Label>
+                      <Input
+                        id="max_retry"
+                        type="number"
+                        min={0}
+                        max={5}
+                        value={formData.max_retry_attempts}
+                        onChange={(e) => setFormData({ ...formData, max_retry_attempts: parseInt(e.target.value) })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="retry_delay">Retry Delay (min)</Label>
+                      <Input
+                        id="retry_delay"
+                        type="number"
+                        min={5}
+                        max={1440}
+                        value={formData.retry_delay_minutes}
+                        onChange={(e) => setFormData({ ...formData, retry_delay_minutes: parseInt(e.target.value) })}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <p className="text-sm text-muted-foreground">
               This controls how many calls can be made simultaneously. Higher values increase throughput but may affect quality.
             </p>
@@ -252,8 +352,8 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
                   currentStep > step.id
                     ? "bg-primary text-primary-foreground"
                     : currentStep === step.id
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-muted-foreground"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground"
                 )}
               >
                 {currentStep > step.id ? <Check className="h-4 w-4" /> : step.id}
@@ -308,8 +408,8 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
               <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (
-            <Button 
-              onClick={handleSubmit} 
+            <Button
+              onClick={handleSubmit}
               disabled={isSubmitting || !formData.name}
               className="gap-2"
             >

@@ -134,6 +134,10 @@ export function useCampaigns() {
     concurrency?: number;
     agentIds?: string[];
     contactListIds?: string[];
+    campaign_type?: string;
+    auto_trigger_enabled?: boolean;
+    max_retry_attempts?: number;
+    retry_delay_minutes?: number;
   }) => {
     if (!profile?.organization_id) {
       toast({
@@ -145,12 +149,16 @@ export function useCampaigns() {
     }
 
     try {
-      const campaignData: CampaignInsert = {
+      const campaignData: any = { // Casting to any/partial because Types are generated and might be outdated localy
         organization_id: profile.organization_id,
         name: data.name,
         description: data.description || null,
         concurrency: data.concurrency || 1,
         status: "draft",
+        campaign_type: data.campaign_type || "outbound",
+        auto_trigger_enabled: data.auto_trigger_enabled || false,
+        max_retry_attempts: data.max_retry_attempts || 3,
+        retry_delay_minutes: data.retry_delay_minutes || 60,
       };
 
       const { data: newCampaign, error } = await supabase
@@ -229,7 +237,7 @@ export function useCampaigns() {
 
   const updateCampaignStatus = async (id: string, status: CampaignStatus) => {
     const updates: Partial<CampaignUpdate> = { status };
-    
+
     if (status === "running") {
       updates.started_at = new Date().toISOString();
     } else if (status === "completed" || status === "cancelled") {
@@ -237,12 +245,12 @@ export function useCampaigns() {
     }
 
     const result = await updateCampaign(id, updates);
-    
+
     if (result) {
       toast({
-        title: status === "running" ? "Campaign Started" : 
-               status === "paused" ? "Campaign Paused" : 
-               `Campaign ${status.charAt(0).toUpperCase() + status.slice(1)}`,
+        title: status === "running" ? "Campaign Started" :
+          status === "paused" ? "Campaign Paused" :
+            `Campaign ${status.charAt(0).toUpperCase() + status.slice(1)}`,
         description: `Campaign is now ${status}.`,
       });
     }

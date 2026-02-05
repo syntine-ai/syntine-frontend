@@ -49,6 +49,7 @@ export interface Order {
     notes?: string;
     tags?: string[];
     order_created_at?: string;
+    call_enqueued_at?: string;
     synced_at?: string;
     created_at: string;
     updated_at: string;

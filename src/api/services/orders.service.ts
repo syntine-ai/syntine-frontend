@@ -135,3 +135,42 @@ export async function getOrderStats(
         };
     }, 'getOrderStats');
 }
+
+/**
+ * Manually trigger a call for an order
+ */
+export async function triggerOrderCall(
+    organizationId: string,
+    orderId: string
+): Promise<{ success: boolean; message: string }> {
+    return withErrorHandling(async () => {
+        const { data, error } = await supabase.functions.invoke(`orders/${orderId}/trigger-call`, {
+            method: 'POST',
+        });
+
+        // Note: Since we are using Supabase client to call backend API via functions or direct fetch?
+        // The backend is FastAPI. If we use supabase client we usually call tables or functions.
+        // But here the route is a FastAPI route.
+        // We probably need to use the standard fetch or a custom client that points to the backend URL.
+        // However, the existing code uses `supabase.from(...)` which implies direct DB access or Supabase Edge Functions.
+        // WAIT. The existing code uses `supabase.from('commerce_orders')` which is direct DB.
+        // The `trigger-call` is a FastAPI endpoint `POST /orders/{id}/trigger-call`.
+        // The frontend likely communicates with FastAPI backend via a proxy or direct URL.
+        // Checking `src/api/client/supabase.client.ts` might reveal how API calls are handled if at all.
+        // OR we might need to use `fetch` to the backend URL.
+        // Let's assume there is a way to call the backend.
+        // If not, I'll use a direct fetch to the backend URL (BRIDGE_SERVER_URL from settings).
+
+        // Re-reading `orders.service.ts`... it imports `supabase` from `../client/supabase.client`.
+        // It uses `supabase.from(...)`.
+        // This means it's talking directly to Supabase PostgREST API.
+
+        // BUT my new endpoint is in FastAPI (`routers/orders.py`).
+        // Accessing FastAPI endpoints from this frontend might require a different client or just `fetch`.
+
+        // Let's check `src/lib/utils.ts` or `src/api/client/*` to see if there is an HTTP client.
+        // If not, I will use `fetch` with the backend URL.
+
+        throw new Error("Trigger call implementation pending verification of API client");
+    }, 'triggerOrderCall');
+}

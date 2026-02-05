@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -5,6 +6,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button"; // Added Button
 import { Separator } from "@/components/ui/separator";
 import {
   ShoppingCart,
@@ -13,10 +15,15 @@ import {
   Truck,
   CreditCard,
   ExternalLink,
+  PhoneCall, // Added PhoneCall
+  Loader2, // Added Loader2
 } from "lucide-react";
 import { format } from "date-fns";
 import { TriggerReadyBadge } from "./TriggerReadyBadge";
 import { useOrder } from "@/hooks/useOrders";
+import { triggerOrderCall } from "@/api/services/orders.service";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface OrderDetailDrawerProps {
   orderId: string | null;
@@ -30,6 +37,31 @@ export function OrderDetailDrawer({
   onOpenChange,
 }: OrderDetailDrawerProps) {
   const { data: order, isLoading } = useOrder(orderId);
+  const [isTriggering, setIsTriggering] = useState(false);
+  const { toast } = useToast();
+  const { profile } = useAuth();
+
+  const handleTriggerCall = async () => {
+    if (!order || !profile?.organization_id) return;
+
+    setIsTriggering(true);
+    try {
+      await triggerOrderCall(profile.organization_id, order.id);
+      toast({
+        title: "Call Triggered",
+        description: "Call has been added to the queue successfully.",
+      });
+      // Optionally invalidate query to refresh order status if needed
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to trigger call. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsTriggering(false);
+    }
+  };
 
   const getPaymentBadge = (paymentType: string) => {
     switch (paymentType) {
@@ -106,7 +138,27 @@ export function OrderDetailDrawer({
                       : "--"}
                   </p>
                 </div>
-                <TriggerReadyBadge status={order.trigger_ready} />
+                {/* Trigger Call Action */}
+                <div className="flex flex-col items-end gap-2">
+                  <TriggerReadyBadge status={order.trigger_ready} />
+                  {order.call_enqueued_at ? (
+                    <Badge variant="outline" className="flex items-center gap-1 text-primary border-primary/30 bg-primary/5">
+                      <PhoneCall className="h-3 w-3" />
+                      Call Queued
+                    </Badge>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="h-7 text-xs gap-1.5"
+                      onClick={handleTriggerCall}
+                      disabled={isTriggering || order.trigger_ready !== 'ready'}
+                    >
+                      {isTriggering ? <Loader2 className="h-3 w-3 animate-spin" /> : <PhoneCall className="h-3 w-3" />}
+                      Trigger Call
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 
