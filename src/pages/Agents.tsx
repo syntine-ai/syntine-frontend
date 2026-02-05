@@ -1,40 +1,19 @@
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Bot, Search, Loader2, Phone } from "lucide-react";
+ import { Bot, Search, Loader2, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAgents } from "@/hooks/useAgents";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { NewAgentModal } from "@/components/agents/NewAgentModal";
-import { Plus } from "lucide-react";
-
-const getCountryFlag = (countryCode: string) => {
-  try {
-    const codePoints = countryCode
-      .toUpperCase()
-      .split("")
-      .map((char) => 127397 + char.charCodeAt(0));
-    return String.fromCodePoint(...codePoints);
-  } catch {
-    return "🌐";
-  }
-};
 
 const Agents = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const { agents, isLoading, error, updateAgentStatus, createAgent } = useAgents();
+   const { agents, isLoading, error, updateAgentStatus } = useAgents();
   const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [isNewAgentModalOpen, setIsNewAgentModalOpen] = useState(false);
-
-  const handleCreateAgent = async (data: any) => {
-    const newAgent = await createAgent(data);
-    if (newAgent) {
-      setIsNewAgentModalOpen(false);
-    }
-  };
 
   const filteredAgents = agents.filter((agent) =>
     agent.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -52,6 +31,29 @@ const Agents = () => {
       setTogglingId(null);
     }
   };
+ 
+   const getStatusBadge = (status: string) => {
+     switch (status) {
+       case "active":
+         return (
+           <Badge className="bg-success/15 text-success border-success/40 border text-xs">
+             Active
+           </Badge>
+         );
+       case "inactive":
+         return (
+           <Badge className="bg-warning/15 text-warning border-warning/40 border text-xs">
+             Paused
+           </Badge>
+         );
+       default:
+         return (
+           <Badge variant="outline" className="text-muted-foreground text-xs">
+             Draft
+           </Badge>
+         );
+     }
+   };
 
   return (
     <div className="p-6 md:p-8">
@@ -70,7 +72,7 @@ const Agents = () => {
               className="pl-9"
             />
           </div>
-          <Button onClick={() => setIsNewAgentModalOpen(true)} className="gap-2">
+           <Button onClick={() => navigate("/agents/new")} className="gap-2">
             <Plus className="h-4 w-4" />
             Create Agent
           </Button>
@@ -99,11 +101,14 @@ const Agents = () => {
                 <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3">
                   Agent Name
                 </th>
+                 <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">
+                   Status
+                 </th>
                 <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">
                   Last Updated
                 </th>
-                <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">
-                  Phone Number
+                 <th className="text-center text-sm font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">
+                   Campaigns
                 </th>
                 <th className="text-center text-sm font-medium text-muted-foreground px-4 py-3 w-24">
                   Enabled
@@ -128,12 +133,15 @@ const Agents = () => {
                         <span className="text-sm font-medium text-foreground">
                           {agent.name}
                         </span>
-                        <span className="text-xs text-muted-foreground">
-                          {agent.language} • {agent.tone}
-                        </span>
                       </div>
                     </div>
                   </td>
+                   <td
+                     className="px-4 py-3 hidden sm:table-cell cursor-pointer"
+                     onClick={() => navigate(`/agents/${agent.id}`)}
+                   >
+                     {getStatusBadge(agent.status || "draft")}
+                   </td>
                   <td
                     className="px-4 py-3 hidden sm:table-cell cursor-pointer"
                     onClick={() => navigate(`/agents/${agent.id}`)}
@@ -143,16 +151,12 @@ const Agents = () => {
                     </span>
                   </td>
                   <td
-                    className="px-4 py-3 hidden md:table-cell cursor-pointer"
+                     className="px-4 py-3 hidden md:table-cell cursor-pointer text-center"
                     onClick={() => navigate(`/agents/${agent.id}`)}
                   >
-                    {agent.phone_number ? (
-                      <span className="text-sm font-mono">
-                        {getCountryFlag(agent.phone_number.country)} {agent.phone_number.phone_number}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted-foreground">—</span>
-                    )}
+                     <span className="text-sm text-muted-foreground">
+                       {agent.linkedCampaigns}
+                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <Switch
@@ -167,12 +171,6 @@ const Agents = () => {
           </table>
         </div>
       )}
-
-      <NewAgentModal
-        open={isNewAgentModalOpen}
-        onOpenChange={setIsNewAgentModalOpen}
-        onSubmit={handleCreateAgent}
-      />
     </div>
   );
 };
