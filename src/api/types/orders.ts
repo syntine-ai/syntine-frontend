@@ -79,3 +79,25 @@ export interface OrderStats {
     trigger_ready: number;
     total_revenue: number;
 }
+
+// Create order data for manual orders
+export interface CreateOrderData {
+    customer_name: string;
+    customer_phone: string;
+    customer_email?: string;
+    payment_type: PaymentType;
+    notes?: string;
+    items: {
+        product_id: string;
+        variant_id: string;
+        title: string;
+        variant_title?: string;
+        sku?: string;
+        quantity: number;
+        price: number;
+        total: number;
+    }[];
+    total_amount: number;
+    subtotal: number;
+    currency: string;
+}

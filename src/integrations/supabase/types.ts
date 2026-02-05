@@ -881,7 +881,7 @@ export type Database = {
             | Database["public"]["Enums"]["order_fulfillment_status"]
             | null
           id: string
-          integration_id: string
+          integration_id: string | null
           items_count: number | null
           notes: string | null
           order_created_at: string | null
@@ -918,7 +918,7 @@ export type Database = {
             | Database["public"]["Enums"]["order_fulfillment_status"]
             | null
           id?: string
-          integration_id: string
+          integration_id?: string | null
           items_count?: number | null
           notes?: string | null
           order_created_at?: string | null
@@ -955,7 +955,7 @@ export type Database = {
             | Database["public"]["Enums"]["order_fulfillment_status"]
             | null
           id?: string
-          integration_id?: string
+          integration_id?: string | null
           items_count?: number | null
           notes?: string | null
           order_created_at?: string | null
