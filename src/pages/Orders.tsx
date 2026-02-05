@@ -20,12 +20,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Plus,
 } from "lucide-react";
 import { OrderDetailDrawer } from "@/components/commerce/OrderDetailDrawer";
+import { AddOrderModal, type ManualOrderData } from "@/components/commerce/AddOrderModal";
 import { AnalyticsSummaryCard } from "@/components/analytics/AnalyticsSummaryCard";
 import { TriggerReadyBadge } from "@/components/commerce/TriggerReadyBadge";
 import { format } from "date-fns";
-import { useOrders, useOrderStats } from "@/hooks/useOrders";
+import { useOrders, useOrderStats, useCreateOrder } from "@/hooks/useOrders";
+import { useToast } from "@/hooks/use-toast";
 
 const PAGE_SIZE = 20;
 
@@ -33,6 +36,10 @@ const Orders = () => {
   const [page, setPage] = useState(1);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [addModalOpen, setAddModalOpen] = useState(false);
+
+  const { toast } = useToast();
+  const createOrder = useCreateOrder();
 
   // Fetch orders with real API hook
   const { data: orders = [], isLoading, error } = useOrders({
@@ -46,6 +53,23 @@ const Orders = () => {
   const handleRowClick = (orderId: string) => {
     setSelectedOrderId(orderId);
     setDrawerOpen(true);
+  };
+
+  const handleCreateOrder = async (data: ManualOrderData) => {
+    try {
+      await createOrder.mutateAsync(data);
+      toast({
+        title: "Order Created",
+        description: "The order has been added successfully.",
+      });
+      setAddModalOpen(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to create order. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const totalPages = Math.ceil((orders.length > 0 ? PAGE_SIZE * page : 0) / PAGE_SIZE);
@@ -103,6 +127,12 @@ const Orders = () => {
     <PageContainer
       title="Orders"
       subtitle="Real-time view of your synced orders with trigger readiness"
+      actions={
+        <Button onClick={() => setAddModalOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add Order
+        </Button>
+      }
     >
       {/* Loading State */}
       {isLoading && (
@@ -258,6 +288,13 @@ const Orders = () => {
             orderId={selectedOrderId}
             open={drawerOpen}
             onOpenChange={setDrawerOpen}
+          />
+
+          <AddOrderModal
+            open={addModalOpen}
+            onOpenChange={setAddModalOpen}
+            onSubmit={handleCreateOrder}
+            isSubmitting={createOrder.isPending}
           />
         </>
       )}

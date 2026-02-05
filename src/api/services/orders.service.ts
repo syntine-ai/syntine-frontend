@@ -10,6 +10,7 @@ import type {
     OrderWithItems,
     OrderListParams,
     OrderStats,
+    CreateOrderData,
 } from '../types/orders';
 
 /**
@@ -137,6 +138,79 @@ export async function getOrderStats(
 }
 
 /**
+ * Create a manual order
+ */
+export async function createOrder(
+    organizationId: string,
+    orderData: CreateOrderData
+): Promise<OrderWithItems> {
+    return withErrorHandling(async () => {
+        // Generate a unique order number for manual orders
+        const orderNumber = `M-${Date.now().toString(36).toUpperCase()}`;
+        const externalOrderId = `manual_${crypto.randomUUID()}`;
+
+        // Determine trigger_ready status based on payment type and phone
+        const triggerReady = orderData.payment_type === 'cod' && orderData.customer_phone
+            ? 'ready'
+            : orderData.payment_type === 'prepaid'
+                ? 'not_applicable'
+                : 'missing_phone';
+
+        // Create order
+        const { data: order, error: orderError } = await supabase
+            .from('commerce_orders')
+            .insert({
+                organization_id: organizationId,
+                external_order_id: externalOrderId,
+                order_number: orderNumber,
+                source: 'custom_webhook', // Manual orders use custom_webhook source
+                integration_id: null, // No integration for manual orders
+                customer_name: orderData.customer_name,
+                customer_phone: orderData.customer_phone,
+                customer_email: orderData.customer_email,
+                payment_type: orderData.payment_type,
+                financial_status: orderData.payment_type === 'prepaid' ? 'paid' : 'pending',
+                fulfillment_status: 'unfulfilled',
+                trigger_ready: triggerReady,
+                total_amount: orderData.total_amount,
+                subtotal: orderData.subtotal,
+                currency: orderData.currency || 'INR',
+                items_count: orderData.items.length,
+                notes: orderData.notes,
+                order_created_at: new Date().toISOString(),
+            })
+            .select()
+            .single();
+
+        if (orderError) throw orderError;
+
+        // Create order items
+        if (orderData.items.length > 0) {
+            const { error: itemsError } = await supabase
+                .from('commerce_order_items')
+                .insert(
+                    orderData.items.map((item) => ({
+                        order_id: order.id,
+                        product_id: item.product_id,
+                        variant_id: item.variant_id,
+                        title: item.title,
+                        variant_title: item.variant_title,
+                        sku: item.sku,
+                        quantity: item.quantity,
+                        price: item.price,
+                        total: item.total,
+                    }))
+                );
+
+            if (itemsError) throw itemsError;
+        }
+
+        // Fetch the complete order with items
+        return getOrder(organizationId, order.id);
+    }, 'createOrder');
+}
+
+/**
  * Manually trigger a call for an order
  */
 export async function triggerOrderCall(
@@ -144,33 +218,8 @@ export async function triggerOrderCall(
     orderId: string
 ): Promise<{ success: boolean; message: string }> {
     return withErrorHandling(async () => {
-        const { data, error } = await supabase.functions.invoke(`orders/${orderId}/trigger-call`, {
-            method: 'POST',
-        });
-
-        // Note: Since we are using Supabase client to call backend API via functions or direct fetch?
-        // The backend is FastAPI. If we use supabase client we usually call tables or functions.
-        // But here the route is a FastAPI route.
-        // We probably need to use the standard fetch or a custom client that points to the backend URL.
-        // However, the existing code uses `supabase.from(...)` which implies direct DB access or Supabase Edge Functions.
-        // WAIT. The existing code uses `supabase.from('commerce_orders')` which is direct DB.
-        // The `trigger-call` is a FastAPI endpoint `POST /orders/{id}/trigger-call`.
-        // The frontend likely communicates with FastAPI backend via a proxy or direct URL.
-        // Checking `src/api/client/supabase.client.ts` might reveal how API calls are handled if at all.
-        // OR we might need to use `fetch` to the backend URL.
-        // Let's assume there is a way to call the backend.
-        // If not, I'll use a direct fetch to the backend URL (BRIDGE_SERVER_URL from settings).
-
-        // Re-reading `orders.service.ts`... it imports `supabase` from `../client/supabase.client`.
-        // It uses `supabase.from(...)`.
-        // This means it's talking directly to Supabase PostgREST API.
-
-        // BUT my new endpoint is in FastAPI (`routers/orders.py`).
-        // Accessing FastAPI endpoints from this frontend might require a different client or just `fetch`.
-
-        // Let's check `src/lib/utils.ts` or `src/api/client/*` to see if there is an HTTP client.
-        // If not, I will use `fetch` with the backend URL.
-
-        throw new Error("Trigger call implementation pending verification of API client");
+        // For now, throw a meaningful error since the backend API is not yet implemented
+        // This will be connected to the FastAPI backend trigger endpoint
+        throw new Error("Trigger call implementation pending backend API integration");
     }, 'triggerOrderCall');
 }
