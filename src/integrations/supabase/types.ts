@@ -133,6 +133,90 @@ export type Database = {
           },
         ]
       }
+      call_queue: {
+        Row: {
+          campaign_id: string
+          cart_id: string | null
+          created_at: string | null
+          customer_id: string | null
+          error_message: string | null
+          id: string
+          order_id: string | null
+          organization_id: string
+          phone_number: string
+          retry_count: number | null
+          scheduled_at: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_id: string
+          cart_id?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          organization_id: string
+          phone_number: string
+          retry_count?: number | null
+          scheduled_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_id?: string
+          cart_id?: string | null
+          created_at?: string | null
+          customer_id?: string | null
+          error_message?: string | null
+          id?: string
+          order_id?: string | null
+          organization_id?: string
+          phone_number?: string
+          retry_count?: number | null
+          scheduled_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_queue_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_queue_cart_id_fkey"
+            columns: ["cart_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_abandoned_carts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_queue_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_queue_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_queue_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       call_recordings: {
         Row: {
           call_id: string
@@ -367,14 +451,18 @@ export type Database = {
       }
       campaigns: {
         Row: {
+          auto_trigger_enabled: boolean | null
+          campaign_type: string | null
           completed_at: string | null
           concurrency: number | null
           created_at: string | null
           deleted_at: string | null
           description: string | null
           id: string
+          max_retry_attempts: number | null
           name: string
           organization_id: string
+          retry_delay_minutes: number | null
           schedule: Json | null
           settings: Json | null
           started_at: string | null
@@ -382,14 +470,18 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          auto_trigger_enabled?: boolean | null
+          campaign_type?: string | null
           completed_at?: string | null
           concurrency?: number | null
           created_at?: string | null
           deleted_at?: string | null
           description?: string | null
           id?: string
+          max_retry_attempts?: number | null
           name: string
           organization_id: string
+          retry_delay_minutes?: number | null
           schedule?: Json | null
           settings?: Json | null
           started_at?: string | null
@@ -397,14 +489,18 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          auto_trigger_enabled?: boolean | null
+          campaign_type?: string | null
           completed_at?: string | null
           concurrency?: number | null
           created_at?: string | null
           deleted_at?: string | null
           description?: string | null
           id?: string
+          max_retry_attempts?: number | null
           name?: string
           organization_id?: string
+          retry_delay_minutes?: number | null
           schedule?: Json | null
           settings?: Json | null
           started_at?: string | null
@@ -770,6 +866,7 @@ export type Database = {
       commerce_orders: {
         Row: {
           billing_address: Json | null
+          call_enqueued_at: string | null
           created_at: string | null
           currency: string | null
           customer_email: string | null
@@ -806,6 +903,7 @@ export type Database = {
         }
         Insert: {
           billing_address?: Json | null
+          call_enqueued_at?: string | null
           created_at?: string | null
           currency?: string | null
           customer_email?: string | null
@@ -842,6 +940,7 @@ export type Database = {
         }
         Update: {
           billing_address?: Json | null
+          call_enqueued_at?: string | null
           created_at?: string | null
           currency?: string | null
           customer_email?: string | null
