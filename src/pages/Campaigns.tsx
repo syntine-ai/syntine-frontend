@@ -3,7 +3,7 @@ import { PageContainer } from "@/components/layout/PageContainer";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Megaphone, Search, Loader2, Plus } from "lucide-react";
+import { Megaphone, Search, Loader2, Plus, Trash2 } from "lucide-react";
 import { NewCampaignModal } from "@/components/campaigns/NewCampaignModal";
 import { useNavigate } from "react-router-dom";
 import { useCampaigns } from "@/hooks/useCampaigns";
@@ -13,13 +13,20 @@ import { toast } from "sonner";
 const Campaigns = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState("");
-    const { campaigns, isLoading, error, updateCampaignStatus, createCampaign } = useCampaigns();
+    const { campaigns, isLoading, error, updateCampaignStatus, createCampaign, deleteCampaign } = useCampaigns();
     const [togglingId, setTogglingId] = useState<string | null>(null);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     const filteredCampaigns = campaigns.filter((campaign) =>
         campaign.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const handleDelete = async (e: React.MouseEvent, id: string, name: string) => {
+        e.stopPropagation(); // Prevent navigation to detail
+        if (confirm(`Are you sure you want to delete campaign "${name}"? This action cannot be undone.`)) {
+            await deleteCampaign(id);
+        }
+    };
 
     const handleCreateCampaign = async (data: any) => {
         await createCampaign(data);
@@ -86,18 +93,27 @@ const Campaigns = () => {
                             <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3">
                                 Campaign Name
                             </th>
+                            <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">
+                                Connected Agent
+                            </th>
+                            <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">
+                                Concurrency
+                            </th>
                             <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">
                                 Last Updated
                             </th>
                             <th className="text-center text-sm font-medium text-muted-foreground px-4 py-3 w-24">
                                 Enabled
                             </th>
+                            <th className="text-center text-sm font-medium text-muted-foreground px-4 py-3 w-16">
+                                Actions
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredCampaigns.length === 0 ? (
                             <tr>
-                                <td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">
+                                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                                     No campaigns found.
                                 </td>
                             </tr>
@@ -126,6 +142,24 @@ const Campaigns = () => {
                                         </div>
                                     </td>
                                     <td
+                                        className="px-4 py-3 hidden md:table-cell cursor-pointer"
+                                        onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                                    >
+                                        <span className="text-sm text-foreground">
+                                            {campaign.agents && campaign.agents.length > 0
+                                                ? campaign.agents.map(a => a.name).join(", ")
+                                                : <span className="text-muted-foreground italic">No agent</span>}
+                                        </span>
+                                    </td>
+                                    <td
+                                        className="px-4 py-3 hidden sm:table-cell cursor-pointer"
+                                        onClick={() => navigate(`/campaigns/${campaign.id}`)}
+                                    >
+                                        <span className="text-sm text-foreground">
+                                            {campaign.concurrency || 1}
+                                        </span>
+                                    </td>
+                                    <td
                                         className="px-4 py-3 hidden sm:table-cell cursor-pointer"
                                         onClick={() => navigate(`/campaigns/${campaign.id}`)}
                                     >
@@ -139,6 +173,16 @@ const Campaigns = () => {
                                             onCheckedChange={() => handleToggle(campaign.id, campaign.status)}
                                             disabled={togglingId === campaign.id}
                                         />
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive transition-colors"
+                                            onClick={(e) => handleDelete(e, campaign.id, campaign.name)}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </td>
                                 </tr>
                             ))
