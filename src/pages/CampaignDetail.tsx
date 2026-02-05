@@ -15,11 +15,19 @@ import {
 } from "lucide-react";
 import { useCampaigns } from "@/hooks/useCampaigns";
 import { format } from "date-fns";
+import { AutoTriggerSettingsCard } from "@/components/campaigns/AutoTriggerSettingsCard";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ConcurrencySlider } from "@/components/campaigns/ConcurrencySlider";
+import { Edit2 } from "lucide-react";
 
 const CampaignDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { campaigns, isLoading, refetch } = useCampaigns();
+  const { campaigns, isLoading, refetch, updateCampaign } = useCampaigns();
 
   const campaign = campaigns.find((c) => c.id === id);
   // Find primary agent or first linked agent
@@ -97,15 +105,32 @@ const CampaignDetail = () => {
         {/* Minimal Metrics Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Trigger Card - Using ID as proxy for trigger type until we have that field or use config */}
-          <div className="p-4 rounded-xl border border-border bg-card shadow-sm">
-            <div className="flex items-start justify-between mb-2">
-              <p className="text-sm font-medium text-muted-foreground">Concurrency</p>
-              <Zap className="h-4 w-4 text-amber-500" />
-            </div>
-            <p className="font-semibold text-foreground truncate">
-              {campaign.concurrency} concurrent calls
-            </p>
-          </div>
+          <Popover>
+            <PopoverTrigger asChild>
+              <div className="p-4 rounded-xl border border-border bg-card shadow-sm cursor-pointer hover:border-primary/50 transition-colors group">
+                <div className="flex items-start justify-between mb-2">
+                  <p className="text-sm font-medium text-muted-foreground">Concurrency</p>
+                  <div className="flex items-center gap-2">
+                    <Edit2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Zap className="h-4 w-4 text-amber-500" />
+                  </div>
+                </div>
+                <p className="font-semibold text-foreground truncate">
+                  {campaign.concurrency} concurrent calls
+                </p>
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="w-80">
+              <div className="space-y-4">
+                <ConcurrencySlider
+                  value={campaign.concurrency}
+                  onChange={(val) => updateCampaign(campaign.id, { concurrency: val })}
+                  min={1}
+                  max={20}
+                />
+              </div>
+            </PopoverContent>
+          </Popover>
 
           {/* Last Updated */}
           <div className="p-4 rounded-xl border border-border bg-card shadow-sm">
@@ -147,6 +172,16 @@ const CampaignDetail = () => {
           </div>
         </div>
 
+        {/* Auto Trigger Settings */}
+        <div className="mt-6">
+          <AutoTriggerSettingsCard
+            campaign={campaign}
+            onUpdate={async (data) => {
+              await updateCampaign(campaign.id, data);
+            }}
+          />
+        </div>
+
         {/* Agent Info (Minimal) */}
         <div className="mt-6 p-4 rounded-xl border border-border bg-card/50 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -176,7 +211,7 @@ const CampaignDetail = () => {
           This is a transactional campaign managed by Syntine.
         </p>
       </div>
-    </PageContainer>
+    </PageContainer >
   );
 };
 

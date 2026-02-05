@@ -5,7 +5,10 @@ import { Bot, Search, Loader2, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAgents } from "@/hooks/useAgents";
 import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { NewAgentModal } from "@/components/agents/NewAgentModal";
+import { Plus } from "lucide-react";
 
 const getCountryFlag = (countryCode: string) => {
   try {
@@ -22,8 +25,16 @@ const getCountryFlag = (countryCode: string) => {
 const Agents = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const { agents, isLoading, error, updateAgentStatus } = useAgents();
+  const { agents, isLoading, error, updateAgentStatus, createAgent } = useAgents();
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [isNewAgentModalOpen, setIsNewAgentModalOpen] = useState(false);
+
+  const handleCreateAgent = async (data: any) => {
+    const newAgent = await createAgent(data);
+    if (newAgent) {
+      setIsNewAgentModalOpen(false);
+    }
+  };
 
   const filteredAgents = agents.filter((agent) =>
     agent.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -49,14 +60,20 @@ const Agents = () => {
         <h1 className="text-2xl font-semibold text-foreground">All Agents</h1>
 
         {/* Search */}
-        <div className="relative w-full sm:w-72">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search agents..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search agents..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Button onClick={() => setIsNewAgentModalOpen(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Agent
+          </Button>
         </div>
       </div>
 
@@ -82,7 +99,7 @@ const Agents = () => {
                 <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3">
                   Agent Name
                 </th>
-              <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">
+                <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3 hidden sm:table-cell">
                   Last Updated
                 </th>
                 <th className="text-left text-sm font-medium text-muted-foreground px-4 py-3 hidden md:table-cell">
@@ -150,6 +167,12 @@ const Agents = () => {
           </table>
         </div>
       )}
+
+      <NewAgentModal
+        open={isNewAgentModalOpen}
+        onOpenChange={setIsNewAgentModalOpen}
+        onSubmit={handleCreateAgent}
+      />
     </div>
   );
 };

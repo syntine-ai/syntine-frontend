@@ -43,8 +43,7 @@ interface NewCampaignModalProps {
 const steps = [
   { id: 1, title: "Campaign Details" },
   { id: 2, title: "Assign Agent" },
-  { id: 3, title: "Contact Source" },
-  { id: 4, title: "Call Settings" },
+  { id: 3, title: "Call Settings" },
 ];
 
 export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignModalProps) {
@@ -56,8 +55,8 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
     agent: "",
     contactList: "",
     concurrency: 3,
-    campaign_type: "outbound",
-    auto_trigger_enabled: false,
+    campaign_type: "order_confirmation",
+    auto_trigger_enabled: true,
     max_retry_attempts: 3,
     retry_delay_minutes: 60,
   });
@@ -87,8 +86,8 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
           name: formData.name,
           description: formData.description || undefined,
           concurrency: formData.concurrency,
-          agentIds: formData.agent ? [formData.agent] : undefined,
-          contactListIds: formData.contactList ? [formData.contactList] : undefined,
+          agentIds: (formData.agent && formData.agent !== "none") ? [formData.agent] : undefined,
+          contactListIds: (formData.contactList && formData.contactList !== "none") ? [formData.contactList] : undefined,
           campaign_type: formData.campaign_type,
           auto_trigger_enabled: formData.auto_trigger_enabled,
           max_retry_attempts: formData.max_retry_attempts,
@@ -155,17 +154,18 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
               <Select
                 value={formData.campaign_type}
                 onValueChange={(value) => setFormData({ ...formData, campaign_type: value })}
+                disabled
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="outbound">Outbound (Manual)</SelectItem>
-                  <SelectItem value="order_conversion">Order Conversion (Auto)</SelectItem>
-                  <SelectItem value="cart_recovery">Cart Recovery (Auto)</SelectItem>
-                  <SelectItem value="general">General</SelectItem>
+                  <SelectItem value="order_confirmation">Order Confirmation (Auto)</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                Currently optimized for automated order confirmations.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
@@ -192,6 +192,7 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
                   <SelectValue placeholder={agentsLoading ? "Loading agents..." : "Choose an agent"} />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="none">No Agent</SelectItem>
                   {agents.map((agent) => (
                     <SelectItem key={agent.id} value={agent.id}>
                       <div className="flex items-center justify-between gap-2">
@@ -217,42 +218,6 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
         );
       case 3:
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Use Contact List</Label>
-              <Select
-                value={formData.contactList}
-                onValueChange={(value) => setFormData({ ...formData, contactList: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={listsLoading ? "Loading lists..." : "Select a contact list"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {contactLists.map((list) => (
-                    <SelectItem key={list.id} value={list.id}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span>{list.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {list.contactCount} contacts
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                  {contactLists.length === 0 && !listsLoading && (
-                    <div className="px-2 py-3 text-sm text-muted-foreground text-center">
-                      No contact lists available. Create a list first.
-                    </div>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Choose an existing contact list or upload a new CSV file with phone numbers.
-            </p>
-          </div>
-        );
-      case 4:
-        return (
           <div className="space-y-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -273,54 +238,52 @@ export function NewCampaignModal({ open, onOpenChange, onSubmit }: NewCampaignMo
             </div>
 
             {/* Auto Trigger Settings */}
-            {(formData.campaign_type === "order_conversion" || formData.campaign_type === "cart_recovery") && (
-              <div className="space-y-4 border-t pt-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>Auto-Trigger Enabled</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Automatically start calls when new orders arrive
-                    </p>
+            <div className="space-y-4 border-t pt-4">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Auto-Trigger Enabled</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Automatically start calls when new orders arrive
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="auto_trigger"
+                    className="h-4 w-4 rounded border-gray-300"
+                    checked={formData.auto_trigger_enabled}
+                    onChange={(e) => setFormData({ ...formData, auto_trigger_enabled: e.target.checked })}
+                  />
+                </div>
+              </div>
+
+              {formData.auto_trigger_enabled && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="max_retry">Max Retries</Label>
+                    <Input
+                      id="max_retry"
+                      type="number"
+                      min={0}
+                      max={5}
+                      value={formData.max_retry_attempts}
+                      onChange={(e) => setFormData({ ...formData, max_retry_attempts: parseInt(e.target.value) })}
+                    />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id="auto_trigger"
-                      className="h-4 w-4 rounded border-gray-300"
-                      checked={formData.auto_trigger_enabled}
-                      onChange={(e) => setFormData({ ...formData, auto_trigger_enabled: e.target.checked })}
+                  <div className="space-y-2">
+                    <Label htmlFor="retry_delay">Retry Delay (min)</Label>
+                    <Input
+                      id="retry_delay"
+                      type="number"
+                      min={5}
+                      max={1440}
+                      value={formData.retry_delay_minutes}
+                      onChange={(e) => setFormData({ ...formData, retry_delay_minutes: parseInt(e.target.value) })}
                     />
                   </div>
                 </div>
-
-                {formData.auto_trigger_enabled && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="max_retry">Max Retries</Label>
-                      <Input
-                        id="max_retry"
-                        type="number"
-                        min={0}
-                        max={5}
-                        value={formData.max_retry_attempts}
-                        onChange={(e) => setFormData({ ...formData, max_retry_attempts: parseInt(e.target.value) })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="retry_delay">Retry Delay (min)</Label>
-                      <Input
-                        id="retry_delay"
-                        type="number"
-                        min={5}
-                        max={1440}
-                        value={formData.retry_delay_minutes}
-                        onChange={(e) => setFormData({ ...formData, retry_delay_minutes: parseInt(e.target.value) })}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+            </div>
 
             <p className="text-sm text-muted-foreground">
               This controls how many calls can be made simultaneously. Higher values increase throughput but may affect quality.

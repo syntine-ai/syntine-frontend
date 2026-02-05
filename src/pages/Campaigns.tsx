@@ -2,7 +2,9 @@ import { useState } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Megaphone, Search, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Megaphone, Search, Loader2, Plus } from "lucide-react";
+import { NewCampaignModal } from "@/components/campaigns/NewCampaignModal";
 import { useNavigate } from "react-router-dom";
 import { useCampaigns } from "@/hooks/useCampaigns";
 import { format } from "date-fns";
@@ -11,12 +13,18 @@ import { toast } from "sonner";
 const Campaigns = () => {
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState("");
-    const { campaigns, isLoading, error, updateCampaignStatus } = useCampaigns();
+    const { campaigns, isLoading, error, updateCampaignStatus, createCampaign } = useCampaigns();
     const [togglingId, setTogglingId] = useState<string | null>(null);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     const filteredCampaigns = campaigns.filter((campaign) =>
         campaign.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    const handleCreateCampaign = async (data: any) => {
+        await createCampaign(data);
+        setIsCreateModalOpen(false);
+    };
 
     const handleToggle = async (id: string, currentStatus: string) => {
         try {
@@ -54,14 +62,20 @@ const Campaigns = () => {
 
     return (
         <PageContainer title="All Campaigns" actions={
-            <div className="relative w-full sm:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    placeholder="Search campaigns..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                />
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <div className="relative w-full sm:w-72">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search campaigns..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9"
+                    />
+                </div>
+                <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2 shrink-0">
+                    <Plus className="h-4 w-4" />
+                    Create Campaign
+                </Button>
             </div>
         }>
             {/* Table */}
@@ -132,6 +146,12 @@ const Campaigns = () => {
                     </tbody>
                 </table>
             </div>
+
+            <NewCampaignModal
+                open={isCreateModalOpen}
+                onOpenChange={setIsCreateModalOpen}
+                onSubmit={handleCreateCampaign}
+            />
         </PageContainer>
     );
 };

@@ -149,7 +149,7 @@ export function useCampaigns() {
     }
 
     try {
-      const campaignData: any = { // Casting to any/partial because Types are generated and might be outdated localy
+      const campaignData: CampaignInsert = {
         organization_id: profile.organization_id,
         name: data.name,
         description: data.description || null,
