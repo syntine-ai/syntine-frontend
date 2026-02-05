@@ -149,21 +149,14 @@ export async function createOrder(
         const orderNumber = `M-${Date.now().toString(36).toUpperCase()}`;
         const externalOrderId = `manual_${crypto.randomUUID()}`;
 
-        // Determine trigger_ready status based on payment type and phone
-        const triggerReady = orderData.payment_type === 'cod' && orderData.customer_phone
-            ? 'ready'
-            : orderData.payment_type === 'prepaid'
-                ? 'not_applicable'
-                : 'missing_phone';
-
-        // Create order
+        // Create order - trigger_ready is computed by database or updated after insert
         const { data: order, error: orderError } = await supabase
             .from('commerce_orders')
             .insert({
                 organization_id: organizationId,
                 external_order_id: externalOrderId,
                 order_number: orderNumber,
-                source: 'custom_webhook', // Manual orders use custom_webhook source
+                source: 'custom_webhook' as const, // Manual orders use custom_webhook source
                 integration_id: null, // No integration for manual orders
                 customer_name: orderData.customer_name,
                 customer_phone: orderData.customer_phone,
@@ -171,7 +164,6 @@ export async function createOrder(
                 payment_type: orderData.payment_type,
                 financial_status: orderData.payment_type === 'prepaid' ? 'paid' : 'pending',
                 fulfillment_status: 'unfulfilled',
-                trigger_ready: triggerReady,
                 total_amount: orderData.total_amount,
                 subtotal: orderData.subtotal,
                 currency: orderData.currency || 'INR',
@@ -181,6 +173,20 @@ export async function createOrder(
             })
             .select()
             .single();
+
+        if (orderError) throw orderError;
+
+        // Update trigger_ready status after insert
+        const triggerReady = orderData.payment_type === 'cod' && orderData.customer_phone
+            ? 'ready'
+            : orderData.payment_type === 'prepaid'
+                ? 'not_applicable'
+                : 'missing_phone';
+
+        await supabase
+            .from('commerce_orders')
+            .update({ trigger_ready: triggerReady as 'ready' | 'missing_phone' | 'not_applicable' })
+            .eq('id', order.id);
 
         if (orderError) throw orderError;
 
