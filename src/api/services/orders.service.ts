@@ -12,6 +12,7 @@ import type {
     OrderStats,
     CreateOrderData,
 } from '../types/orders';
+import { restClient } from '../client/rest.client';
 
 /**
  * List orders with filtering and pagination
@@ -224,8 +225,10 @@ export async function triggerOrderCall(
     orderId: string
 ): Promise<{ success: boolean; message: string }> {
     return withErrorHandling(async () => {
-        // For now, throw a meaningful error since the backend API is not yet implemented
-        // This will be connected to the FastAPI backend trigger endpoint
-        throw new Error("Trigger call implementation pending backend API integration");
+        // Call backend API
+        const response = await restClient.post<{ success: boolean; message: string }>(
+            `/orders/${orderId}/trigger-call`
+        );
+        return response;
     }, 'triggerOrderCall');
 }
