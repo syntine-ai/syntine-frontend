@@ -75,6 +75,7 @@ const CallDetails = () => {
 
   const [callData, setCallData] = useState<CallLogWithDetails | null>(null);
   const [transcript, setTranscript] = useState<any[]>([]);
+  const [recordingUrl, setRecordingUrl] = useState<string | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -97,6 +98,22 @@ const CallDetails = () => {
               : ""
           }));
           setTranscript(mappedTranscript);
+
+          // Fetch recording from call_recordings table
+          try {
+            const { supabase } = await import("@/integrations/supabase/client");
+            const { data: recordingData } = await supabase
+              .from("call_recordings")
+              .select("storage_path")
+              .eq("call_id", callId)
+              .single();
+
+            if (recordingData?.storage_path) {
+              setRecordingUrl(recordingData.storage_path);
+            }
+          } catch (recordingError) {
+            console.log("No recording found for this call");
+          }
         }
       } catch (error) {
         console.error("Failed to load call details", error);
@@ -349,11 +366,16 @@ const CallDetails = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            {/* Real recording URL would come from database/storage */}
+            {/* Recording player with real URL from call_recordings table */}
             <CallRecordingPlayer
-              recordingUrl={callData.outcome !== "no_answer" ? "demo-recording" : undefined}
+              recordingUrl={recordingUrl}
               duration={formatDuration(callData.duration_seconds)}
             />
+            {!recordingUrl && callData.outcome !== "no_answer" && (
+              <p className="text-xs text-muted-foreground mt-2 italic">
+                Recording processing — check back in a few moments
+              </p>
+            )}
             {callData.outcome === "no_answer" && (
               <p className="text-xs text-muted-foreground mt-2 italic">
                 Recording not available — call was not answered.

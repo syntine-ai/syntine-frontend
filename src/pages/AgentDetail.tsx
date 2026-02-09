@@ -39,12 +39,16 @@ const AgentDetail = () => {
   const [name, setName] = useState("");
   const [systemPrompt, setSystemPrompt] = useState("");
   const [firstMessage, setFirstMessage] = useState("");
+  const [firstSpeaker, setFirstSpeaker] = useState("agent");
+  const [firstMessageDelayMs, setFirstMessageDelayMs] = useState(2000);
 
   useEffect(() => {
     if (agent) {
       setName(agent.name);
       setSystemPrompt(initialParts.systemPrompt);
-      setFirstMessage(initialParts.firstMessage);
+      setFirstMessage(agent.first_message || initialParts.firstMessage || "");
+      setFirstSpeaker(agent.first_speaker || "agent");
+      setFirstMessageDelayMs(agent.first_message_delay_ms || 2000);
     }
   }, [agent, initialParts]);
 
@@ -52,15 +56,14 @@ const AgentDetail = () => {
   const hasUnsavedChanges = useMemo(() => {
     if (!agent) return false;
 
-    const currentCombined = firstMessage
-      ? `${systemPrompt}\n\n---\nFIRST MESSAGE:\n${firstMessage}`
-      : systemPrompt;
-
     return (
       name !== agent.name ||
-      currentCombined !== (agent.system_prompt || "")
+      systemPrompt !== (initialParts.systemPrompt || "") ||
+      firstMessage !== (agent.first_message || initialParts.firstMessage || "") ||
+      firstSpeaker !== (agent.first_speaker || "agent") ||
+      firstMessageDelayMs !== (agent.first_message_delay_ms || 2000)
     );
-  }, [agent, name, systemPrompt, firstMessage]);
+  }, [agent, name, systemPrompt, firstMessage, firstSpeaker, firstMessageDelayMs, initialParts]);
 
   const handleSave = async () => {
     if (!agent || !id) return;
@@ -68,13 +71,12 @@ const AgentDetail = () => {
     try {
       setIsSaving(true);
 
-      const combinedPrompt = firstMessage
-        ? `${systemPrompt}\n\n---\nFIRST MESSAGE:\n${firstMessage}`
-        : systemPrompt;
-
       await updateAgent(id, {
         name: name.trim(),
-        system_prompt: combinedPrompt,
+        system_prompt: systemPrompt,
+        first_message: firstMessage,
+        first_speaker: firstSpeaker,
+        first_message_delay_ms: firstMessageDelayMs,
       });
 
       toast.success("Agent saved successfully");
@@ -174,6 +176,10 @@ const AgentDetail = () => {
               onSystemPromptChange={setSystemPrompt}
               firstMessage={firstMessage}
               onFirstMessageChange={setFirstMessage}
+              firstSpeaker={firstSpeaker}
+              onFirstSpeakerChange={setFirstSpeaker}
+              firstMessageDelayMs={firstMessageDelayMs}
+              onFirstMessageDelayMsChange={setFirstMessageDelayMs}
               isReadOnly={isViewMode}
               agentId={agent.id}
               linkedCampaigns={agent.linkedCampaigns}
