@@ -7,6 +7,7 @@ import { NotificationDropdown } from "./NotificationDropdown";
 import { UserMenu } from "./UserMenu";
 import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChannelSwitcher } from "./ChannelSwitcher";
 
 interface TopBarProps {
   workspaceName?: string;
@@ -74,7 +75,7 @@ export function TopBar({ workspaceName = "Syntine Workspace", variant }: TopBarP
         className="h-16 border-b border-border bg-background flex items-center justify-between px-5"
       >
         <div className="flex items-center gap-2">
-          {/* Clean header - no breadcrumb navigation */}
+          {variant === "org" && <ChannelSwitcher />}
         </div>
 
         <div className="flex items-center gap-2">

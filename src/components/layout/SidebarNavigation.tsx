@@ -74,8 +74,7 @@ export function SidebarNavigation({ isCollapsed: propCollapsed }: SidebarNavigat
 
   return (
     <nav className="flex-1 px-3 py-4">
-      <ChannelSwitcher isCollapsed={isCollapsed} />
-      <ul className="space-y-1 mt-2">
+      <ul className="space-y-1">
         {items.map((item) => {
           const isActive = isActiveRoute(item.route);
 
