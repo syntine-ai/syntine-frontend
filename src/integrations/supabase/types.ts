@@ -213,6 +213,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "call_queue_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_orders"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "call_queue_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
