@@ -74,6 +74,9 @@ export type Database = {
         Row: {
           created_at: string | null
           deleted_at: string | null
+          first_message: string | null
+          first_message_delay_ms: number | null
+          first_speaker: string | null
           id: string
           language: string | null
           name: string
@@ -89,6 +92,9 @@ export type Database = {
         Insert: {
           created_at?: string | null
           deleted_at?: string | null
+          first_message?: string | null
+          first_message_delay_ms?: number | null
+          first_speaker?: string | null
           id?: string
           language?: string | null
           name: string
@@ -104,6 +110,9 @@ export type Database = {
         Update: {
           created_at?: string | null
           deleted_at?: string | null
+          first_message?: string | null
+          first_message_delay_ms?: number | null
+          first_speaker?: string | null
           id?: string
           language?: string | null
           name?: string
@@ -141,6 +150,9 @@ export type Database = {
           customer_id: string | null
           error_message: string | null
           id: string
+          last_attempt_at: string | null
+          last_attempt_outcome: string | null
+          metadata: Json | null
           order_id: string | null
           organization_id: string
           phone_number: string
@@ -156,6 +168,9 @@ export type Database = {
           customer_id?: string | null
           error_message?: string | null
           id?: string
+          last_attempt_at?: string | null
+          last_attempt_outcome?: string | null
+          metadata?: Json | null
           order_id?: string | null
           organization_id: string
           phone_number: string
@@ -171,6 +186,9 @@ export type Database = {
           customer_id?: string | null
           error_message?: string | null
           id?: string
+          last_attempt_at?: string | null
+          last_attempt_outcome?: string | null
+          metadata?: Json | null
           order_id?: string | null
           organization_id?: string
           phone_number?: string
@@ -192,20 +210,6 @@ export type Database = {
             columns: ["cart_id"]
             isOneToOne: false
             referencedRelation: "commerce_abandoned_carts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "call_queue_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "commerce_customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "call_queue_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "commerce_orders"
             referencedColumns: ["id"]
           },
           {
@@ -395,17 +399,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "calls_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "commerce_orders"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "calls_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_active_calls: {
+        Row: {
+          active_count: number | null
+          campaign_id: string
+          created_at: string | null
+          last_updated: string | null
+        }
+        Insert: {
+          active_count?: number | null
+          campaign_id: string
+          created_at?: string | null
+          last_updated?: string | null
+        }
+        Update: {
+          active_count?: number | null
+          campaign_id?: string
+          created_at?: string | null
+          last_updated?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_active_calls_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: true
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -452,6 +478,8 @@ export type Database = {
       campaigns: {
         Row: {
           auto_trigger_enabled: boolean | null
+          calling_hours_end: number | null
+          calling_hours_start: number | null
           campaign_type: string | null
           completed_at: string | null
           concurrency: number | null
@@ -471,6 +499,8 @@ export type Database = {
         }
         Insert: {
           auto_trigger_enabled?: boolean | null
+          calling_hours_end?: number | null
+          calling_hours_start?: number | null
           campaign_type?: string | null
           completed_at?: string | null
           concurrency?: number | null
@@ -490,6 +520,8 @@ export type Database = {
         }
         Update: {
           auto_trigger_enabled?: boolean | null
+          calling_hours_end?: number | null
+          calling_hours_start?: number | null
           campaign_type?: string | null
           completed_at?: string | null
           concurrency?: number | null
@@ -660,20 +692,6 @@ export type Database = {
             columns: ["cart_id"]
             isOneToOne: false
             referencedRelation: "commerce_abandoned_carts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commerce_cart_items_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "commerce_products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commerce_cart_items_variant_id_fkey"
-            columns: ["variant_id"]
-            isOneToOne: false
-            referencedRelation: "commerce_product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -1176,6 +1194,8 @@ export type Database = {
       }
       organizations: {
         Row: {
+          calling_hours_end: number | null
+          calling_hours_start: number | null
           created_at: string | null
           domain: string | null
           email: string | null
@@ -1185,10 +1205,13 @@ export type Database = {
           plan: Database["public"]["Enums"]["organization_plan"]
           settings: Json | null
           status: Database["public"]["Enums"]["organization_status"]
+          timezone: string | null
           trial_ends_at: string | null
           updated_at: string | null
         }
         Insert: {
+          calling_hours_end?: number | null
+          calling_hours_start?: number | null
           created_at?: string | null
           domain?: string | null
           email?: string | null
@@ -1198,10 +1221,13 @@ export type Database = {
           plan?: Database["public"]["Enums"]["organization_plan"]
           settings?: Json | null
           status?: Database["public"]["Enums"]["organization_status"]
+          timezone?: string | null
           trial_ends_at?: string | null
           updated_at?: string | null
         }
         Update: {
+          calling_hours_end?: number | null
+          calling_hours_start?: number | null
           created_at?: string | null
           domain?: string | null
           email?: string | null
@@ -1211,6 +1237,7 @@ export type Database = {
           plan?: Database["public"]["Enums"]["organization_plan"]
           settings?: Json | null
           status?: Database["public"]["Enums"]["organization_status"]
+          timezone?: string | null
           trial_ends_at?: string | null
           updated_at?: string | null
         }
@@ -1349,6 +1376,28 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      claim_queue_items: {
+        Args: { p_campaign_id: string; p_limit?: number }
+        Returns: {
+          campaign_id: string
+          id: string
+          metadata: Json
+          order_id: string
+          organization_id: string
+          phone_number: string
+          retry_count: number
+          scheduled_at: string
+          status: string
+        }[]
+      }
+      decrement_active_calls: {
+        Args: { p_campaign_id: string }
+        Returns: undefined
+      }
+      get_active_call_count: {
+        Args: { p_campaign_id: string }
+        Returns: number
+      }
       get_org_team_members: {
         Args: never
         Returns: {
@@ -1371,7 +1420,19 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_active_calls: {
+        Args: { p_campaign_id: string }
+        Returns: undefined
+      }
       is_org_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_wa_window_open: {
+        Args: { p_conversation_id: string }
+        Returns: boolean
+      }
+      is_within_calling_hours: {
+        Args: { p_campaign_id: string; p_check_time?: string }
+        Returns: boolean
+      }
       log_activity: {
         Args: {
           _action: string
@@ -1389,6 +1450,7 @@ export type Database = {
         Args: { _notification_id: string }
         Returns: undefined
       }
+      reset_stale_call_counters: { Args: never; Returns: undefined }
     }
     Enums: {
       agent_status: "active" | "inactive" | "draft"
@@ -1436,6 +1498,40 @@ export type Database = {
       product_status: "active" | "draft" | "archived"
       transcript_speaker: "agent" | "caller" | "system"
       trigger_ready_status: "ready" | "missing_phone" | "not_applicable"
+      wa_channel: "whatsapp" | "instagram" | "messenger"
+      wa_conversation_status: "active" | "closed" | "escalated" | "expired"
+      wa_escalation_reason:
+        | "negative_sentiment"
+        | "explicit_request"
+        | "repeated_failure"
+        | "high_value_customer"
+        | "complex_query"
+        | "manual"
+      wa_escalation_status:
+        | "pending"
+        | "assigned"
+        | "resolved"
+        | "returned_to_ai"
+      wa_intent:
+        | "sales"
+        | "support"
+        | "campaign"
+        | "order_status"
+        | "abandoned_cart"
+        | "unknown"
+      wa_message_type:
+        | "text"
+        | "image"
+        | "document"
+        | "audio"
+        | "video"
+        | "location"
+        | "contact"
+        | "template"
+        | "interactive"
+        | "reaction"
+      wa_rule_status: "active" | "paused" | "draft" | "archived"
+      wa_sentiment: "positive" | "negative" | "neutral"
       webhook_status: "active" | "failed" | "pending"
     }
     CompositeTypes: {
@@ -1613,6 +1709,44 @@ export const Constants = {
       product_status: ["active", "draft", "archived"],
       transcript_speaker: ["agent", "caller", "system"],
       trigger_ready_status: ["ready", "missing_phone", "not_applicable"],
+      wa_channel: ["whatsapp", "instagram", "messenger"],
+      wa_conversation_status: ["active", "closed", "escalated", "expired"],
+      wa_escalation_reason: [
+        "negative_sentiment",
+        "explicit_request",
+        "repeated_failure",
+        "high_value_customer",
+        "complex_query",
+        "manual",
+      ],
+      wa_escalation_status: [
+        "pending",
+        "assigned",
+        "resolved",
+        "returned_to_ai",
+      ],
+      wa_intent: [
+        "sales",
+        "support",
+        "campaign",
+        "order_status",
+        "abandoned_cart",
+        "unknown",
+      ],
+      wa_message_type: [
+        "text",
+        "image",
+        "document",
+        "audio",
+        "video",
+        "location",
+        "contact",
+        "template",
+        "interactive",
+        "reaction",
+      ],
+      wa_rule_status: ["active", "paused", "draft", "archived"],
+      wa_sentiment: ["positive", "negative", "neutral"],
       webhook_status: ["active", "failed", "pending"],
     },
   },
