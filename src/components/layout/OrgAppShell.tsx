@@ -5,6 +5,7 @@ import { TopBar } from "./TopBar";
 import { Zap, Menu, PanelLeftClose, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSidebar, SidebarProvider } from "@/contexts/SidebarContext";
+import { ChannelProvider } from "@/contexts/ChannelContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -145,7 +146,9 @@ function OrgAppShellContent({ children }: OrgAppShellProps) {
 export function OrgAppShell({ children }: OrgAppShellProps) {
   return (
     <SidebarProvider>
-      <OrgAppShellContent>{children}</OrgAppShellContent>
+      <ChannelProvider>
+        <OrgAppShellContent>{children}</OrgAppShellContent>
+      </ChannelProvider>
     </SidebarProvider>
   );
 }

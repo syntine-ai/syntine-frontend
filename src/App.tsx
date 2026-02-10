@@ -16,7 +16,7 @@ import Campaigns from "./pages/Campaigns";
 import CampaignDetail from "./pages/CampaignDetail";
 import Agents from "./pages/Agents";
 import AgentDetail from "./pages/AgentDetail";
- import AgentCreate from "./pages/AgentCreate";
+import AgentCreate from "./pages/AgentCreate";
 import CallAnalytics from "./pages/CallAnalytics";
 import CallLogs from "./pages/CallLogs";
 import RecentCalls from "./pages/RecentCalls";
@@ -32,6 +32,12 @@ import AbandonedCarts from "./pages/AbandonedCarts";
 import SystemLogs from "./pages/SystemLogs";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import PhoneNumbers from "./pages/PhoneNumbers";
+
+// WhatsApp Pages
+import WhatsAppDashboard from "./pages/WhatsAppDashboard";
+import WhatsAppAgent from "./pages/WhatsAppAgent";
+import WhatsAppConversations from "./pages/WhatsAppConversations";
+import WhatsAppTemplates from "./pages/WhatsAppTemplates";
 
 // Account Pages
 import Account from "./pages/Account";
@@ -53,11 +59,9 @@ const App = () => (
             <Route path="/" element={<Auth />} />
             <Route path="/auth" element={<Navigate to="/" replace />} />
             <Route path="/login" element={<Navigate to="/" replace />} />
-            {/* Admin login deleted, redirect to home */}
             <Route path="/admin/login" element={<Navigate to="/" replace />} />
 
-            {/* Protected Organization Routes - direct paths without /app prefix */}
-            {/* Layout wraps all org pages via Outlet */}
+            {/* Protected Organization Routes */}
             <Route element={
               <ProtectedRoute requiredRole="org">
                 <OrgLayout />
@@ -67,7 +71,7 @@ const App = () => (
               <Route path="/campaigns" element={<Campaigns />} />
               <Route path="/campaigns/:id" element={<CampaignDetail />} />
               <Route path="/agents" element={<Agents />} />
-             <Route path="/agents/new" element={<AgentCreate />} />
+              <Route path="/agents/new" element={<AgentCreate />} />
               <Route path="/agents/:id" element={<AgentDetail />} />
               <Route path="/phone-numbers" element={<PhoneNumbers />} />
               <Route path="/calls" element={<RecentCalls />} />
@@ -85,6 +89,12 @@ const App = () => (
               <Route path="/settings/system-logs" element={<SystemLogs />} />
               <Route path="/account" element={<Account />} />
               <Route path="/notifications" element={<OrgNotifications />} />
+
+              {/* WhatsApp Routes */}
+              <Route path="/wa/dashboard" element={<WhatsAppDashboard />} />
+              <Route path="/wa/agent" element={<WhatsAppAgent />} />
+              <Route path="/wa/conversations" element={<WhatsAppConversations />} />
+              <Route path="/wa/templates" element={<WhatsAppTemplates />} />
             </Route>
 
             {/* Catch-all */}
