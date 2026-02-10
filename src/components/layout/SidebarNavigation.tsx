@@ -40,6 +40,7 @@ const voiceNavItems: NavItem[] = [
 const whatsappNavItems: NavItem[] = [
   { icon: BarChart3, label: "Dashboard", route: "/wa/dashboard" },
   { icon: Bot, label: "Agent Config", route: "/wa/agent" },
+  { icon: Zap, label: "Automations", route: "/wa/automations" },
   { icon: MessageCircle, label: "Conversations", route: "/wa/conversations" },
   { icon: FileText, label: "Templates", route: "/wa/templates" },
   { icon: Package, label: "Products", route: "/products" },
