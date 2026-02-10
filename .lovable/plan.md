@@ -1,472 +1,169 @@
 
-# Phone Number Management - Implementation Plan
+
+# WhatsApp Module - Frontend + Database Plan
 
 ## Overview
-This plan implements a complete Phone Number Management system as a foundational feature in Syntine. The feature allows organizations to view, assign, and manage phone numbers, and link them to AI agents for future voice calling capabilities.
+
+Add a complete WhatsApp automation module to the Syntine platform, accessible via a **channel switcher** in the sidebar. Users toggle between "Voice" and "WhatsApp" modes, each showing its own navigation items. Both share the same login, auth, and organization context.
 
 ---
 
-## Phase 1: Database Schema
+## 1. Bug Fix (Pre-requisite)
 
-### New Table: `phone_numbers`
+Fix the existing build error in `src/hooks/useCallQueue.ts` (line 74) where the `call_queue` table lost its foreign key relation to `commerce_orders` after the table recreation. The `order` join needs a cast through `unknown` to suppress the TS error until the FK is re-established.
 
-```sql
-CREATE TYPE phone_number_status AS ENUM ('available', 'assigned', 'reserved');
+---
 
-CREATE TABLE public.phone_numbers (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  phone_number TEXT NOT NULL UNIQUE,
-  country TEXT NOT NULL,
-  region TEXT,
-  organization_id UUID REFERENCES public.organizations(id) ON DELETE SET NULL,
-  agent_id UUID REFERENCES public.agents(id) ON DELETE SET NULL,
-  status phone_number_status NOT NULL DEFAULT 'available',
-  monthly_cost NUMERIC(10, 2) DEFAULT 0,
-  provider TEXT DEFAULT 'twilio',
-  capabilities JSONB DEFAULT '{"voice": true, "sms": false}'::jsonb,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
-);
+## 2. Database Migration
 
--- Indexes for performance
-CREATE INDEX idx_phone_numbers_org ON public.phone_numbers(organization_id);
-CREATE INDEX idx_phone_numbers_agent ON public.phone_numbers(agent_id);
-CREATE INDEX idx_phone_numbers_status ON public.phone_numbers(status);
+Create the following new tables from the masterplan:
 
--- Update trigger
-CREATE TRIGGER update_phone_numbers_updated_at
-  BEFORE UPDATE ON public.phone_numbers
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
-```
+### New Tables
 
-### Column Definitions
+| Table | Purpose |
+|---|---|
+| `whatsapp_agent_configs` | One WhatsApp agent config per org (bot name, tone, language, system prompt, custom instructions) |
+| `whatsapp_automations` | Pre-built automation configs per org (cod_confirmation, cart_recovery, support_chat) with delay, filters, discount settings |
+| `whatsapp_conversations` | Chat sessions linking customer phone to an order/cart with trigger type and status |
+| `whatsapp_messages` | All inbound/outbound messages with delivery status tracking |
+| `whatsapp_templates` | WhatsApp-approved message templates |
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | UUID | Primary key |
-| `phone_number` | TEXT | E.164 format phone number (e.g., +14155551234) |
-| `country` | TEXT | ISO country code (e.g., US, IN, GB) |
-| `region` | TEXT | State/region name (optional) |
-| `organization_id` | UUID | Assigned organization (NULL = available pool) |
-| `agent_id` | UUID | Connected agent (NULL = not connected) |
-| `status` | ENUM | available, assigned, reserved |
-| `monthly_cost` | NUMERIC | Informational cost per month |
-| `provider` | TEXT | Telephony provider (twilio, etc.) |
-| `capabilities` | JSONB | Features like voice, SMS support |
+### Organization Table Update
+
+Add two columns to `organizations`:
+- `enabled_channels TEXT[] DEFAULT '{"voice"}'` -- feature flag for voice/whatsapp
+- `whatsapp_credits INT DEFAULT 0` -- message credits
 
 ### RLS Policies
 
-```sql
--- Enable RLS
-ALTER TABLE public.phone_numbers ENABLE ROW LEVEL SECURITY;
+All new tables will have org-scoped RLS using the existing `get_user_organization_id(auth.uid())` pattern, consistent with other tables in the project.
 
--- View: Org members see their assigned numbers + all available numbers
-CREATE POLICY "Users can view available and org numbers"
-  ON public.phone_numbers FOR SELECT
-  TO authenticated
-  USING (
-    organization_id IS NULL 
-    OR organization_id = get_user_organization_id(auth.uid())
-    OR has_role(auth.uid(), 'admin')
-  );
+### Foreign Key Relationships
 
--- Assign: Org admins can assign available numbers to their org
-CREATE POLICY "Org admins can assign available numbers"
-  ON public.phone_numbers FOR UPDATE
-  TO authenticated
-  USING (
-    (organization_id IS NULL AND status = 'available')
-    OR organization_id = get_user_organization_id(auth.uid())
-  )
-  WITH CHECK (
-    organization_id = get_user_organization_id(auth.uid())
-    OR organization_id IS NULL
-  );
+- `whatsapp_agent_configs.organization_id` -> `organizations.id`
+- `whatsapp_automations.organization_id` -> `organizations.id`
+- `whatsapp_conversations.organization_id` -> `organizations.id`
+- `whatsapp_conversations.agent_config_id` -> `whatsapp_agent_configs.id`
+- `whatsapp_messages.conversation_id` -> `whatsapp_conversations.id`
+- `whatsapp_templates.organization_id` -> `organizations.id` (via RLS, no FK to avoid cross-org issues)
 
--- Platform admins can create/delete numbers
-CREATE POLICY "Admins can manage all numbers"
-  ON public.phone_numbers FOR ALL
-  TO authenticated
-  USING (has_role(auth.uid(), 'admin'));
-```
-
-### Modify Agents Table
-
-```sql
--- Add phone_number_id column to agents
-ALTER TABLE public.agents 
-  ADD COLUMN phone_number_id UUID REFERENCES public.phone_numbers(id) ON DELETE SET NULL;
-
--- Index for lookups
-CREATE INDEX idx_agents_phone_number ON public.agents(phone_number_id);
-```
+Also re-add the missing FK from `call_queue.order_id` -> `commerce_orders.id` to fix the build error properly.
 
 ---
 
-## Phase 2: Frontend Implementation
+## 3. Channel Switcher in Sidebar
 
-### 2.1 New Files to Create
+### How It Works
 
-#### File: `src/pages/PhoneNumbers.tsx`
+A dropdown or toggle at the top of the sidebar (below the logo) lets users switch between **Voice** and **WhatsApp** channels. Each channel shows its own set of nav items. The selected channel is stored in a new `ChannelContext`.
 
-Main page with two sections:
-1. **My Phone Numbers** - Numbers assigned to organization
-2. **Available Numbers** - Pool of unassigned numbers
+**Voice nav items** (existing): Dashboard, Campaigns, Agents, Phone Numbers, Call Logs, Products, Orders, Integrations
 
-**UI Elements:**
-- Summary cards (total assigned, connected to agents, available)
-- Table view with country flags, number, region, status, agent link
-- Action buttons: Assign, Connect, Disconnect, Release
-- Filters: Country dropdown, status filter
-- Search by phone number
+**WhatsApp nav items** (new): Dashboard (WhatsApp metrics), Agent Config, Conversations, Templates, Products (shared), Orders (shared), Integrations (shared)
 
-**Page Structure:**
-```
-PageContainer (title="Phone Numbers")
-  ├── Summary Cards (4 cards in grid)
-  │   ├── My Numbers (count)
-  │   ├── Connected to Agents (count)
-  │   ├── Available to Assign (count)
-  │   └── Monthly Cost (sum)
-  │
-  ├── Tabs
-  │   ├── Tab: "My Numbers"
-  │   │   └── PhoneNumbersTable (org assigned)
-  │   │
-  │   └── Tab: "Available Numbers"
-  │       ├── Filters (country, region)
-  │       └── PhoneNumbersTable (available pool)
-```
+### New Context: `src/contexts/ChannelContext.tsx`
 
-#### File: `src/components/phone-numbers/PhoneNumbersTable.tsx`
+Stores the active channel (`voice` | `whatsapp`), persisted to localStorage. Reads `organization.enabled_channels` to determine which channels are available. If WhatsApp is not enabled for the org, the switcher hides the WhatsApp option.
 
-Reusable table component displaying phone numbers.
+### Sidebar Updates: `src/components/layout/SidebarNavigation.tsx`
 
-**Columns:**
-- Phone Number (with country flag icon)
-- Country / Region
-- Status (Badge: Available / Assigned / Connected)
-- Connected Agent (agent name or "Not connected")
-- Monthly Cost
-- Actions (dropdown: Connect, Disconnect, Release)
-
-#### File: `src/components/phone-numbers/AssignNumberModal.tsx`
-
-Modal for assigning an available number to the organization.
-
-**Content:**
-- Number display
-- Country and region info
-- Monthly cost (informational)
-- Confirm button
-
-#### File: `src/components/phone-numbers/ConnectAgentModal.tsx`
-
-Modal for connecting a number to an agent.
-
-**Content:**
-- Dropdown of organization's agents (only those without a connected number)
-- Selected number display
-- Confirm/Cancel buttons
-
-#### File: `src/hooks/usePhoneNumbers.ts`
-
-Custom hook for phone number operations.
-
-**Functions:**
-- `fetchOrgNumbers()` - Get numbers assigned to org
-- `fetchAvailableNumbers(filters)` - Get available pool with filters
-- `assignNumber(numberId)` - Assign to organization
-- `releaseNumber(numberId)` - Release back to pool
-- `connectToAgent(numberId, agentId)` - Link number to agent
-- `disconnectFromAgent(numberId)` - Unlink from agent
-
-**State:**
-- `orgNumbers` - Organization's assigned numbers
-- `availableNumbers` - Available pool
-- `isLoading`, `error`
-- Filter state for country/region
-
-### 2.2 Files to Modify
-
-#### File: `src/components/layout/SidebarNavigation.tsx`
-
-Add new navigation item:
-
-```typescript
-import { PhoneCall } from "lucide-react";
-
-const orgNavItems: NavItem[] = [
-  { icon: Zap, label: "Dashboard", route: "/dashboard" },
-  { icon: LayoutGrid, label: "Campaigns", route: "/campaigns" },
-  { icon: Bot, label: "Agents", route: "/agents" },
-  { icon: PhoneCall, label: "Phone Numbers", route: "/phone-numbers" }, // NEW
-  { icon: Phone, label: "Call Logs", route: "/calls" },
-  // ... rest
-];
-```
-
-#### File: `src/App.tsx`
-
-Add new route:
-
-```typescript
-import PhoneNumbers from "./pages/PhoneNumbers";
-
-// Inside protected routes:
-<Route path="/phone-numbers" element={<PhoneNumbers />} />
-```
-
-#### File: `src/pages/AgentDetail.tsx`
-
-Add phone number section to agent detail page:
-
-**New Section (after header, before prompt):**
-```
-Phone Number Card
-├── If connected:
-│   ├── Display connected number with flag
-│   ├── "Disconnect" button
-│   └── Link to Phone Numbers page
-│
-└── If not connected:
-    ├── "No phone number connected" message
-    ├── "Connect Number" button (opens modal or redirects)
-    └── Helper text explaining the feature
-```
-
-#### File: `src/pages/Agents.tsx`
-
-Update agents list table to show phone number column:
-
-**New Column:**
-- "Phone Number" column after "Last Updated"
-- Shows connected number or "—" if none
-- Clicking number navigates to phone numbers page
-
-#### File: `src/hooks/useAgents.ts`
-
-Extend to include phone number data:
-
-```typescript
-// Update fetch query to join phone_numbers
-const { data: agentsData } = await supabase
-  .from("agents")
-  .select(`
-    *,
-    phone_numbers(id, phone_number, country)
-  `)
-  .eq("organization_id", orgId)
-  .is("deleted_at", null);
-
-// Add phone_number to AgentWithCampaigns interface
-export interface AgentWithCampaigns extends Agent {
-  linkedCampaigns: number;
-  phone_number?: {
-    id: string;
-    phone_number: string;
-    country: string;
-  } | null;
-}
-```
+- Add channel switcher UI element above the nav items
+- Conditionally render Voice or WhatsApp nav items based on active channel
+- WhatsApp items use green accent color (WhatsApp brand) vs purple for Voice
 
 ---
 
-## Phase 3: Component Details
+## 4. New Pages
 
-### 3.1 Phone Numbers Page Layout
+### Page 1: `src/pages/WhatsAppDashboard.tsx` (Route: `/wa/dashboard`)
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│ Phone Numbers                                                    │
-│ Manage your organization's phone numbers                        │
-├─────────────────────────────────────────────────────────────────┤
-│ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐            │
-│ │ My       │ │ Connected│ │ Available│ │ Monthly  │            │
-│ │ Numbers  │ │ to Agents│ │ Pool     │ │ Cost     │            │
-│ │    4     │ │    2     │ │   12     │ │ ₹4,800   │            │
-│ └──────────┘ └──────────┘ └──────────┘ └──────────┘            │
-├─────────────────────────────────────────────────────────────────┤
-│ ┌─────────────────┐ ┌─────────────────┐                        │
-│ │ My Numbers      │ │ Available Pool  │                        │
-│ └─────────────────┴─┴─────────────────┴────────────────────────┤
-│                                                                  │
-│ ┌────────────────────────────────────────────────────────────┐ │
-│ │ Search: [                    ]  Country: [All ▼]           │ │
-│ └────────────────────────────────────────────────────────────┘ │
-│                                                                  │
-│ ┌─────────────────────────────────────────────────────────────┐│
-│ │ Number        │ Region    │ Status    │ Agent    │ Actions ││
-│ ├───────────────┼───────────┼───────────┼──────────┼─────────┤│
-│ │ 🇮🇳 +91 98XX │ Mumbai    │ Connected │ Order... │ ⋮       ││
-│ │ 🇮🇳 +91 98XX │ Delhi     │ Assigned  │ —        │ ⋮       ││
-│ │ 🇺🇸 +1 415XX │ California│ Assigned  │ —        │ ⋮       ││
-│ └─────────────────────────────────────────────────────────────┘│
-└─────────────────────────────────────────────────────────────────┘
-```
+Summary metrics dashboard for WhatsApp:
+- COD confirmation rate, Cart recovery rate, Messages sent/received, Response time
+- Uses `StatCard` components with WhatsApp-themed styling
+- Demo data initially, connected to `whatsapp_messages` and `whatsapp_conversations` tables
 
-### 3.2 Status Badges
+### Page 2: `src/pages/WhatsAppAgent.tsx` (Route: `/wa/agent`)
 
-| Status | Badge Style | Meaning |
-|--------|-------------|---------|
-| `available` | Gray outline | In pool, not assigned to any org |
-| `assigned` | Blue bg/text | Assigned to org, not connected to agent |
-| `connected` | Green bg/text | Assigned to org AND connected to agent |
+Single-page agent configuration:
+- **AgentConfigPanel**: Bot name, tone selector (friendly/professional/casual), language picker, system prompt textarea, custom instructions box, on/off toggle
+- **AutomationCards**: Three cards for COD Confirmation, Cart Recovery, and AI Support -- each with enable toggle and "Edit" button
+- **AutomationEditModal**: Opens on edit click with delay, min value, max followups, discount settings, message template preview
 
-### 3.3 Actions Menu
+### Page 3: `src/pages/WhatsAppConversations.tsx` (Route: `/wa/conversations`)
 
-**For "My Numbers" tab:**
-- Connect to Agent (if not connected)
-- Disconnect from Agent (if connected)
-- Release Number (returns to available pool)
+Two-panel layout:
+- **Left panel**: Conversation list with search, status filter (Active/Waiting/Closed), customer name, last message preview, timestamp
+- **Right panel**: Message thread view with chat bubbles (inbound left, outbound right), customer info sidebar showing linked order/cart
 
-**For "Available Numbers" tab:**
-- Assign to My Organization
+### Page 4: `src/pages/WhatsAppTemplates.tsx` (Route: `/wa/templates`)
+
+Template management table:
+- List of templates with name, type, status (pending/approved/rejected), language
+- Create template modal with body, variables, type selection
 
 ---
 
-## Phase 4: Constraints & Business Rules
+## 5. New Components
 
-### One-to-One Relationship
-- One phone number can connect to only ONE agent
-- One agent can have only ONE phone number
-- Enforced at database level via unique constraint on `agent_id` in phone_numbers
-
-```sql
-CREATE UNIQUE INDEX idx_phone_numbers_agent_unique 
-  ON public.phone_numbers(agent_id) 
-  WHERE agent_id IS NOT NULL;
-```
-
-### Release Rules
-- Cannot release a number that is connected to an active agent
-- Must disconnect first, then release
-- UI enforces this flow
-
-### Assignment Rules
-- Only org_admin and org_owner roles can assign/release numbers
-- All org members can view numbers
-- Regular members cannot modify assignments
+| Component | Location | Purpose |
+|---|---|---|
+| `ChannelSwitcher` | `src/components/layout/ChannelSwitcher.tsx` | Toggle between Voice/WhatsApp in sidebar |
+| `WhatsAppAgentConfigPanel` | `src/components/whatsapp/AgentConfigPanel.tsx` | Name, tone, language, prompt, instructions form |
+| `AutomationCard` | `src/components/whatsapp/AutomationCard.tsx` | Toggle card for each automation type |
+| `AutomationEditModal` | `src/components/whatsapp/AutomationEditModal.tsx` | Settings form for automation parameters |
+| `ConversationList` | `src/components/whatsapp/ConversationList.tsx` | Filterable list of conversations |
+| `ConversationThread` | `src/components/whatsapp/ConversationThread.tsx` | Chat bubble UI for message history |
+| `WhatsAppMetricsCard` | `src/components/whatsapp/WhatsAppMetricsCard.tsx` | Summary stats card |
 
 ---
 
-## Phase 5: File Structure Summary
+## 6. New Hooks & Services
 
-### New Files
-```
-src/
-├── pages/
-│   └── PhoneNumbers.tsx
-├── components/
-│   └── phone-numbers/
-│       ├── PhoneNumbersTable.tsx
-│       ├── AssignNumberModal.tsx
-│       ├── ConnectAgentModal.tsx
-│       ├── PhoneNumberStatusBadge.tsx
-│       └── ReleaseNumberDialog.tsx
-└── hooks/
-    └── usePhoneNumbers.ts
-```
-
-### Modified Files
-```
-src/
-├── App.tsx                                    (add route)
-├── components/layout/SidebarNavigation.tsx   (add nav item)
-├── pages/Agents.tsx                          (add phone column)
-├── pages/AgentDetail.tsx                     (add phone section)
-└── hooks/useAgents.ts                        (join phone data)
-```
+| File | Purpose |
+|---|---|
+| `src/hooks/useWhatsAppAgent.ts` | CRUD for `whatsapp_agent_configs` |
+| `src/hooks/useWhatsAppAutomations.ts` | CRUD for `whatsapp_automations` |
+| `src/hooks/useWhatsAppConversations.ts` | List/filter conversations + messages |
+| `src/hooks/useWhatsAppTemplates.ts` | CRUD for `whatsapp_templates` |
+| `src/api/services/whatsapp.service.ts` | Supabase queries for all WhatsApp tables |
 
 ---
 
-## Phase 6: Implementation Order
+## 7. Routing Updates
 
-### Step 1: Database Migration
-1. Create `phone_number_status` enum
-2. Create `phone_numbers` table with all columns
-3. Add RLS policies
-4. Add `phone_number_id` to `agents` table
-5. Create indexes and unique constraint
+Add WhatsApp routes inside the existing `ProtectedRoute` wrapper in `App.tsx`:
 
-### Step 2: Core Hook
-1. Create `usePhoneNumbers.ts` with CRUD operations
-2. Test queries against empty table
+```text
+/wa/dashboard      -> WhatsAppDashboard
+/wa/agent          -> WhatsAppAgent
+/wa/conversations  -> WhatsAppConversations
+/wa/templates      -> WhatsAppTemplates
+```
 
-### Step 3: Phone Numbers Page
-1. Create `PhoneNumbers.tsx` with layout
-2. Create `PhoneNumbersTable.tsx` component
-3. Add tab navigation (My Numbers / Available)
-4. Add summary stat cards
+These routes use the same `OrgLayout` with the channel-aware sidebar.
 
-### Step 4: Modals & Actions
-1. Create `AssignNumberModal.tsx`
-2. Create `ConnectAgentModal.tsx`
-3. Create `ReleaseNumberDialog.tsx` (confirmation)
-4. Wire up action handlers
+---
 
-### Step 5: Navigation
-1. Update `SidebarNavigation.tsx`
-2. Add route to `App.tsx`
+## 8. Implementation Order
 
-### Step 6: Agent Integration
-1. Update `useAgents.ts` to join phone data
-2. Add phone column to `Agents.tsx` list
-3. Add phone section to `AgentDetail.tsx`
+| Step | What | Files |
+|---|---|---|
+| 1 | Fix `useCallQueue.ts` build error | 1 file |
+| 2 | Database migration (5 new tables + org columns + FK fix) | 1 migration |
+| 3 | `ChannelContext` + `ChannelSwitcher` component | 2 files |
+| 4 | Update `SidebarNavigation` with channel-aware nav | 1 file |
+| 5 | WhatsApp service + hooks (4 hooks, 1 service) | 5 files |
+| 6 | WhatsApp pages (4 pages) + components (7 components) | 11 files |
+| 7 | Update `App.tsx` routing | 1 file |
 
-### Step 7: Testing & Polish
-1. Verify all flows work end-to-end
-2. Test RLS policies
-3. Add loading/error states
-4. Add toast notifications for actions
+**Total: ~21 new/modified files, 1 database migration**
 
 ---
 
 ## Technical Notes
 
-### API Patterns
-Following existing patterns from `useAgents.ts`:
-- Direct Supabase client calls (no Edge Functions needed)
-- Optimistic UI updates where appropriate
-- Toast notifications for success/error
-- Loading states with Loader2 spinner
+- The channel switcher reads `enabled_channels` from the `Organization` object already fetched in `AuthContext`. The `Organization` interface will be extended to include `enabled_channels` and `whatsapp_credits`.
+- All WhatsApp pages follow the same design system (dark theme, Inter font, purple/green accent, `PageContainer` wrapper, Framer Motion transitions).
+- Shared pages like Products and Orders remain accessible from both channels -- no duplication.
+- Demo data file `src/data/demoWhatsAppData.ts` will provide mock conversations and metrics for initial UI testing.
 
-### UI Components Used
-- `PageContainer` for layout
-- `Table`, `TableHeader`, `TableRow`, `TableCell` from shadcn
-- `Badge` for status pills
-- `Button` for actions
-- `Dialog` for modals
-- `DropdownMenu` for action menus
-- `Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`
-- `Select` for filters
-
-### Country Flag Display
-Use emoji flags based on country code:
-```typescript
-const getCountryFlag = (countryCode: string) => {
-  const codePoints = countryCode
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
-};
-// getCountryFlag('IN') => '🇮🇳'
-```
-
----
-
-## Success Criteria Checklist
-
-- [ ] Organizations can see all their assigned phone numbers
-- [ ] Organizations can view available numbers to assign
-- [ ] Org admins can assign numbers from available pool
-- [ ] Org admins can release numbers back to pool
-- [ ] Users can connect a number to an agent (1:1)
-- [ ] Users can disconnect a number from an agent
-- [ ] Agent detail page shows connected phone number
-- [ ] Agent list shows phone number column
-- [ ] Phone Numbers appears in sidebar navigation
-- [ ] All actions show appropriate loading states
-- [ ] All actions show success/error toasts
-- [ ] RLS policies correctly scope data access
