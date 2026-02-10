@@ -621,6 +621,20 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "commerce_abandoned_carts_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commerce_abandoned_carts_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_integrations"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "commerce_abandoned_carts_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
@@ -682,6 +696,124 @@ export type Database = {
           },
         ]
       }
+      commerce_customers: {
+        Row: {
+          accepts_marketing: boolean | null
+          created_at: string | null
+          email: string | null
+          external_customer_id: string | null
+          first_name: string | null
+          id: string
+          last_name: string | null
+          organization_id: string
+          phone: string | null
+          source: Database["public"]["Enums"]["commerce_source"]
+          total_orders: number | null
+          total_spent: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          accepts_marketing?: boolean | null
+          created_at?: string | null
+          email?: string | null
+          external_customer_id?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          organization_id: string
+          phone?: string | null
+          source: Database["public"]["Enums"]["commerce_source"]
+          total_orders?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          accepts_marketing?: boolean | null
+          created_at?: string | null
+          email?: string | null
+          external_customer_id?: string | null
+          first_name?: string | null
+          id?: string
+          last_name?: string | null
+          organization_id?: string
+          phone?: string | null
+          source?: Database["public"]["Enums"]["commerce_source"]
+          total_orders?: number | null
+          total_spent?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commerce_customers_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commerce_integrations: {
+        Row: {
+          access_token_encrypted: string | null
+          created_at: string | null
+          external_store_id: string | null
+          id: string
+          last_orders_sync_at: string | null
+          last_products_sync_at: string | null
+          last_sync_at: string | null
+          organization_id: string
+          settings: Json | null
+          source: Database["public"]["Enums"]["commerce_source"]
+          status: Database["public"]["Enums"]["integration_status"]
+          store_domain: string | null
+          store_name: string | null
+          updated_at: string | null
+          webhook_status: Database["public"]["Enums"]["webhook_status"] | null
+        }
+        Insert: {
+          access_token_encrypted?: string | null
+          created_at?: string | null
+          external_store_id?: string | null
+          id?: string
+          last_orders_sync_at?: string | null
+          last_products_sync_at?: string | null
+          last_sync_at?: string | null
+          organization_id: string
+          settings?: Json | null
+          source: Database["public"]["Enums"]["commerce_source"]
+          status?: Database["public"]["Enums"]["integration_status"]
+          store_domain?: string | null
+          store_name?: string | null
+          updated_at?: string | null
+          webhook_status?: Database["public"]["Enums"]["webhook_status"] | null
+        }
+        Update: {
+          access_token_encrypted?: string | null
+          created_at?: string | null
+          external_store_id?: string | null
+          id?: string
+          last_orders_sync_at?: string | null
+          last_products_sync_at?: string | null
+          last_sync_at?: string | null
+          organization_id?: string
+          settings?: Json | null
+          source?: Database["public"]["Enums"]["commerce_source"]
+          status?: Database["public"]["Enums"]["integration_status"]
+          store_domain?: string | null
+          store_name?: string | null
+          updated_at?: string | null
+          webhook_status?: Database["public"]["Enums"]["webhook_status"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commerce_integrations_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commerce_order_items: {
         Row: {
           created_at: string | null
@@ -725,7 +857,290 @@ export type Database = {
           variant_id?: string | null
           variant_title?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "commerce_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commerce_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commerce_order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_product_variants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commerce_orders: {
+        Row: {
+          billing_address: Json | null
+          call_enqueued_at: string | null
+          created_at: string | null
+          currency: string | null
+          customer_email: string | null
+          customer_id: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          external_order_id: string
+          financial_status:
+            | Database["public"]["Enums"]["order_financial_status"]
+            | null
+          fulfillment_status:
+            | Database["public"]["Enums"]["order_fulfillment_status"]
+            | null
+          id: string
+          integration_id: string | null
+          items_count: number | null
+          notes: string | null
+          order_created_at: string | null
+          order_number: string | null
+          organization_id: string
+          payment_type: Database["public"]["Enums"]["payment_type"] | null
+          shipping_address: Json | null
+          source: Database["public"]["Enums"]["commerce_source"]
+          subtotal: number | null
+          synced_at: string | null
+          tags: Json | null
+          total_amount: number
+          total_discounts: number | null
+          total_tax: number | null
+          trigger_ready:
+            | Database["public"]["Enums"]["trigger_ready_status"]
+            | null
+          updated_at: string | null
+        }
+        Insert: {
+          billing_address?: Json | null
+          call_enqueued_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          external_order_id: string
+          financial_status?:
+            | Database["public"]["Enums"]["order_financial_status"]
+            | null
+          fulfillment_status?:
+            | Database["public"]["Enums"]["order_fulfillment_status"]
+            | null
+          id?: string
+          integration_id?: string | null
+          items_count?: number | null
+          notes?: string | null
+          order_created_at?: string | null
+          order_number?: string | null
+          organization_id: string
+          payment_type?: Database["public"]["Enums"]["payment_type"] | null
+          shipping_address?: Json | null
+          source: Database["public"]["Enums"]["commerce_source"]
+          subtotal?: number | null
+          synced_at?: string | null
+          tags?: Json | null
+          total_amount: number
+          total_discounts?: number | null
+          total_tax?: number | null
+          trigger_ready?:
+            | Database["public"]["Enums"]["trigger_ready_status"]
+            | null
+          updated_at?: string | null
+        }
+        Update: {
+          billing_address?: Json | null
+          call_enqueued_at?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_email?: string | null
+          customer_id?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          external_order_id?: string
+          financial_status?:
+            | Database["public"]["Enums"]["order_financial_status"]
+            | null
+          fulfillment_status?:
+            | Database["public"]["Enums"]["order_fulfillment_status"]
+            | null
+          id?: string
+          integration_id?: string | null
+          items_count?: number | null
+          notes?: string | null
+          order_created_at?: string | null
+          order_number?: string | null
+          organization_id?: string
+          payment_type?: Database["public"]["Enums"]["payment_type"] | null
+          shipping_address?: Json | null
+          source?: Database["public"]["Enums"]["commerce_source"]
+          subtotal?: number | null
+          synced_at?: string | null
+          tags?: Json | null
+          total_amount?: number
+          total_discounts?: number | null
+          total_tax?: number | null
+          trigger_ready?:
+            | Database["public"]["Enums"]["trigger_ready_status"]
+            | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commerce_orders_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commerce_orders_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commerce_orders_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commerce_product_variants: {
+        Row: {
+          compare_at_price: number | null
+          created_at: string | null
+          external_variant_id: string
+          id: string
+          inventory_quantity: number | null
+          price: number | null
+          product_id: string
+          requires_shipping: boolean | null
+          sku: string | null
+          title: string | null
+          updated_at: string | null
+          weight: number | null
+          weight_unit: string | null
+        }
+        Insert: {
+          compare_at_price?: number | null
+          created_at?: string | null
+          external_variant_id: string
+          id?: string
+          inventory_quantity?: number | null
+          price?: number | null
+          product_id: string
+          requires_shipping?: boolean | null
+          sku?: string | null
+          title?: string | null
+          updated_at?: string | null
+          weight?: number | null
+          weight_unit?: string | null
+        }
+        Update: {
+          compare_at_price?: number | null
+          created_at?: string | null
+          external_variant_id?: string
+          id?: string
+          inventory_quantity?: number | null
+          price?: number | null
+          product_id?: string
+          requires_shipping?: boolean | null
+          sku?: string | null
+          title?: string | null
+          updated_at?: string | null
+          weight?: number | null
+          weight_unit?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commerce_product_variants_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      commerce_products: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          external_product_id: string
+          id: string
+          images: Json | null
+          integration_id: string
+          organization_id: string
+          product_type: string | null
+          source: Database["public"]["Enums"]["commerce_source"]
+          status: Database["public"]["Enums"]["product_status"] | null
+          synced_at: string | null
+          tags: Json | null
+          title: string
+          updated_at: string | null
+          vendor: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          external_product_id: string
+          id?: string
+          images?: Json | null
+          integration_id: string
+          organization_id: string
+          product_type?: string | null
+          source: Database["public"]["Enums"]["commerce_source"]
+          status?: Database["public"]["Enums"]["product_status"] | null
+          synced_at?: string | null
+          tags?: Json | null
+          title: string
+          updated_at?: string | null
+          vendor?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          external_product_id?: string
+          id?: string
+          images?: Json | null
+          integration_id?: string
+          organization_id?: string
+          product_type?: string | null
+          source?: Database["public"]["Enums"]["commerce_source"]
+          status?: Database["public"]["Enums"]["product_status"] | null
+          synced_at?: string | null
+          tags?: Json | null
+          title?: string
+          updated_at?: string | null
+          vendor?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commerce_products_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "commerce_integrations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commerce_products_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
