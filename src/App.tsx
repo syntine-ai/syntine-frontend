@@ -36,6 +36,7 @@ import PhoneNumbers from "./pages/PhoneNumbers";
 // WhatsApp Pages
 import WhatsAppDashboard from "./pages/WhatsAppDashboard";
 import WhatsAppAgent from "./pages/WhatsAppAgent";
+import WhatsAppAutomations from "./pages/WhatsAppAutomations";
 import WhatsAppConversations from "./pages/WhatsAppConversations";
 import WhatsAppTemplates from "./pages/WhatsAppTemplates";
 
@@ -93,6 +94,7 @@ const App = () => (
               {/* WhatsApp Routes */}
               <Route path="/wa/dashboard" element={<WhatsAppDashboard />} />
               <Route path="/wa/agent" element={<WhatsAppAgent />} />
+              <Route path="/wa/automations" element={<WhatsAppAutomations />} />
               <Route path="/wa/conversations" element={<WhatsAppConversations />} />
               <Route path="/wa/templates" element={<WhatsAppTemplates />} />
             </Route>
