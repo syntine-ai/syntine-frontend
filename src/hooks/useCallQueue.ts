@@ -67,13 +67,13 @@
  
        if (fetchError) throw fetchError;
  
-       // Transform the nested relations
-       const transformedItems: CallQueueItemWithDetails[] = (data || []).map((item) => ({
-         ...item,
-         campaign: item.campaign as { id: string; name: string } | null,
-         order: item.order as { id: string; order_number: string | null; customer_name: string | null } | null,
-         cart: item.cart as { id: string; customer_name: string | null; total_value: number | null } | null,
-       }));
+        // Transform the nested relations
+        const transformedItems: CallQueueItemWithDetails[] = (data || []).map((item) => ({
+          ...item,
+          campaign: item.campaign as { id: string; name: string } | null,
+          order: item.order as unknown as { id: string; order_number: string | null; customer_name: string | null } | null,
+          cart: item.cart as { id: string; customer_name: string | null; total_value: number | null } | null,
+        }));
  
        setItems(transformedItems);
      } catch (err) {
