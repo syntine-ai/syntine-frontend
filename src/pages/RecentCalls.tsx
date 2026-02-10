@@ -46,6 +46,7 @@ const outcomeToStatus = (outcome: string | null): "answered" | "ended" | "missed
 // Map real call_type to display format
 const mapCallType = (callType: string | null): "inbound" | "outbound" | "webcall" => {
   if (callType === "inbound") return "inbound";
+  if (callType === "webcall") return "webcall";
   return "outbound";
 };
 

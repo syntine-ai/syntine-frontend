@@ -203,6 +203,8 @@ const AgentDetail = () => {
             agentId={agent.id}
             agentName={agent.name}
             hasPhoneNumber={!!agent.phone_number_id}
+            systemPrompt={systemPrompt}
+            firstMessage={firstMessage}
           />
         </motion.div>
       </div>

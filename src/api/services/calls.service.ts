@@ -20,17 +20,23 @@ interface TestCallResponse {
  */
 export async function makeTestCall(
     agentId: string,
-    phoneNumber: string
+    phoneNumber: string,
+    variableOverrides?: Record<string, string>
 ): Promise<TestCallResponse> {
+    const body: Record<string, unknown> = {
+        phone_number: phoneNumber,
+        agent_id: agentId,
+    };
+    if (variableOverrides && Object.keys(variableOverrides).length > 0) {
+        body.variable_overrides = variableOverrides;
+    }
+
     const response = await fetch(`${API_BASE_URL}/calls/test`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            phone_number: phoneNumber,
-            agent_id: agentId,
-        }),
+        body: JSON.stringify(body),
     });
 
     if (!response.ok) {

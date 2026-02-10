@@ -104,6 +104,10 @@ const relatedToConfig: Record<string, { label: string; className: string }> = {
     label: "Inbound",
     className: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30",
   },
+  webcall: {
+    label: "Web Call",
+    className: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30",
+  },
   unknown: {
     label: "Unknown",
     className: "bg-muted text-muted-foreground border-border",
@@ -367,7 +371,7 @@ const CallLogs = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredLogs.map((call, index) => {
-                    const relatedTo = (call as any).metadata?.related_to || "unknown";
+                    const relatedTo = call.call_type === "webcall" ? "webcall" : ((call as any).metadata?.related_to || "unknown");
                     const config = relatedToConfig[relatedTo] || relatedToConfig.unknown;
 
                     // Logic: Show Status if active, Outcome if ended
@@ -398,9 +402,9 @@ const CallLogs = () => {
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="font-medium text-foreground">{call.contact_name || "Unknown"}</span>
+                            <span className="font-medium text-foreground">{call.contact_name || (call.call_type === "webcall" ? "Web Call" : "Unknown")}</span>
                             <span className="text-xs text-muted-foreground">
-                              {call.call_type === "inbound" ? call.from_number : call.to_number}
+                              {call.call_type === "webcall" ? "Browser" : (call.call_type === "inbound" ? call.from_number : call.to_number)}
                             </span>
                           </div>
                         </TableCell>
