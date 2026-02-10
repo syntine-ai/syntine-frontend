@@ -10,10 +10,15 @@ import {
   Link2,
   ShoppingCart,
   Package,
+  MessageCircle,
+  FileText,
+  BarChart3,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { useChannel } from "@/contexts/ChannelContext";
+import { ChannelSwitcher } from "./ChannelSwitcher";
 
 interface NavItem {
   icon: LucideIcon;
@@ -21,12 +26,22 @@ interface NavItem {
   route: string;
 }
 
-const orgNavItems: NavItem[] = [
+const voiceNavItems: NavItem[] = [
   { icon: Zap, label: "Dashboard", route: "/dashboard" },
   { icon: LayoutGrid, label: "Campaigns", route: "/campaigns" },
   { icon: Bot, label: "Agents", route: "/agents" },
   { icon: PhoneCall, label: "Phone Numbers", route: "/phone-numbers" },
   { icon: Phone, label: "Call Logs", route: "/calls" },
+  { icon: Package, label: "Products", route: "/products" },
+  { icon: ShoppingCart, label: "Orders", route: "/orders" },
+  { icon: Link2, label: "Integrations", route: "/integrations" },
+];
+
+const whatsappNavItems: NavItem[] = [
+  { icon: BarChart3, label: "Dashboard", route: "/wa/dashboard" },
+  { icon: Bot, label: "Agent Config", route: "/wa/agent" },
+  { icon: MessageCircle, label: "Conversations", route: "/wa/conversations" },
+  { icon: FileText, label: "Templates", route: "/wa/templates" },
   { icon: Package, label: "Products", route: "/products" },
   { icon: ShoppingCart, label: "Orders", route: "/orders" },
   { icon: Link2, label: "Integrations", route: "/integrations" },
@@ -39,23 +54,29 @@ interface SidebarNavigationProps {
 export function SidebarNavigation({ isCollapsed: propCollapsed }: SidebarNavigationProps) {
   const location = useLocation();
   const context = useSidebar();
+  const { activeChannel } = useChannel();
   const isCollapsed = propCollapsed ?? context.isCollapsed;
-  const items = orgNavItems;
+  const items = activeChannel === "whatsapp" ? whatsappNavItems : voiceNavItems;
+  const isWhatsApp = activeChannel === "whatsapp";
 
   const isActiveRoute = (route: string) => {
     if (route === "/dashboard") {
       return location.pathname === "/" || location.pathname === "/dashboard";
     }
+    if (route === "/wa/dashboard") {
+      return location.pathname === "/wa/dashboard";
+    }
     return (
       location.pathname === route ||
-      (route !== "/dashboard" && location.pathname.startsWith(route))
+      (!["/dashboard", "/wa/dashboard"].includes(route) && location.pathname.startsWith(route))
     );
   };
 
   return (
     <nav className="flex-1 px-3 py-4">
-      <ul className="space-y-1">
-        {items.map((item, index) => {
+      <ChannelSwitcher isCollapsed={isCollapsed} />
+      <ul className="space-y-1 mt-2">
+        {items.map((item) => {
           const isActive = isActiveRoute(item.route);
 
           const linkContent = (
@@ -65,14 +86,17 @@ export function SidebarNavigation({ isCollapsed: propCollapsed }: SidebarNavigat
                 "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200",
                 isCollapsed && "justify-center px-2",
                 isActive
-                  ? "bg-primary/10 text-primary"
+                  ? isWhatsApp
+                    ? "bg-[hsl(142,71%,45%)]/10 text-[hsl(142,71%,45%)]"
+                    : "bg-primary/10 text-primary"
                   : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
               )}
             >
               {isActive && (
                 <div
                   className={cn(
-                    "absolute left-0 top-0 bottom-0 w-0.5 rounded-full bg-primary"
+                    "absolute left-0 top-0 bottom-0 w-0.5 rounded-full",
+                    isWhatsApp ? "bg-[hsl(142,71%,45%)]" : "bg-primary"
                   )}
                 />
               )}
@@ -80,7 +104,7 @@ export function SidebarNavigation({ isCollapsed: propCollapsed }: SidebarNavigat
                 className={cn(
                   "h-5 w-5 shrink-0 transition-colors",
                   isActive
-                    ? "text-primary"
+                    ? isWhatsApp ? "text-[hsl(142,71%,45%)]" : "text-primary"
                     : "text-icon group-hover:text-sidebar-foreground"
                 )}
               />
