@@ -1,5 +1,6 @@
 import { Phone, MessageCircle } from "lucide-react";
 import { useChannel, Channel } from "@/contexts/ChannelContext";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -10,6 +11,7 @@ const channels: { id: Channel; label: string; icon: typeof Phone }[] = [
 
 export function ChannelSwitcher() {
   const { activeChannel, setActiveChannel, availableChannels } = useChannel();
+  const navigate = useNavigate();
 
   const visibleChannels = channels.filter((c) => availableChannels.includes(c.id));
   if (visibleChannels.length <= 1) return null;
@@ -24,7 +26,10 @@ export function ChannelSwitcher() {
           <Tooltip key={channel.id} delayDuration={0}>
             <TooltipTrigger asChild>
               <button
-                onClick={() => setActiveChannel(channel.id)}
+                onClick={() => {
+                  setActiveChannel(channel.id);
+                  navigate(channel.id === "whatsapp" ? "/wa/dashboard" : "/dashboard");
+                }}
                 className={cn(
                   "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200",
                   isActive
