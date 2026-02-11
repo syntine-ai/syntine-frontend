@@ -19,11 +19,16 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { ProductDetailDrawer } from "@/components/commerce/ProductDetailDrawer";
 import { AnalyticsSummaryCard } from "@/components/analytics/AnalyticsSummaryCard";
 import { format } from "date-fns";
 import { useProducts, useProductStats } from "@/hooks/useProducts";
+import { useIntegrations } from "@/hooks/useIntegrations";
+import { useTriggerSync } from "@/hooks/useIntegrations";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 const PAGE_SIZE = 20;
 
@@ -31,6 +36,8 @@ const Products = () => {
   const [page, setPage] = useState(1);
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   // Fetch products with real API hook
   const { data: products = [], isLoading, error } = useProducts({
@@ -40,6 +47,43 @@ const Products = () => {
 
   // Fetch product stats
   const { data: stats } = useProductStats();
+
+  // Fetch integrations to find connected Shopify integration
+  const { data: integrations = [] } = useIntegrations();
+  const connectedIntegration = integrations.find(
+    (i: any) => i.source === "shopify" && i.status === "connected"
+  );
+
+  // Sync mutation
+  const syncMutation = useTriggerSync();
+
+  const handleSync = async () => {
+    if (!connectedIntegration) {
+      toast({
+        title: "No Connected Integration",
+        description: "Please connect a Shopify store first from the Integrations page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const result = await syncMutation.mutateAsync(connectedIntegration.id);
+      toast({
+        title: "Sync Complete ✅",
+        description: result.message || "Products synced successfully",
+      });
+      // Refresh products and stats
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["product-stats"] });
+    } catch (err: any) {
+      toast({
+        title: "Sync Failed",
+        description: err.message || "Failed to sync products",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleRowClick = (productId: string) => {
     setSelectedProductId(productId);
@@ -74,7 +118,23 @@ const Products = () => {
   return (
     <PageContainer
       title="Products"
-      subtitle="Read-only view of your synced product catalog"
+      subtitle="Synced product catalog from your Shopify store"
+      actions={
+        <Button
+          onClick={handleSync}
+          disabled={syncMutation.isPending || !connectedIntegration}
+          variant="outline"
+          size="sm"
+          className="gap-2"
+        >
+          {syncMutation.isPending ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
+          {syncMutation.isPending ? "Syncing..." : "Sync Products"}
+        </Button>
+      }
     >
       {/* Loading State */}
       {isLoading && (

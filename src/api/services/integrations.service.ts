@@ -26,7 +26,7 @@ export async function listIntegrations(
             .order('created_at', { ascending: false });
 
         if (error) throw error;
-        
+
         // Transform to ensure type compatibility
         return (data || []).map(item => ({
             ...item,
@@ -104,41 +104,17 @@ export async function disconnectIntegration(
 
 /**
  * Trigger manual sync for an integration
- * NOTE: This is a placeholder. Full implementation requires backend sync logic.
+ * Calls the backend endpoint which pulls products from Shopify Admin API
  */
 export async function triggerSync(
     organizationId: string,
     integrationId: string
 ): Promise<SuccessResponse> {
     return withErrorHandling(async () => {
-        // Verify integration exists
-        const { data: integration } = await supabase
-            .from('commerce_integrations')
-            .select('status')
-            .eq('id', integrationId)
-            .eq('organization_id', organizationId)
-            .single();
-
-        if (!integration) {
-            throw new Error('Integration not found');
-        }
-
-        if (integration.status !== 'connected') {
-            throw new Error('Integration is not connected');
-        }
-
-        // TODO: Call backend sync endpoint when implemented
-        // For now, just update last_sync_at
-        const { error } = await supabase
-            .from('commerce_integrations')
-            .update({ last_sync_at: new Date().toISOString() })
-            .eq('id', integrationId);
-
-        if (error) throw error;
-
-        return {
-            success: true,
-            message: 'Sync initiated successfully. Full sync implementation pending.',
-        };
+        const { restClient } = await import('../client/rest.client');
+        const result = await restClient.post<SuccessResponse>(
+            `/integrations/${integrationId}/sync`
+        );
+        return result;
     }, 'triggerSync');
 }
