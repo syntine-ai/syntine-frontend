@@ -109,7 +109,12 @@ const CallDetails = () => {
               .single();
 
             if (recordingData?.storage_path) {
-              setRecordingUrl(recordingData.storage_path);
+              const { data: { publicUrl } } = supabase
+                .storage
+                .from("recordings")
+                .getPublicUrl(recordingData.storage_path);
+
+              setRecordingUrl(publicUrl);
             }
           } catch (recordingError) {
             console.log("No recording found for this call");
