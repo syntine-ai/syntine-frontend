@@ -2,13 +2,13 @@ import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { 
-  Play, 
-  Pause, 
-  Download, 
-  Volume2, 
+import {
+  Play,
+  Pause,
+  Download,
+  Volume2,
   VolumeX,
-  MicOff 
+  MicOff
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -17,23 +17,82 @@ interface CallRecordingPlayerProps {
   duration?: string;
 }
 
-export function CallRecordingPlayer({ 
-  recordingUrl, 
-  duration = "2:34" 
+export function CallRecordingPlayer({
+  recordingUrl,
+  duration: initialDuration = "0:00"
 }: CallRecordingPlayerProps) {
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [volume, setVolume] = useState(80);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [totalDuration, setTotalDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
 
-  const formatTime = (percent: number) => {
-    // Mock time calculation based on duration string
-    const [mins, secs] = duration.split(":").map(Number);
-    const totalSeconds = mins * 60 + secs;
-    const currentSeconds = Math.floor((percent / 100) * totalSeconds);
-    const currentMins = Math.floor(currentSeconds / 60);
-    const currentSecs = currentSeconds % 60;
-    return `${currentMins}:${currentSecs.toString().padStart(2, "0")}`;
+  // Initialize duration from props (convert string "MM:SS" to seconds if needed) or default
+  // But reliable totalDuration comes from onLoadedMetadata
+
+  const togglePlay = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+      } else {
+        audioRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleTimeUpdate = () => {
+    if (audioRef.current) {
+      const current = audioRef.current.currentTime;
+      const total = audioRef.current.duration || 1;
+      setCurrentTime(current);
+      setProgress((current / total) * 100);
+    }
+  };
+
+  const handleLoadedMetadata = () => {
+    if (audioRef.current) {
+      setTotalDuration(audioRef.current.duration);
+    }
+  };
+
+  const handleError = () => {
+    setIsPlaying(false);
+    console.error("Audio playback error");
+  };
+
+  const handleSeek = (value: number[]) => {
+    if (audioRef.current) {
+      const newTime = (value[0] / 100) * totalDuration;
+      audioRef.current.currentTime = newTime;
+      setProgress(value[0]);
+    }
+  };
+
+  const handleVolumeChange = (value: number[]) => {
+    const newVol = value[0];
+    setVolume(newVol);
+    if (audioRef.current) {
+      audioRef.current.volume = isMuted ? 0 : newVol;
+    }
+    if (newVol > 0 && isMuted) setIsMuted(false);
+  };
+
+  const toggleMute = () => {
+    if (audioRef.current) {
+      const newMuted = !isMuted;
+      setIsMuted(newMuted);
+      audioRef.current.volume = newMuted ? 0 : volume;
+    }
+  };
+
+  const formatTimeSeconds = (time: number) => {
+    if (isNaN(time)) return "0:00";
+    const mins = Math.floor(time / 60);
+    const secs = Math.floor(time % 60);
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   if (!recordingUrl) {
@@ -56,25 +115,31 @@ export function CallRecordingPlayer({
   return (
     <div className="bg-card rounded-xl border border-border/50 p-6">
       <h3 className="text-sm font-medium text-foreground mb-4">Recording</h3>
-      
+
+      {/* Hidden Audio Element */}
+      <audio
+        ref={audioRef}
+        src={recordingUrl}
+        onTimeUpdate={handleTimeUpdate}
+        onLoadedMetadata={handleLoadedMetadata}
+        onEnded={() => setIsPlaying(false)}
+        onError={handleError}
+      />
+
       <div className="space-y-4">
-        {/* Waveform Visualization (Mock) */}
-        <div className="relative h-16 bg-muted/30 rounded-lg overflow-hidden">
-          <motion.div
-            className="absolute inset-y-0 left-0 bg-primary/20"
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.1 }}
-          />
-          <div className="absolute inset-0 flex items-center justify-center gap-0.5 px-4">
-            {Array.from({ length: 50 }).map((_, i) => (
-              <motion.div
+        {/* Simple Visualizer / Progress Bar */}
+        <div className="relative h-12 bg-muted/30 rounded-lg overflow-hidden flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center gap-1 px-4 opacity-50">
+            {/* Fake waveform bars just for visuals */}
+            {Array.from({ length: 40 }).map((_, i) => (
+              <div
                 key={i}
                 className={cn(
                   "w-1 rounded-full transition-colors",
-                  i < (progress / 100) * 50 ? "bg-primary" : "bg-muted-foreground/30"
+                  i < (progress / 100) * 40 ? "bg-primary" : "bg-muted-foreground/30"
                 )}
                 style={{
-                  height: `${20 + Math.sin(i * 0.5) * 15 + Math.random() * 20}px`,
+                  height: `${10 + Math.random() * 20}px`,
                 }}
               />
             ))}
@@ -85,14 +150,14 @@ export function CallRecordingPlayer({
         <div className="space-y-2">
           <Slider
             value={[progress]}
-            onValueChange={([value]) => setProgress(value)}
+            onValueChange={handleSeek}
             max={100}
             step={0.1}
             className="cursor-pointer"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
-            <span>{formatTime(progress)}</span>
-            <span>{duration}</span>
+            <span>{formatTimeSeconds(currentTime)}</span>
+            <span>{formatTimeSeconds(totalDuration || 0)}</span>
           </div>
         </div>
 
@@ -103,7 +168,7 @@ export function CallRecordingPlayer({
               variant="outline"
               size="icon"
               className="h-10 w-10 rounded-full"
-              onClick={() => setIsPlaying(!isPlaying)}
+              onClick={togglePlay}
             >
               {isPlaying ? (
                 <Pause className="h-4 w-4" />
@@ -111,12 +176,13 @@ export function CallRecordingPlayer({
                 <Play className="h-4 w-4 ml-0.5" />
               )}
             </Button>
+
             <div className="flex items-center gap-2 ml-2">
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8"
-                onClick={() => setIsMuted(!isMuted)}
+                onClick={toggleMute}
               >
                 {isMuted ? (
                   <VolumeX className="h-4 w-4 text-muted-foreground" />
@@ -126,16 +192,17 @@ export function CallRecordingPlayer({
               </Button>
               <Slider
                 value={[isMuted ? 0 : volume]}
-                onValueChange={([value]) => {
-                  setVolume(value);
-                  setIsMuted(value === 0);
-                }}
-                max={100}
+                onValueChange={handleVolumeChange}
+                max={1}
+                step={0.05}
                 className="w-20"
               />
             </div>
           </div>
-          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
+
+          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground"
+            onClick={() => window.open(recordingUrl, '_blank')}
+          >
             <Download className="h-4 w-4" />
             Download
           </Button>
