@@ -66,3 +66,17 @@ export function useTriggerSync() {
         },
     });
 }
+
+export function useReconnectIntegration() {
+    const { profile } = useAuth();
+    const queryClient = useQueryClient();
+    const organizationId = profile?.organization_id;
+
+    return useMutation({
+        mutationFn: (integrationId: string) =>
+            IntegrationsService.reconnectIntegration(organizationId!, integrationId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['integrations', organizationId] });
+        },
+    });
+}

@@ -21,6 +21,9 @@ export interface Integration {
     last_sync_at?: string;
     last_products_sync_at?: string;
     last_orders_sync_at?: string;
+    last_disconnected_at?: string;
+    last_error_at?: string;
+    last_error_reason?: string;
     created_at: string;
     updated_at: string;
 }

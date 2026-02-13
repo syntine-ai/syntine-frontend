@@ -80,26 +80,36 @@ export async function connectShopify(
 
 /**
  * Disconnect an integration
+ * Calls backend DELETE endpoint which handles token clearing and audit trail
  */
 export async function disconnectIntegration(
     organizationId: string,
     integrationId: string
 ): Promise<SuccessResponse> {
     return withErrorHandling(async () => {
-        // Update status to disconnected
-        const { error } = await supabase
-            .from('commerce_integrations')
-            .update({ status: 'disconnected' })
-            .eq('id', integrationId)
-            .eq('organization_id', organizationId);
-
-        if (error) throw error;
-
-        return {
-            success: true,
-            message: 'Integration disconnected successfully',
-        };
+        const { restClient } = await import('../client/rest.client');
+        const result = await restClient.delete<SuccessResponse>(
+            `/integrations/${integrationId}`
+        );
+        return result;
     }, 'disconnectIntegration');
+}
+
+/**
+ * Reconnect a disconnected/errored integration
+ * Backend fetches shop_domain from DB and returns install URL
+ */
+export async function reconnectIntegration(
+    organizationId: string,
+    integrationId: string
+): Promise<SuccessResponse> {
+    return withErrorHandling(async () => {
+        const { restClient } = await import('../client/rest.client');
+        const result = await restClient.post<SuccessResponse>(
+            `/integrations/${integrationId}/reconnect`
+        );
+        return result;
+    }, 'reconnectIntegration');
 }
 
 /**
@@ -118,3 +128,4 @@ export async function triggerSync(
         return result;
     }, 'triggerSync');
 }
+
