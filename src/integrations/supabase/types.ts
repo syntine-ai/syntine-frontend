@@ -579,8 +579,8 @@ export type Database = {
           synced_at: string | null
           total_value: number | null
           trigger_ready:
-          | Database["public"]["Enums"]["trigger_ready_status"]
-          | null
+            | Database["public"]["Enums"]["trigger_ready_status"]
+            | null
           updated_at: string | null
         }
         Insert: {
@@ -602,8 +602,8 @@ export type Database = {
           synced_at?: string | null
           total_value?: number | null
           trigger_ready?:
-          | Database["public"]["Enums"]["trigger_ready_status"]
-          | null
+            | Database["public"]["Enums"]["trigger_ready_status"]
+            | null
           updated_at?: string | null
         }
         Update: {
@@ -625,8 +625,8 @@ export type Database = {
           synced_at?: string | null
           total_value?: number | null
           trigger_ready?:
-          | Database["public"]["Enums"]["trigger_ready_status"]
-          | null
+            | Database["public"]["Enums"]["trigger_ready_status"]
+            | null
           updated_at?: string | null
         }
         Relationships: [
@@ -768,6 +768,9 @@ export type Database = {
           created_at: string | null
           external_store_id: string | null
           id: string
+          last_disconnected_at: string | null
+          last_error_at: string | null
+          last_error_reason: string | null
           last_orders_sync_at: string | null
           last_products_sync_at: string | null
           last_sync_at: string | null
@@ -785,6 +788,9 @@ export type Database = {
           created_at?: string | null
           external_store_id?: string | null
           id?: string
+          last_disconnected_at?: string | null
+          last_error_at?: string | null
+          last_error_reason?: string | null
           last_orders_sync_at?: string | null
           last_products_sync_at?: string | null
           last_sync_at?: string | null
@@ -802,6 +808,9 @@ export type Database = {
           created_at?: string | null
           external_store_id?: string | null
           id?: string
+          last_disconnected_at?: string | null
+          last_error_at?: string | null
+          last_error_reason?: string | null
           last_orders_sync_at?: string | null
           last_products_sync_at?: string | null
           last_sync_at?: string | null
@@ -903,11 +912,11 @@ export type Database = {
           customer_phone: string | null
           external_order_id: string
           financial_status:
-          | Database["public"]["Enums"]["order_financial_status"]
-          | null
+            | Database["public"]["Enums"]["order_financial_status"]
+            | null
           fulfillment_status:
-          | Database["public"]["Enums"]["order_fulfillment_status"]
-          | null
+            | Database["public"]["Enums"]["order_fulfillment_status"]
+            | null
           id: string
           integration_id: string | null
           items_count: number | null
@@ -925,8 +934,8 @@ export type Database = {
           total_discounts: number | null
           total_tax: number | null
           trigger_ready:
-          | Database["public"]["Enums"]["trigger_ready_status"]
-          | null
+            | Database["public"]["Enums"]["trigger_ready_status"]
+            | null
           updated_at: string | null
         }
         Insert: {
@@ -940,11 +949,11 @@ export type Database = {
           customer_phone?: string | null
           external_order_id: string
           financial_status?:
-          | Database["public"]["Enums"]["order_financial_status"]
-          | null
+            | Database["public"]["Enums"]["order_financial_status"]
+            | null
           fulfillment_status?:
-          | Database["public"]["Enums"]["order_fulfillment_status"]
-          | null
+            | Database["public"]["Enums"]["order_fulfillment_status"]
+            | null
           id?: string
           integration_id?: string | null
           items_count?: number | null
@@ -962,8 +971,8 @@ export type Database = {
           total_discounts?: number | null
           total_tax?: number | null
           trigger_ready?:
-          | Database["public"]["Enums"]["trigger_ready_status"]
-          | null
+            | Database["public"]["Enums"]["trigger_ready_status"]
+            | null
           updated_at?: string | null
         }
         Update: {
@@ -977,11 +986,11 @@ export type Database = {
           customer_phone?: string | null
           external_order_id?: string
           financial_status?:
-          | Database["public"]["Enums"]["order_financial_status"]
-          | null
+            | Database["public"]["Enums"]["order_financial_status"]
+            | null
           fulfillment_status?:
-          | Database["public"]["Enums"]["order_fulfillment_status"]
-          | null
+            | Database["public"]["Enums"]["order_fulfillment_status"]
+            | null
           id?: string
           integration_id?: string | null
           items_count?: number | null
@@ -999,8 +1008,8 @@ export type Database = {
           total_discounts?: number | null
           total_tax?: number | null
           trigger_ready?:
-          | Database["public"]["Enums"]["trigger_ready_status"]
-          | null
+            | Database["public"]["Enums"]["trigger_ready_status"]
+            | null
           updated_at?: string | null
         }
         Relationships: [
@@ -1207,6 +1216,7 @@ export type Database = {
           calling_hours_end: number | null
           calling_hours_start: number | null
           created_at: string | null
+          credits: number | null
           domain: string | null
           email: string | null
           enabled_channels: string[] | null
@@ -1220,11 +1230,13 @@ export type Database = {
           trial_ends_at: string | null
           updated_at: string | null
           whatsapp_credits: number | null
+          whatsapp_phone_id: string | null
         }
         Insert: {
           calling_hours_end?: number | null
           calling_hours_start?: number | null
           created_at?: string | null
+          credits?: number | null
           domain?: string | null
           email?: string | null
           enabled_channels?: string[] | null
@@ -1238,11 +1250,13 @@ export type Database = {
           trial_ends_at?: string | null
           updated_at?: string | null
           whatsapp_credits?: number | null
+          whatsapp_phone_id?: string | null
         }
         Update: {
           calling_hours_end?: number | null
           calling_hours_start?: number | null
           created_at?: string | null
+          credits?: number | null
           domain?: string | null
           email?: string | null
           enabled_channels?: string[] | null
@@ -1256,6 +1270,7 @@ export type Database = {
           trial_ends_at?: string | null
           updated_at?: string | null
           whatsapp_credits?: number | null
+          whatsapp_phone_id?: string | null
         }
         Relationships: []
       }
@@ -1567,6 +1582,7 @@ export type Database = {
           media_url: string | null
           message_type: string
           metadata: Json | null
+          organization_id: string | null
           status: string
           template_name: string | null
         }
@@ -1580,6 +1596,7 @@ export type Database = {
           media_url?: string | null
           message_type?: string
           metadata?: Json | null
+          organization_id?: string | null
           status?: string
           template_name?: string | null
         }
@@ -1593,6 +1610,7 @@ export type Database = {
           media_url?: string | null
           message_type?: string
           metadata?: Json | null
+          organization_id?: string | null
           status?: string
           template_name?: string | null
         }
@@ -1685,6 +1703,7 @@ export type Database = {
         Args: { p_campaign_id: string }
         Returns: undefined
       }
+      deduct_whatsapp_credit: { Args: { org_id: string }; Returns: number }
       get_active_call_count: {
         Args: { p_campaign_id: string }
         Returns: number
@@ -1746,11 +1765,11 @@ export type Database = {
     Enums: {
       agent_status: "active" | "inactive" | "draft"
       agent_tone:
-      | "professional"
-      | "friendly"
-      | "casual"
-      | "formal"
-      | "empathetic"
+        | "professional"
+        | "friendly"
+        | "casual"
+        | "formal"
+        | "empathetic"
       app_role: "admin" | "org_owner" | "org_admin" | "org_member"
       call_direction: "inbound" | "outbound"
       call_outcome: "answered" | "no_answer" | "busy" | "failed" | "voicemail"
@@ -1758,12 +1777,12 @@ export type Database = {
       call_status: "queued" | "ringing" | "in_progress" | "ended"
       call_type: "inbound" | "outbound" | "webcall"
       campaign_status:
-      | "draft"
-      | "scheduled"
-      | "running"
-      | "paused"
-      | "completed"
-      | "cancelled"
+        | "draft"
+        | "scheduled"
+        | "running"
+        | "paused"
+        | "completed"
+        | "cancelled"
       cart_status: "abandoned" | "recovered" | "expired"
       commerce_source: "shopify" | "woocommerce" | "custom_webhook"
       contact_status: "active" | "inactive"
@@ -1772,16 +1791,16 @@ export type Database = {
       log_level: "info" | "warning" | "error" | "success"
       notification_type: "info" | "success" | "warning" | "error"
       order_financial_status:
-      | "pending"
-      | "paid"
-      | "refunded"
-      | "partially_refunded"
-      | "voided"
+        | "pending"
+        | "paid"
+        | "refunded"
+        | "partially_refunded"
+        | "voided"
       order_fulfillment_status:
-      | "unfulfilled"
-      | "partial"
-      | "fulfilled"
-      | "restocked"
+        | "unfulfilled"
+        | "partial"
+        | "fulfilled"
+        | "restocked"
       organization_plan: "starter" | "pro" | "enterprise"
       organization_status: "active" | "trial" | "suspended" | "cancelled"
       payment_type: "cod" | "prepaid" | "unknown"
@@ -1792,35 +1811,35 @@ export type Database = {
       wa_channel: "whatsapp" | "instagram" | "messenger"
       wa_conversation_status: "active" | "closed" | "escalated" | "expired"
       wa_escalation_reason:
-      | "negative_sentiment"
-      | "explicit_request"
-      | "repeated_failure"
-      | "high_value_customer"
-      | "complex_query"
-      | "manual"
+        | "negative_sentiment"
+        | "explicit_request"
+        | "repeated_failure"
+        | "high_value_customer"
+        | "complex_query"
+        | "manual"
       wa_escalation_status:
-      | "pending"
-      | "assigned"
-      | "resolved"
-      | "returned_to_ai"
+        | "pending"
+        | "assigned"
+        | "resolved"
+        | "returned_to_ai"
       wa_intent:
-      | "sales"
-      | "support"
-      | "campaign"
-      | "order_status"
-      | "abandoned_cart"
-      | "unknown"
+        | "sales"
+        | "support"
+        | "campaign"
+        | "order_status"
+        | "abandoned_cart"
+        | "unknown"
       wa_message_type:
-      | "text"
-      | "image"
-      | "document"
-      | "audio"
-      | "video"
-      | "location"
-      | "contact"
-      | "template"
-      | "interactive"
-      | "reaction"
+        | "text"
+        | "image"
+        | "document"
+        | "audio"
+        | "video"
+        | "location"
+        | "contact"
+        | "template"
+        | "interactive"
+        | "reaction"
       wa_rule_status: "active" | "paused" | "draft" | "archived"
       wa_sentiment: "positive" | "negative" | "neutral"
       webhook_status: "active" | "failed" | "pending"
@@ -1837,116 +1856,116 @@ type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-  | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-  : never = never,
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-    DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
-  ? R
-  : never
+    ? R
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-    DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R
-    }
-  ? R
-  : never
-  : never
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
+      Insert: infer I
+    }
+    ? I
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Insert: infer I
-  }
-  ? I
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-  | keyof DefaultSchema["Tables"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-    Update: infer U
-  }
-  ? U
-  : never
+      Update: infer U
+    }
+    ? U
+    : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-    Update: infer U
-  }
-  ? U
-  : never
-  : never
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-  | keyof DefaultSchema["Enums"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-  | keyof DefaultSchema["CompositeTypes"]
-  | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-  ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-  : never = never,
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   public: {
