@@ -5,22 +5,16 @@ import { Loader2 } from "lucide-react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { AgentTopBar } from "@/components/agents/AgentTopBar";
-import { AgentConfigPanel } from "@/components/agents/AgentConfigPanel";
+import { AgentConfigPanel, PromptConfig, assemblePreview } from "@/components/agents/AgentConfigPanel";
 import { AgentTestPanel } from "@/components/agents/AgentTestPanel";
 import { useAgents } from "@/hooks/useAgents";
 import { toast } from "sonner";
 
-// Helper to parse first message from system prompt
-const parsePromptParts = (prompt: string | null) => {
-  if (!prompt) return { systemPrompt: "", firstMessage: "" };
-
-  const separator = "\n\n---\nFIRST MESSAGE:\n";
-  const parts = prompt.split(separator);
-
-  return {
-    systemPrompt: parts[0] || "",
-    firstMessage: parts[1] || "",
-  };
+const EMPTY_PROMPT_CONFIG: PromptConfig = {
+  agent_instructions: "",
+  off_topic_response: "",
+  no_context_response: "",
+  guardrails: [],
 };
 
 const AgentDetail = () => {
@@ -32,12 +26,16 @@ const AgentDetail = () => {
 
   const agent = agents.find((a) => a.id === id);
 
-  // Parse the stored prompt into system prompt and first message
-  const initialParts = useMemo(() => parsePromptParts(agent?.system_prompt || null), [agent?.system_prompt]);
+  // Determine if this is a legacy agent (no prompt_config stored)
+  const isLegacyMode = useMemo(() => {
+    if (!agent) return false;
+    return !agent.prompt_config;
+  }, [agent]);
 
   // Form state
   const [name, setName] = useState("");
-  const [systemPrompt, setSystemPrompt] = useState("");
+  const [promptConfig, setPromptConfig] = useState<PromptConfig>(EMPTY_PROMPT_CONFIG);
+  const [legacySystemPrompt, setLegacySystemPrompt] = useState("");
   const [firstMessage, setFirstMessage] = useState("");
   const [firstSpeaker, setFirstSpeaker] = useState("agent");
   const [firstMessageDelayMs, setFirstMessageDelayMs] = useState(2000);
@@ -45,25 +43,49 @@ const AgentDetail = () => {
   useEffect(() => {
     if (agent) {
       setName(agent.name);
-      setSystemPrompt(initialParts.systemPrompt);
-      setFirstMessage(agent.first_message || initialParts.firstMessage || "");
+      setFirstMessage(agent.first_message || "");
       setFirstSpeaker(agent.first_speaker || "agent");
       setFirstMessageDelayMs(agent.first_message_delay_ms || 2000);
+
+      if (agent.prompt_config && typeof agent.prompt_config === "object") {
+        const pc = agent.prompt_config as Record<string, unknown>;
+        setPromptConfig({
+          agent_instructions: (pc.agent_instructions as string) || "",
+          off_topic_response: (pc.off_topic_response as string) || "",
+          no_context_response: (pc.no_context_response as string) || "",
+          guardrails: Array.isArray(pc.guardrails) ? (pc.guardrails as string[]) : [],
+        });
+      } else {
+        // Legacy: use raw system_prompt
+        setLegacySystemPrompt(agent.system_prompt || "");
+      }
     }
-  }, [agent, initialParts]);
+  }, [agent]);
 
   // Check for unsaved changes
   const hasUnsavedChanges = useMemo(() => {
     if (!agent) return false;
 
-    return (
-      name !== agent.name ||
-      systemPrompt !== (initialParts.systemPrompt || "") ||
-      firstMessage !== (agent.first_message || initialParts.firstMessage || "") ||
-      firstSpeaker !== (agent.first_speaker || "agent") ||
-      firstMessageDelayMs !== (agent.first_message_delay_ms || 2000)
-    );
-  }, [agent, name, systemPrompt, firstMessage, firstSpeaker, firstMessageDelayMs, initialParts]);
+    const nameChanged = name !== agent.name;
+    const firstMessageChanged = firstMessage !== (agent.first_message || "");
+    const speakerChanged = firstSpeaker !== (agent.first_speaker || "agent");
+    const delayChanged = firstMessageDelayMs !== (agent.first_message_delay_ms || 2000);
+
+    if (isLegacyMode) {
+      return nameChanged || legacySystemPrompt !== (agent.system_prompt || "") ||
+        firstMessageChanged || speakerChanged || delayChanged;
+    }
+
+    // For structured mode, compare prompt_config fields
+    const pc = agent.prompt_config as Record<string, unknown> | null;
+    const configChanged = !pc ||
+      promptConfig.agent_instructions !== ((pc.agent_instructions as string) || "") ||
+      promptConfig.off_topic_response !== ((pc.off_topic_response as string) || "") ||
+      promptConfig.no_context_response !== ((pc.no_context_response as string) || "") ||
+      JSON.stringify(promptConfig.guardrails) !== JSON.stringify(pc.guardrails || []);
+
+    return nameChanged || configChanged || firstMessageChanged || speakerChanged || delayChanged;
+  }, [agent, name, promptConfig, legacySystemPrompt, firstMessage, firstSpeaker, firstMessageDelayMs, isLegacyMode]);
 
   const handleSave = async () => {
     if (!agent || !id) return;
@@ -71,13 +93,21 @@ const AgentDetail = () => {
     try {
       setIsSaving(true);
 
-      await updateAgent(id, {
+      const updateData: Record<string, unknown> = {
         name: name.trim(),
-        system_prompt: systemPrompt,
         first_message: firstMessage,
         first_speaker: firstSpeaker,
         first_message_delay_ms: firstMessageDelayMs,
-      });
+      };
+
+      if (isLegacyMode) {
+        updateData.system_prompt = legacySystemPrompt;
+      } else {
+        updateData.prompt_config = promptConfig;
+        updateData.system_prompt = assemblePreview(promptConfig);
+      }
+
+      await updateAgent(id, updateData);
 
       toast.success("Agent saved successfully");
       setIsViewMode(true);
@@ -172,8 +202,11 @@ const AgentDetail = () => {
               Agent Configuration
             </h2>
             <AgentConfigPanel
-              systemPrompt={systemPrompt}
-              onSystemPromptChange={setSystemPrompt}
+              promptConfig={promptConfig}
+              onPromptConfigChange={setPromptConfig}
+              legacySystemPrompt={legacySystemPrompt}
+              onLegacySystemPromptChange={setLegacySystemPrompt}
+              isLegacyMode={isLegacyMode}
               firstMessage={firstMessage}
               onFirstMessageChange={setFirstMessage}
               firstSpeaker={firstSpeaker}
@@ -203,7 +236,7 @@ const AgentDetail = () => {
             agentId={agent.id}
             agentName={agent.name}
             hasPhoneNumber={!!agent.phone_number_id}
-            systemPrompt={systemPrompt}
+            systemPrompt={isLegacyMode ? legacySystemPrompt : agent.system_prompt || ""}
             firstMessage={firstMessage}
           />
         </motion.div>
