@@ -59,7 +59,7 @@ const AgentCreate = () => {
           name: name.trim(),
           language: "en-US",
           tone: "professional",
-          prompt_config: promptConfig as Record<string, unknown>,
+          prompt_config: promptConfig as any,
           system_prompt: assembledPrompt,
           first_message: firstMessage || null,
           first_speaker: firstSpeaker,
