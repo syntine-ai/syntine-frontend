@@ -239,8 +239,39 @@ const IntegrationCard = ({
   const cfg = getStatusConfig(integration.status);
   const StatusIcon = cfg.icon;
 
+  // Reconnect dialog state
+  const [showReconnectDialog, setShowReconnectDialog] = useState(false);
+  const [reconnectDomain, setReconnectDomain] = useState(
+    integration.store_domain?.replace(".myshopify.com", "") || ""
+  );
+  const [reconnectStep, setReconnectStep] = useState<"edit" | "pending">("edit");
+  const [installUrl, setInstallUrl] = useState("");
+
   const handleReconnect = () => {
-    reconnect.mutate(integration.id);
+    const domainToSend = reconnectDomain.trim().toLowerCase();
+    const existingHandle = integration.store_domain?.replace(".myshopify.com", "") || "";
+    // Only send shop_domain if it changed
+    const shopDomain = domainToSend !== existingHandle ? domainToSend : undefined;
+
+    reconnect.mutate(
+      { integrationId: integration.id, shopDomain },
+      {
+        onSuccess: (data: any) => {
+          setReconnectStep("pending");
+          setInstallUrl(
+            data?.data?.install_url ||
+            `https://admin.shopify.com/store/${domainToSend}/oauth/install?client_id=${SHOPIFY_CLIENT_ID}`
+          );
+        },
+      }
+    );
+  };
+
+  const openReconnectDialog = () => {
+    setReconnectDomain(integration.store_domain?.replace(".myshopify.com", "") || "");
+    setReconnectStep("edit");
+    setInstallUrl("");
+    setShowReconnectDialog(true);
   };
 
   const primaryAction = () => {
@@ -257,14 +288,9 @@ const IntegrationCard = ({
           <Button
             size="sm"
             className="flex-1 bg-orange-600 hover:bg-orange-700 text-white"
-            onClick={handleReconnect}
-            disabled={reconnect.isPending}
+            onClick={openReconnectDialog}
           >
-            {reconnect.isPending ? (
-              <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" />Fixing...</>
-            ) : (
-              <><Wrench className="h-4 w-4 mr-1.5" />Fix Connection</>
-            )}
+            <Wrench className="h-4 w-4 mr-1.5" />Fix Connection
           </Button>
         );
       case "disconnected":
@@ -272,14 +298,9 @@ const IntegrationCard = ({
           <Button
             size="sm"
             className="flex-1"
-            onClick={handleReconnect}
-            disabled={reconnect.isPending}
+            onClick={openReconnectDialog}
           >
-            {reconnect.isPending ? (
-              <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" />Reconnecting...</>
-            ) : (
-              <><RotateCcw className="h-4 w-4 mr-1.5" />Reconnect</>
-            )}
+            <RotateCcw className="h-4 w-4 mr-1.5" />Reconnect
           </Button>
         );
       default:
@@ -288,60 +309,144 @@ const IntegrationCard = ({
   };
 
   return (
-    <div className="bg-card rounded-xl border border-border p-5 flex flex-col">
-      <div className="flex items-start justify-between mb-4">
-        <div className="h-12 w-12 rounded-lg bg-muted/50 border border-border flex items-center justify-center overflow-hidden p-2">
-          {integration.source === "shopify" ? (
-            <img
-              src="https://cdn.shopify.com/shopifycloud/brochure/assets/brand-assets/shopify-logo-primary-logo-456baa801ee66a0a435671082365958316831c9960c480451dd0330bcdae304f.svg"
-              alt="Shopify logo"
-              className="h-full w-full object-contain"
-            />
-          ) : (
-            <span className="text-lg font-bold text-muted-foreground">
-              {integration.source[0].toUpperCase()}
+    <>
+      <div className="bg-card rounded-xl border border-border p-5 flex flex-col">
+        <div className="flex items-start justify-between mb-4">
+          <div className="h-12 w-12 rounded-lg bg-muted/50 border border-border flex items-center justify-center overflow-hidden p-2">
+            {integration.source === "shopify" ? (
+              <img
+                src="https://cdn.shopify.com/shopifycloud/brochure/assets/brand-assets/shopify-logo-primary-logo-456baa801ee66a0a435671082365958316831c9960c480451dd0330bcdae304f.svg"
+                alt="Shopify logo"
+                className="h-full w-full object-contain"
+              />
+            ) : (
+              <span className="text-lg font-bold text-muted-foreground">
+                {integration.source[0].toUpperCase()}
+              </span>
+            )}
+          </div>
+          <Badge className={`${cfg.bgColor} ${cfg.color} ${cfg.borderColor} border`}>
+            <StatusIcon className="h-3 w-3 mr-1" />
+            {cfg.label}
+          </Badge>
+        </div>
+
+        <h3 className="text-base font-semibold text-foreground mb-1">
+          {integration.store_name || integration.source.charAt(0).toUpperCase() + integration.source.slice(1)}
+        </h3>
+
+        <p className="text-sm text-muted-foreground mb-4 line-clamp-2 flex-1">
+          {integration.store_domain && <span>{integration.store_domain}</span>}
+          {integration.status === "error" && integration.last_error_reason && (
+            <span className="block text-orange-400 text-xs mt-1">
+              ⚠ {getErrorLabel(integration.last_error_reason)}
+              {integration.last_error_at && ` • ${formatDate(integration.last_error_at)}`}
             </span>
           )}
+          {integration.status === "disconnected" && integration.last_disconnected_at && (
+            <span className="block text-red-400 text-xs mt-1">
+              Disconnected {formatDate(integration.last_disconnected_at)}
+            </span>
+          )}
+          {integration.status === "connected" && integration.last_sync_at && (
+            <span className="block text-xs mt-1">
+              Last synced: {formatDate(integration.last_sync_at)}
+            </span>
+          )}
+        </p>
+
+        <div className="flex gap-2 mt-auto">
+          {primaryAction()}
+          {integration.status === "connected" && (
+            <Button variant="ghost" size="sm" onClick={onManage}>
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          )}
         </div>
-        <Badge className={`${cfg.bgColor} ${cfg.color} ${cfg.borderColor} border`}>
-          <StatusIcon className="h-3 w-3 mr-1" />
-          {cfg.label}
-        </Badge>
       </div>
 
-      <h3 className="text-base font-semibold text-foreground mb-1">
-        {integration.store_name || integration.source.charAt(0).toUpperCase() + integration.source.slice(1)}
-      </h3>
+      {/* Reconnect Dialog */}
+      <Dialog open={showReconnectDialog} onOpenChange={(open) => !open && setShowReconnectDialog(false)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5" />
+              Reconnect Integration
+            </DialogTitle>
+            <DialogDescription>
+              Update the store URL or reconnect to the same store.
+            </DialogDescription>
+          </DialogHeader>
 
-      <p className="text-sm text-muted-foreground mb-4 line-clamp-2 flex-1">
-        {integration.store_domain && <span>{integration.store_domain}</span>}
-        {integration.status === "error" && integration.last_error_reason && (
-          <span className="block text-orange-400 text-xs mt-1">
-            ⚠ {getErrorLabel(integration.last_error_reason)}
-            {integration.last_error_at && ` • ${formatDate(integration.last_error_at)}`}
-          </span>
-        )}
-        {integration.status === "disconnected" && integration.last_disconnected_at && (
-          <span className="block text-red-400 text-xs mt-1">
-            Disconnected {formatDate(integration.last_disconnected_at)}
-          </span>
-        )}
-        {integration.status === "connected" && integration.last_sync_at && (
-          <span className="block text-xs mt-1">
-            Last synced: {formatDate(integration.last_sync_at)}
-          </span>
-        )}
-      </p>
+          <div className="space-y-5 py-4">
+            {reconnectStep === "edit" && (
+              <>
+                <div className="space-y-3">
+                  <h4 className="font-medium text-sm">Store URL</h4>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      placeholder="my-store"
+                      value={reconnectDomain}
+                      onChange={(e) => setReconnectDomain(e.target.value.trim().toLowerCase())}
+                      className="flex-1"
+                    />
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      .myshopify.com
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Change this if you want to connect a different store.
+                  </p>
+                </div>
 
-      <div className="flex gap-2 mt-auto">
-        {primaryAction()}
-        {integration.status === "connected" && (
-          <Button variant="ghost" size="sm" onClick={onManage}>
-            <ExternalLink className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-    </div>
+                <Button
+                  className="w-full"
+                  onClick={handleReconnect}
+                  disabled={reconnect.isPending || !reconnectDomain}
+                >
+                  {reconnect.isPending ? (
+                    <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" />Reconnecting...</>
+                  ) : (
+                    <><RotateCcw className="h-4 w-4 mr-1.5" />Reconnect</>
+                  )}
+                </Button>
+
+                {reconnect.isError && (
+                  <p className="text-sm text-destructive">
+                    {(reconnect.error as any)?.message || "Reconnection failed. Please try again."}
+                  </p>
+                )}
+              </>
+            )}
+
+            {reconnectStep === "pending" && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 text-green-600">
+                  <Check className="h-4 w-4" />
+                  <span className="text-sm font-medium">Ready to reconnect!</span>
+                </div>
+
+                <p className="text-sm text-muted-foreground">
+                  Now install or reinstall the Syntine app on <strong>{reconnectDomain}.myshopify.com</strong>
+                </p>
+
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => window.open(installUrl, "_blank")}
+                >
+                  <ExternalLink className="h-4 w-4 mr-1.5" />
+                  Install Syntine App on Shopify
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  After installing, open the app in Shopify Admin. It will connect automatically.
+                </p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

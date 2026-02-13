@@ -101,12 +101,15 @@ export async function disconnectIntegration(
  */
 export async function reconnectIntegration(
     organizationId: string,
-    integrationId: string
+    integrationId: string,
+    shopDomain?: string
 ): Promise<SuccessResponse> {
     return withErrorHandling(async () => {
         const { restClient } = await import('../client/rest.client');
+        const body = shopDomain ? { shop_domain: shopDomain } : undefined;
         const result = await restClient.post<SuccessResponse>(
-            `/integrations/${integrationId}/reconnect`
+            `/integrations/${integrationId}/reconnect`,
+            body
         );
         return result;
     }, 'reconnectIntegration');

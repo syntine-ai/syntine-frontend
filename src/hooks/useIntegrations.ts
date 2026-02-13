@@ -73,8 +73,8 @@ export function useReconnectIntegration() {
     const organizationId = profile?.organization_id;
 
     return useMutation({
-        mutationFn: (integrationId: string) =>
-            IntegrationsService.reconnectIntegration(organizationId!, integrationId),
+        mutationFn: ({ integrationId, shopDomain }: { integrationId: string; shopDomain?: string }) =>
+            IntegrationsService.reconnectIntegration(organizationId!, integrationId, shopDomain),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['integrations', organizationId] });
         },
