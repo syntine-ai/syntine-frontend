@@ -93,7 +93,7 @@ const AgentDetail = () => {
     try {
       setIsSaving(true);
 
-      const updateData: Record<string, unknown> = {
+      const updateData: any = {
         name: name.trim(),
         first_message: firstMessage,
         first_speaker: firstSpeaker,
