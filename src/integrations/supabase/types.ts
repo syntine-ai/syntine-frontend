@@ -87,6 +87,7 @@ export type Database = {
           status: Database["public"]["Enums"]["agent_status"] | null
           system_prompt: string | null
           tone: Database["public"]["Enums"]["agent_tone"] | null
+          type: string
           updated_at: string | null
           voice_settings: Json | null
         }
@@ -106,6 +107,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["agent_status"] | null
           system_prompt?: string | null
           tone?: Database["public"]["Enums"]["agent_tone"] | null
+          type?: string
           updated_at?: string | null
           voice_settings?: Json | null
         }
@@ -125,6 +127,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["agent_status"] | null
           system_prompt?: string | null
           tone?: Database["public"]["Enums"]["agent_tone"] | null
+          type?: string
           updated_at?: string | null
           voice_settings?: Json | null
         }
@@ -552,6 +555,317 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "campaigns_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_agent_configs: {
+        Row: {
+          agent_id: string
+          business_rules: Json | null
+          created_at: string | null
+          custom_system_prefix: string | null
+          enabled_templates: boolean | null
+          fallback_message_wa: string | null
+          fallback_message_web: string | null
+          greeting_message: string | null
+          handover_notification_url: string | null
+          handover_timeout_hours: number | null
+          id: string
+          is_deleted: boolean | null
+          max_tokens: number | null
+          model: string | null
+          modules: Json | null
+          organization_id: string
+          system_prompt: string | null
+          temperature: number | null
+          template_namespace: string | null
+          updated_at: string | null
+          use_summary: boolean | null
+          version: number | null
+          whatsapp_config: Json | null
+          whatsapp_provider: string | null
+        }
+        Insert: {
+          agent_id: string
+          business_rules?: Json | null
+          created_at?: string | null
+          custom_system_prefix?: string | null
+          enabled_templates?: boolean | null
+          fallback_message_wa?: string | null
+          fallback_message_web?: string | null
+          greeting_message?: string | null
+          handover_notification_url?: string | null
+          handover_timeout_hours?: number | null
+          id?: string
+          is_deleted?: boolean | null
+          max_tokens?: number | null
+          model?: string | null
+          modules?: Json | null
+          organization_id: string
+          system_prompt?: string | null
+          temperature?: number | null
+          template_namespace?: string | null
+          updated_at?: string | null
+          use_summary?: boolean | null
+          version?: number | null
+          whatsapp_config?: Json | null
+          whatsapp_provider?: string | null
+        }
+        Update: {
+          agent_id?: string
+          business_rules?: Json | null
+          created_at?: string | null
+          custom_system_prefix?: string | null
+          enabled_templates?: boolean | null
+          fallback_message_wa?: string | null
+          fallback_message_web?: string | null
+          greeting_message?: string | null
+          handover_notification_url?: string | null
+          handover_timeout_hours?: number | null
+          id?: string
+          is_deleted?: boolean | null
+          max_tokens?: number | null
+          model?: string | null
+          modules?: Json | null
+          organization_id?: string
+          system_prompt?: string | null
+          temperature?: number | null
+          template_namespace?: string | null
+          updated_at?: string | null
+          use_summary?: boolean | null
+          version?: number | null
+          whatsapp_config?: Json | null
+          whatsapp_provider?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_agent_configs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: true
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_agent_configs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_dead_letters: {
+        Row: {
+          created_at: string | null
+          error: string | null
+          id: string
+          payload: Json
+          resolved: boolean | null
+          resolved_at: string | null
+          retries: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          payload: Json
+          resolved?: boolean | null
+          resolved_at?: string | null
+          retries?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          error?: string | null
+          id?: string
+          payload?: Json
+          resolved?: boolean | null
+          resolved_at?: string | null
+          retries?: number | null
+        }
+        Relationships: []
+      }
+      chat_message_dedup: {
+        Row: {
+          external_message_id: string
+          processed_at: string | null
+        }
+        Insert: {
+          external_message_id: string
+          processed_at?: string | null
+        }
+        Update: {
+          external_message_id?: string
+          processed_at?: string | null
+        }
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          completion_tokens: number | null
+          content: string
+          created_at: string | null
+          id: string
+          latency_ms: number | null
+          message_type: string | null
+          metadata: Json | null
+          prompt_tokens: number | null
+          sender: Database["public"]["Enums"]["chat_sender_role"]
+          session_id: string
+          total_tokens: number | null
+        }
+        Insert: {
+          completion_tokens?: number | null
+          content: string
+          created_at?: string | null
+          id?: string
+          latency_ms?: number | null
+          message_type?: string | null
+          metadata?: Json | null
+          prompt_tokens?: number | null
+          sender: Database["public"]["Enums"]["chat_sender_role"]
+          session_id: string
+          total_tokens?: number | null
+        }
+        Update: {
+          completion_tokens?: number | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          latency_ms?: number | null
+          message_type?: string | null
+          metadata?: Json | null
+          prompt_tokens?: number | null
+          sender?: Database["public"]["Enums"]["chat_sender_role"]
+          session_id?: string
+          total_tokens?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "chat_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_sessions: {
+        Row: {
+          agent_config_id: string | null
+          channel: Database["public"]["Enums"]["chat_channel"]
+          conversation_summary: string | null
+          created_at: string | null
+          external_id: string | null
+          id: string
+          last_message_at: string | null
+          message_count: number | null
+          metadata: Json | null
+          organization_id: string
+          status: Database["public"]["Enums"]["chat_session_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          agent_config_id?: string | null
+          channel: Database["public"]["Enums"]["chat_channel"]
+          conversation_summary?: string | null
+          created_at?: string | null
+          external_id?: string | null
+          id?: string
+          last_message_at?: string | null
+          message_count?: number | null
+          metadata?: Json | null
+          organization_id: string
+          status?: Database["public"]["Enums"]["chat_session_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          agent_config_id?: string | null
+          channel?: Database["public"]["Enums"]["chat_channel"]
+          conversation_summary?: string | null
+          created_at?: string | null
+          external_id?: string | null
+          id?: string
+          last_message_at?: string | null
+          message_count?: number | null
+          metadata?: Json | null
+          organization_id?: string
+          status?: Database["public"]["Enums"]["chat_session_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_sessions_agent_config_id_fkey"
+            columns: ["agent_config_id"]
+            isOneToOne: false
+            referencedRelation: "chat_agent_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_sessions_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_templates: {
+        Row: {
+          agent_config_id: string | null
+          body: string
+          category: string | null
+          created_at: string | null
+          external_id: string | null
+          id: string
+          language: string | null
+          last_status_check_at: string | null
+          name: string
+          organization_id: string
+          status: Database["public"]["Enums"]["chat_template_status"] | null
+          variables: Json | null
+        }
+        Insert: {
+          agent_config_id?: string | null
+          body: string
+          category?: string | null
+          created_at?: string | null
+          external_id?: string | null
+          id?: string
+          language?: string | null
+          last_status_check_at?: string | null
+          name: string
+          organization_id: string
+          status?: Database["public"]["Enums"]["chat_template_status"] | null
+          variables?: Json | null
+        }
+        Update: {
+          agent_config_id?: string | null
+          body?: string
+          category?: string | null
+          created_at?: string | null
+          external_id?: string | null
+          id?: string
+          language?: string | null
+          last_status_check_at?: string | null
+          name?: string
+          organization_id?: string
+          status?: Database["public"]["Enums"]["chat_template_status"] | null
+          variables?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_templates_agent_config_id_fkey"
+            columns: ["agent_config_id"]
+            isOneToOne: false
+            referencedRelation: "chat_agent_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_templates_organization_id_fkey"
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1402,284 +1716,6 @@ export type Database = {
         }
         Relationships: []
       }
-      whatsapp_agent_configs: {
-        Row: {
-          bot_name: string
-          created_at: string
-          custom_instructions: string | null
-          id: string
-          is_active: boolean
-          language: string
-          organization_id: string
-          system_prompt: string | null
-          tone: string
-          updated_at: string
-        }
-        Insert: {
-          bot_name?: string
-          created_at?: string
-          custom_instructions?: string | null
-          id?: string
-          is_active?: boolean
-          language?: string
-          organization_id: string
-          system_prompt?: string | null
-          tone?: string
-          updated_at?: string
-        }
-        Update: {
-          bot_name?: string
-          created_at?: string
-          custom_instructions?: string | null
-          id?: string
-          is_active?: boolean
-          language?: string
-          organization_id?: string
-          system_prompt?: string | null
-          tone?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_agent_configs_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: true
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      whatsapp_automations: {
-        Row: {
-          automation_type: string
-          created_at: string
-          delay_minutes: number | null
-          discount_enabled: boolean | null
-          discount_percent: number | null
-          id: string
-          is_enabled: boolean
-          max_followups: number | null
-          min_order_value: number | null
-          organization_id: string
-          settings: Json | null
-          template_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          automation_type: string
-          created_at?: string
-          delay_minutes?: number | null
-          discount_enabled?: boolean | null
-          discount_percent?: number | null
-          id?: string
-          is_enabled?: boolean
-          max_followups?: number | null
-          min_order_value?: number | null
-          organization_id: string
-          settings?: Json | null
-          template_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          automation_type?: string
-          created_at?: string
-          delay_minutes?: number | null
-          discount_enabled?: boolean | null
-          discount_percent?: number | null
-          id?: string
-          is_enabled?: boolean
-          max_followups?: number | null
-          min_order_value?: number | null
-          organization_id?: string
-          settings?: Json | null
-          template_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_automations_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      whatsapp_conversations: {
-        Row: {
-          agent_config_id: string | null
-          cart_id: string | null
-          created_at: string
-          customer_name: string | null
-          customer_phone: string
-          id: string
-          last_message_at: string | null
-          metadata: Json | null
-          order_id: string | null
-          organization_id: string
-          status: string
-          trigger_type: string | null
-          updated_at: string
-          window_expires_at: string | null
-        }
-        Insert: {
-          agent_config_id?: string | null
-          cart_id?: string | null
-          created_at?: string
-          customer_name?: string | null
-          customer_phone: string
-          id?: string
-          last_message_at?: string | null
-          metadata?: Json | null
-          order_id?: string | null
-          organization_id: string
-          status?: string
-          trigger_type?: string | null
-          updated_at?: string
-          window_expires_at?: string | null
-        }
-        Update: {
-          agent_config_id?: string | null
-          cart_id?: string | null
-          created_at?: string
-          customer_name?: string | null
-          customer_phone?: string
-          id?: string
-          last_message_at?: string | null
-          metadata?: Json | null
-          order_id?: string | null
-          organization_id?: string
-          status?: string
-          trigger_type?: string | null
-          updated_at?: string
-          window_expires_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_conversations_agent_config_id_fkey"
-            columns: ["agent_config_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_agent_configs"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "whatsapp_conversations_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      whatsapp_messages: {
-        Row: {
-          content: string | null
-          conversation_id: string
-          created_at: string
-          direction: string
-          external_message_id: string | null
-          id: string
-          media_url: string | null
-          message_type: string
-          metadata: Json | null
-          organization_id: string | null
-          status: string
-          template_name: string | null
-        }
-        Insert: {
-          content?: string | null
-          conversation_id: string
-          created_at?: string
-          direction?: string
-          external_message_id?: string | null
-          id?: string
-          media_url?: string | null
-          message_type?: string
-          metadata?: Json | null
-          organization_id?: string | null
-          status?: string
-          template_name?: string | null
-        }
-        Update: {
-          content?: string | null
-          conversation_id?: string
-          created_at?: string
-          direction?: string
-          external_message_id?: string | null
-          id?: string
-          media_url?: string | null
-          message_type?: string
-          metadata?: Json | null
-          organization_id?: string | null
-          status?: string
-          template_name?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_messages_conversation_id_fkey"
-            columns: ["conversation_id"]
-            isOneToOne: false
-            referencedRelation: "whatsapp_conversations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      whatsapp_templates: {
-        Row: {
-          body: string
-          category: string
-          created_at: string
-          external_template_id: string | null
-          footer: string | null
-          header: string | null
-          id: string
-          language: string
-          name: string
-          organization_id: string
-          status: string
-          updated_at: string
-          variables: Json | null
-        }
-        Insert: {
-          body: string
-          category?: string
-          created_at?: string
-          external_template_id?: string | null
-          footer?: string | null
-          header?: string | null
-          id?: string
-          language?: string
-          name: string
-          organization_id: string
-          status?: string
-          updated_at?: string
-          variables?: Json | null
-        }
-        Update: {
-          body?: string
-          category?: string
-          created_at?: string
-          external_template_id?: string | null
-          footer?: string | null
-          header?: string | null
-          id?: string
-          language?: string
-          name?: string
-          organization_id?: string
-          status?: string
-          updated_at?: string
-          variables?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "whatsapp_templates_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -1784,6 +1820,15 @@ export type Database = {
         | "completed"
         | "cancelled"
       cart_status: "abandoned" | "recovered" | "expired"
+      chat_channel: "whatsapp" | "web"
+      chat_sender_role: "user" | "ai" | "human_agent" | "system"
+      chat_session_status: "active" | "closed" | "human_handover"
+      chat_template_status:
+        | "pending"
+        | "approved"
+        | "rejected"
+        | "paused"
+        | "deleted"
       commerce_source: "shopify" | "woocommerce" | "custom_webhook"
       contact_status: "active" | "inactive"
       integration_status: "connected" | "disconnected" | "error" | "pending"
@@ -1993,6 +2038,16 @@ export const Constants = {
         "cancelled",
       ],
       cart_status: ["abandoned", "recovered", "expired"],
+      chat_channel: ["whatsapp", "web"],
+      chat_sender_role: ["user", "ai", "human_agent", "system"],
+      chat_session_status: ["active", "closed", "human_handover"],
+      chat_template_status: [
+        "pending",
+        "approved",
+        "rejected",
+        "paused",
+        "deleted",
+      ],
       commerce_source: ["shopify", "woocommerce", "custom_webhook"],
       contact_status: ["active", "inactive"],
       integration_status: ["connected", "disconnected", "error", "pending"],
