@@ -164,22 +164,80 @@ export function useAgents() {
     }
   };
 
-  const updateAgent = async (id: string, data: Partial<AgentUpdate>) => {
+  const updateAgent = async (id: string, data: Partial<AgentUpdate> & Partial<VoiceConfig>) => {
     try {
-      const { data: updatedAgent, error } = await supabase
-        .from("agents")
-        .update({ ...data, updated_at: new Date().toISOString() })
-        .eq("id", id)
-        .select()
-        .single();
+      // Split constraints
+      const agentFields = ["name", "system_prompt", "tone", "language", "status", "sentiment_rules"];
+      const voiceFields = ["voice_settings", "phone_number_id", "first_speaker", "first_message", "first_message_delay_ms", "prompt_config"];
 
-      if (error) throw error;
+      const agentUpdate: any = { updated_at: new Date().toISOString() };
+      const voiceUpdate: any = { updated_at: new Date().toISOString() };
+
+      let hasAgentUpdates = false;
+      let hasVoiceUpdates = false;
+
+      Object.keys(data).forEach(key => {
+        if (agentFields.includes(key)) {
+          agentUpdate[key] = data[key as keyof AgentUpdate];
+          hasAgentUpdates = true;
+        } else if (voiceFields.includes(key)) {
+          voiceUpdate[key] = data[key as keyof VoiceConfig];
+          hasVoiceUpdates = true;
+        }
+      });
+
+      let updatedAgent = null;
+
+      // 1. Update Agent Core
+      if (hasAgentUpdates) {
+        const { data: res, error } = await supabase
+          .from("agents")
+          .update(agentUpdate)
+          .eq("id", id)
+          .select()
+          .single();
+
+        if (error) throw error;
+        updatedAgent = res;
+      }
+
+      // 2. Update Voice Config
+      if (hasVoiceUpdates) {
+        // Check if config exists
+        const { data: existing } = await supabase
+          .from("voice_agent_configs")
+          .select("id")
+          .eq("agent_id", id)
+          .single();
+
+        if (existing) {
+          const { error } = await supabase
+            .from("voice_agent_configs")
+            .update(voiceUpdate)
+            .eq("agent_id", id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabase
+            .from("voice_agent_configs")
+            .insert({ ...voiceUpdate, agent_id: id });
+          if (error) throw error;
+        }
+      }
 
       // Update local state
       setAgents((prev) =>
-        prev.map((agent) =>
-          agent.id === id ? { ...agent, ...updatedAgent } : agent
-        )
+        prev.map((agent) => {
+          if (agent.id !== id) return agent;
+
+          return {
+            ...agent,
+            ...(updatedAgent || {}),
+            // Manually merge voice updates into local state for responsiveness
+            voiceConfig: hasVoiceUpdates ? { ...agent.voiceConfig, ...voiceUpdate } : agent.voiceConfig,
+            // Also merge flattened fields if they exist on agent object (legacy compat)
+            ...voiceUpdate
+          };
+        })
       );
 
       toast({
@@ -187,13 +245,14 @@ export function useAgents() {
         description: "Agent has been updated successfully.",
       });
 
-      return updatedAgent;
+      return updatedAgent; // Note: this might not contain voice updates in return, but local state is updated
     } catch (err) {
       console.error("Error updating agent:", err);
       toast({
         title: "Error",
         description: "Failed to update agent",
         variant: "destructive",
+        duration: 3000,
       });
       return null;
     }

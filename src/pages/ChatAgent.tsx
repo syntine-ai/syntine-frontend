@@ -1,14 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { AgentConfigPanel } from "@/components/chat/AgentConfigPanel";
-import { chatService } from "@/api/services/chat.service";
+import { chatService, ChatAgentConfig } from "@/api/services/chat.service";
 import { Loader2 } from "lucide-react";
 
 export default function ChatAgent() {
   // Fetch first agent to config
   const { data: agents = [], isLoading } = useQuery({
     queryKey: ["chat-agents"],
-    queryFn: () => chatService.getAgents() as Promise<Array<{ id: string }>>,
+    queryFn: () => chatService.getAgents(),
   });
 
   // For MVP, we assume 1 agent per org or we pick the first "chat" type agent
