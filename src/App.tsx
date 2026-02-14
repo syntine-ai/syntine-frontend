@@ -39,6 +39,7 @@ import WhatsAppAgent from "./pages/WhatsAppAgent";
 import WhatsAppAutomations from "./pages/WhatsAppAutomations";
 import WhatsAppConversations from "./pages/WhatsAppConversations";
 import WhatsAppTemplates from "./pages/WhatsAppTemplates";
+import WhatsAppChatTest from "./pages/WhatsAppChatTest";
 
 // Account Pages
 import Account from "./pages/Account";
@@ -97,6 +98,7 @@ const App = () => (
               <Route path="/wa/automations" element={<WhatsAppAutomations />} />
               <Route path="/wa/conversations" element={<WhatsAppConversations />} />
               <Route path="/wa/templates" element={<WhatsAppTemplates />} />
+              <Route path="/wa/test-chat" element={<WhatsAppChatTest />} />
             </Route>
 
             {/* Catch-all */}

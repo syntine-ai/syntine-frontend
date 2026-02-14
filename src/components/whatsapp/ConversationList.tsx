@@ -20,6 +20,8 @@ interface ConversationListProps {
   conversations: Conversation[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  statusFilter: string;
+  onStatusFilterChange: (status: string) => void;
 }
 
 const statusFilters = ["All", "Active", "Closed"] as const;
@@ -30,9 +32,8 @@ const triggerLabels: Record<string, string> = {
   support_chat: "Support",
 };
 
-export function ConversationList({ conversations, selectedId, onSelect }: ConversationListProps) {
+export function ConversationList({ conversations, selectedId, onSelect, statusFilter, onStatusFilterChange }: ConversationListProps) {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("All");
 
   const filtered = conversations.filter((c) => {
     const matchSearch = c.customer_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -57,7 +58,7 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
           {statusFilters.map((f) => (
             <button
               key={f}
-              onClick={() => setStatusFilter(f)}
+              onClick={() => onStatusFilterChange(f)}
               className={cn(
                 "text-xs px-2.5 py-1 rounded-md font-medium transition-colors",
                 statusFilter === f

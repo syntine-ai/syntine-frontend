@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { demoWATemplates } from "@/data/demoWhatsAppData";
+import { useQuery } from "@tanstack/react-query";
+import { chatService } from "@/api/services/chat.service";
 import { FileText, Send } from "lucide-react";
 
 interface SendTemplateModalProps {
@@ -21,7 +22,12 @@ export function SendTemplateModal({ open, onClose, onSend }: SendTemplateModalPr
   const [selectedId, setSelectedId] = useState<string>("");
   const [variables, setVariables] = useState<Record<string, string>>({});
 
-  const approved = demoWATemplates.filter((t) => t.status === "approved");
+  const { data: templates = [] } = useQuery({
+    queryKey: ["chat-templates"],
+    queryFn: chatService.getTemplates
+  });
+
+  const approved = (templates as any[]).filter((t: any) => t.status === "approved");
   const template = approved.find((t) => t.id === selectedId);
 
   const preview = useMemo(() => {
