@@ -9,6 +9,7 @@ import { AgentConfigPanel, PromptConfig, assemblePreview, getConfigHealth } from
 import { AgentTestPanel } from "@/components/agents/AgentTestPanel";
 import { useAgents } from "@/hooks/useAgents";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const EMPTY_PROMPT_CONFIG: PromptConfig = {
   agent_instructions: "",
@@ -25,11 +26,12 @@ const AgentDetail = () => {
   const [isViewMode, setIsViewMode] = useState(true);
 
   const agent = agents.find((a) => a.id === id);
+  const voiceConfig = agent?.voiceConfig;
 
   const isLegacyMode = useMemo(() => {
     if (!agent) return false;
-    return !agent.prompt_config;
-  }, [agent]);
+    return !voiceConfig?.prompt_config;
+  }, [agent, voiceConfig]);
 
   const [name, setName] = useState("");
   const [promptConfig, setPromptConfig] = useState<PromptConfig>(EMPTY_PROMPT_CONFIG);
@@ -41,11 +43,11 @@ const AgentDetail = () => {
   useEffect(() => {
     if (agent) {
       setName(agent.name);
-      setFirstMessage(agent.first_message || "");
-      setFirstSpeaker(agent.first_speaker || "agent");
-      setFirstMessageDelayMs(agent.first_message_delay_ms || 2000);
-      if (agent.prompt_config && typeof agent.prompt_config === "object") {
-        const pc = agent.prompt_config as Record<string, unknown>;
+      setFirstMessage(voiceConfig?.first_message || "");
+      setFirstSpeaker(voiceConfig?.first_speaker || "agent");
+      setFirstMessageDelayMs(voiceConfig?.first_message_delay_ms || 2000);
+      if (voiceConfig?.prompt_config && typeof voiceConfig.prompt_config === "object") {
+        const pc = voiceConfig.prompt_config as Record<string, unknown>;
         setPromptConfig({
           agent_instructions: (pc.agent_instructions as string) || "",
           off_topic_response: (pc.off_topic_response as string) || "",
@@ -56,25 +58,25 @@ const AgentDetail = () => {
         setLegacySystemPrompt(agent.system_prompt || "");
       }
     }
-  }, [agent]);
+  }, [agent, voiceConfig]);
 
   const hasUnsavedChanges = useMemo(() => {
     if (!agent) return false;
     const nameChanged = name !== agent.name;
-    const firstMessageChanged = firstMessage !== (agent.first_message || "");
-    const speakerChanged = firstSpeaker !== (agent.first_speaker || "agent");
-    const delayChanged = firstMessageDelayMs !== (agent.first_message_delay_ms || 2000);
+    const firstMessageChanged = firstMessage !== (voiceConfig?.first_message || "");
+    const speakerChanged = firstSpeaker !== (voiceConfig?.first_speaker || "agent");
+    const delayChanged = firstMessageDelayMs !== (voiceConfig?.first_message_delay_ms || 2000);
     if (isLegacyMode) {
       return nameChanged || legacySystemPrompt !== (agent.system_prompt || "") || firstMessageChanged || speakerChanged || delayChanged;
     }
-    const pc = agent.prompt_config as Record<string, unknown> | null;
+    const pc = voiceConfig?.prompt_config as Record<string, unknown> | null | undefined;
     const configChanged = !pc ||
       promptConfig.agent_instructions !== ((pc.agent_instructions as string) || "") ||
       promptConfig.off_topic_response !== ((pc.off_topic_response as string) || "") ||
       promptConfig.no_context_response !== ((pc.no_context_response as string) || "") ||
       JSON.stringify(promptConfig.guardrails) !== JSON.stringify(pc.guardrails || []);
     return nameChanged || configChanged || firstMessageChanged || speakerChanged || delayChanged;
-  }, [agent, name, promptConfig, legacySystemPrompt, firstMessage, firstSpeaker, firstMessageDelayMs, isLegacyMode]);
+  }, [agent, voiceConfig, name, promptConfig, legacySystemPrompt, firstMessage, firstSpeaker, firstMessageDelayMs, isLegacyMode]);
 
   const configHealth = useMemo(() => getConfigHealth(promptConfig, firstMessage), [promptConfig, firstMessage]);
 
@@ -82,19 +84,37 @@ const AgentDetail = () => {
     if (!agent || !id) return;
     try {
       setIsSaving(true);
-      const updateData: any = {
-        name: name.trim(),
+
+      // Update agent name & system_prompt
+      const agentUpdateData: any = { name: name.trim() };
+      if (isLegacyMode) {
+        agentUpdateData.system_prompt = legacySystemPrompt;
+      } else {
+        agentUpdateData.system_prompt = assemblePreview(promptConfig);
+      }
+      await updateAgent(id, agentUpdateData);
+
+      // Update voice config
+      const voiceUpdateData: any = {
         first_message: firstMessage,
         first_speaker: firstSpeaker,
         first_message_delay_ms: firstMessageDelayMs,
       };
-      if (isLegacyMode) {
-        updateData.system_prompt = legacySystemPrompt;
-      } else {
-        updateData.prompt_config = promptConfig;
-        updateData.system_prompt = assemblePreview(promptConfig);
+      if (!isLegacyMode) {
+        voiceUpdateData.prompt_config = promptConfig;
       }
-      await updateAgent(id, updateData);
+
+      if (voiceConfig) {
+        await supabase
+          .from("voice_agent_configs")
+          .update(voiceUpdateData)
+          .eq("agent_id", id);
+      } else {
+        await supabase
+          .from("voice_agent_configs")
+          .insert({ agent_id: id, ...voiceUpdateData });
+      }
+
       toast.success("Agent saved successfully");
       setIsViewMode(true);
     } catch (error) {
@@ -182,7 +202,7 @@ const AgentDetail = () => {
           <AgentTestPanel
             agentId={agent.id}
             agentName={agent.name}
-            hasPhoneNumber={!!agent.phone_number_id}
+            hasPhoneNumber={!!voiceConfig?.phone_number_id}
             systemPrompt={isLegacyMode ? legacySystemPrompt : agent.system_prompt || ""}
             firstMessage={firstMessage}
             hasUnsavedChanges={hasUnsavedChanges && !isViewMode}

@@ -7,11 +7,14 @@ import type { Database } from "@/integrations/supabase/types";
 type Agent = Database["public"]["Tables"]["agents"]["Row"];
 type AgentInsert = Database["public"]["Tables"]["agents"]["Insert"];
 type AgentUpdate = Database["public"]["Tables"]["agents"]["Update"];
+type VoiceConfig = Database["public"]["Tables"]["voice_agent_configs"]["Row"];
+type VoiceConfigInsert = Database["public"]["Tables"]["voice_agent_configs"]["Insert"];
 type AgentTone = Database["public"]["Enums"]["agent_tone"];
 type AgentStatus = Database["public"]["Enums"]["agent_status"];
 
 export interface AgentWithCampaigns extends Agent {
   linkedCampaigns: number;
+  voiceConfig?: VoiceConfig | null;
   phone_number?: {
     id: string;
     phone_number: string;
@@ -33,42 +36,62 @@ export function useAgents() {
       setIsLoading(true);
       setError(null);
 
-      // Fetch agents with phone number info
+      // Fetch agents
       const { data: agentsData, error: agentsError } = await supabase
         .from("agents")
-        .select(`
-          *,
-          phone_numbers!agents_phone_number_id_fkey(id, phone_number, country)
-        `)
+        .select("*")
         .eq("organization_id", profile.organization_id)
         .is("deleted_at", null)
         .order("updated_at", { ascending: false });
 
       if (agentsError) throw agentsError;
 
-      // Fetch campaign counts for each agent
+      // Fetch voice configs for voice agents
+      const voiceAgentIds = (agentsData || []).filter(a => a.type === "voice").map(a => a.id);
+      let voiceConfigsMap: Record<string, VoiceConfig> = {};
+      if (voiceAgentIds.length > 0) {
+        const { data: voiceConfigs } = await supabase
+          .from("voice_agent_configs")
+          .select("*")
+          .in("agent_id", voiceAgentIds);
+        (voiceConfigs || []).forEach(vc => { voiceConfigsMap[vc.agent_id] = vc; });
+      }
+
+      // Fetch phone numbers linked via voice configs
+      const phoneNumberIds = Object.values(voiceConfigsMap)
+        .map(vc => vc.phone_number_id)
+        .filter(Boolean) as string[];
+      let phoneMap: Record<string, { id: string; phone_number: string; country: string }> = {};
+      if (phoneNumberIds.length > 0) {
+        const { data: phones } = await supabase
+          .from("phone_numbers")
+          .select("id, phone_number, country")
+          .in("id", phoneNumberIds);
+        (phones || []).forEach(p => { phoneMap[p.id] = p; });
+      }
+
+      // Fetch campaign counts
       const { data: campaignAgents, error: campaignError } = await supabase
         .from("campaign_agents")
         .select("agent_id, campaign_id");
 
       if (campaignError) throw campaignError;
 
-      // Count campaigns per agent
       const campaignCounts: Record<string, number> = {};
       campaignAgents?.forEach((ca) => {
         campaignCounts[ca.agent_id] = (campaignCounts[ca.agent_id] || 0) + 1;
       });
 
       // Combine data
-      const agentsWithCampaigns: AgentWithCampaigns[] = (agentsData || []).map((agent) => ({
-        ...agent,
-        linkedCampaigns: campaignCounts[agent.id] || 0,
-        phone_number: agent.phone_numbers ? {
-          id: agent.phone_numbers.id,
-          phone_number: agent.phone_numbers.phone_number,
-          country: agent.phone_numbers.country,
-        } : null,
-      }));
+      const agentsWithCampaigns: AgentWithCampaigns[] = (agentsData || []).map((agent) => {
+        const vc = voiceConfigsMap[agent.id];
+        return {
+          ...agent,
+          linkedCampaigns: campaignCounts[agent.id] || 0,
+          voiceConfig: vc || null,
+          phone_number: vc?.phone_number_id ? phoneMap[vc.phone_number_id] || null : null,
+        };
+      });
 
       setAgents(agentsWithCampaigns);
     } catch (err) {
@@ -187,7 +210,7 @@ export function useAgents() {
         tone: agent.tone,
         system_prompt: agent.system_prompt,
         sentiment_rules: agent.sentiment_rules,
-        voice_settings: agent.voice_settings,
+        type: agent.type,
         status: "draft",
       };
 
@@ -199,7 +222,25 @@ export function useAgents() {
 
       if (error) throw error;
 
-      setAgents((prev) => [{ ...newAgent, linkedCampaigns: 0 }, ...prev]);
+      // Duplicate voice config if source agent has one
+      let newVoiceConfig: VoiceConfig | null = null;
+      if (agent.voiceConfig) {
+        const { data: vc } = await supabase
+          .from("voice_agent_configs")
+          .insert({
+            agent_id: newAgent.id,
+            voice_settings: agent.voiceConfig.voice_settings,
+            first_speaker: agent.voiceConfig.first_speaker,
+            first_message: agent.voiceConfig.first_message,
+            first_message_delay_ms: agent.voiceConfig.first_message_delay_ms,
+            prompt_config: agent.voiceConfig.prompt_config,
+          } as VoiceConfigInsert)
+          .select()
+          .single();
+        newVoiceConfig = vc;
+      }
+
+      setAgents((prev) => [{ ...newAgent, linkedCampaigns: 0, voiceConfig: newVoiceConfig }, ...prev]);
 
       toast({
         title: "Agent Duplicated",
