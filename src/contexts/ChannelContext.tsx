@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 
-export type Channel = "voice" | "whatsapp";
+export type Channel = "voice" | "chat";
 
 interface ChannelContextType {
   activeChannel: Channel;
@@ -19,13 +19,18 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
   const availableChannels: Channel[] = (() => {
     const orgChannels = (organization as any)?.enabled_channels as string[] | undefined;
     if (orgChannels && Array.isArray(orgChannels)) {
-      return orgChannels.filter((c): c is Channel => c === "voice" || c === "whatsapp");
+      return orgChannels.map((c) => {
+        if (c === "whatsapp") return "chat" as Channel;
+        return c;
+      }).filter((c): c is Channel => c === "voice" || c === "chat");
     }
-    return ["voice", "whatsapp"]; // Default: show both for dev
+    return ["voice", "chat"];
   })();
 
   const [activeChannel, setActiveChannelState] = useState<Channel>(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as Channel | null;
+    // Migrate old "whatsapp" stored value
+    if (stored === "whatsapp" as any) return "chat";
     if (stored && availableChannels.includes(stored)) return stored;
     return availableChannels[0] || "voice";
   });
@@ -35,7 +40,6 @@ export function ChannelProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(STORAGE_KEY, channel);
   };
 
-  // If active channel becomes unavailable, switch to first available
   useEffect(() => {
     if (!availableChannels.includes(activeChannel)) {
       setActiveChannel(availableChannels[0] || "voice");

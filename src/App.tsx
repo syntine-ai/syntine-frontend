@@ -33,12 +33,12 @@ import SystemLogs from "./pages/SystemLogs";
 import KnowledgeBase from "./pages/KnowledgeBase";
 import PhoneNumbers from "./pages/PhoneNumbers";
 
-// WhatsApp Pages
-import WhatsAppDashboard from "./pages/WhatsAppDashboard";
-import WhatsAppAgent from "./pages/WhatsAppAgent";
-import WhatsAppAutomations from "./pages/WhatsAppAutomations";
-import WhatsAppConversations from "./pages/WhatsAppConversations";
-import WhatsAppTemplates from "./pages/WhatsAppTemplates";
+// Chat Pages
+import ChatDashboard from "./pages/ChatDashboard";
+import ChatAgent from "./pages/ChatAgent";
+import ChatAutomations from "./pages/ChatAutomations";
+import ChatConversations from "./pages/ChatConversations";
+import ChatTemplates from "./pages/ChatTemplates";
 
 // Account Pages
 import Account from "./pages/Account";
@@ -91,12 +91,12 @@ const App = () => (
               <Route path="/account" element={<Account />} />
               <Route path="/notifications" element={<OrgNotifications />} />
 
-              {/* WhatsApp Routes */}
-              <Route path="/wa/dashboard" element={<WhatsAppDashboard />} />
-              <Route path="/wa/agent" element={<WhatsAppAgent />} />
-              <Route path="/wa/automations" element={<WhatsAppAutomations />} />
-              <Route path="/wa/conversations" element={<WhatsAppConversations />} />
-              <Route path="/wa/templates" element={<WhatsAppTemplates />} />
+              {/* Chat Routes */}
+              <Route path="/chat/dashboard" element={<ChatDashboard />} />
+              <Route path="/chat/agent" element={<ChatAgent />} />
+              <Route path="/chat/automations" element={<ChatAutomations />} />
+              <Route path="/chat/conversations" element={<ChatConversations />} />
+              <Route path="/chat/templates" element={<ChatTemplates />} />
             </Route>
 
             {/* Catch-all */}

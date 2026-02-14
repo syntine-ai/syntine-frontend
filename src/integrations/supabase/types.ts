@@ -756,6 +756,7 @@ export type Database = {
       chat_sessions: {
         Row: {
           agent_config_id: string | null
+          agent_id: string | null
           channel: Database["public"]["Enums"]["chat_channel"]
           conversation_summary: string | null
           created_at: string | null
@@ -770,6 +771,7 @@ export type Database = {
         }
         Insert: {
           agent_config_id?: string | null
+          agent_id?: string | null
           channel: Database["public"]["Enums"]["chat_channel"]
           conversation_summary?: string | null
           created_at?: string | null
@@ -784,6 +786,7 @@ export type Database = {
         }
         Update: {
           agent_config_id?: string | null
+          agent_id?: string | null
           channel?: Database["public"]["Enums"]["chat_channel"]
           conversation_summary?: string | null
           created_at?: string | null
@@ -802,6 +805,13 @@ export type Database = {
             columns: ["agent_config_id"]
             isOneToOne: false
             referencedRelation: "chat_agent_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_sessions_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "agents"
             referencedColumns: ["id"]
           },
           {

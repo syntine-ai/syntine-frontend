@@ -1,18 +1,18 @@
 import { useState, useCallback } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { ConversationList } from "@/components/whatsapp/ConversationList";
-import { ConversationThread } from "@/components/whatsapp/ConversationThread";
-import { InternalNotesPanel } from "@/components/whatsapp/InternalNotesPanel";
-import { SendTemplateModal } from "@/components/whatsapp/SendTemplateModal";
-import { SendMediaModal } from "@/components/whatsapp/SendMediaModal";
+import { ConversationList } from "@/components/chat/ConversationList";
+import { ConversationThread } from "@/components/chat/ConversationThread";
+import { InternalNotesPanel } from "@/components/chat/InternalNotesPanel";
+import { SendTemplateModal } from "@/components/chat/SendTemplateModal";
+import { SendMediaModal } from "@/components/chat/SendMediaModal";
 import {
-  demoWAConversations, demoWAMessages, demoWAInternalNotes,
+  demoChatConversations, demoChatMessages, demoChatInternalNotes,
   type ConversationStatus, type MessageSender,
-} from "@/data/demoWhatsAppData";
+} from "@/data/demoChatData";
 
-export default function WhatsAppConversations() {
-  const [conversations, setConversations] = useState(demoWAConversations);
-  const [messages, setMessages] = useState(demoWAMessages);
+export default function ChatConversations() {
+  const [conversations, setConversations] = useState(demoChatConversations);
+  const [messages, setMessages] = useState(demoChatMessages);
   const [selectedId, setSelectedId] = useState<string | null>(conversations[0]?.id || null);
   const [notesOpen, setNotesOpen] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
@@ -20,7 +20,7 @@ export default function WhatsAppConversations() {
 
   const selected = conversations.find((c) => c.id === selectedId) || null;
   const currentMessages = selectedId ? messages[selectedId] || [] : [];
-  const currentNotes = selectedId ? demoWAInternalNotes[selectedId] || [] : [];
+  const currentNotes = selectedId ? demoChatInternalNotes[selectedId] || [] : [];
 
   /* ─── State helpers ─── */
 
@@ -77,7 +77,7 @@ export default function WhatsAppConversations() {
   };
 
   return (
-    <PageContainer title="Conversations" subtitle="WhatsApp message threads">
+    <PageContainer title="Conversations" subtitle="Chat message threads">
       <div className="flex gap-3 h-[calc(100vh-220px)] min-h-[500px]">
         <ConversationList
           conversations={conversations}

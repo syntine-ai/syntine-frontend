@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 const channels: { id: Channel; label: string; icon: typeof Phone }[] = [
   { id: "voice", label: "Voice", icon: Phone },
-  { id: "whatsapp", label: "WhatsApp", icon: MessageCircle },
+  { id: "chat", label: "Chat", icon: MessageCircle },
 ];
 
 export function ChannelSwitcher() {
@@ -20,7 +20,7 @@ export function ChannelSwitcher() {
     <div className="flex items-center gap-0.5 bg-muted/40 rounded-lg p-0.5">
       {visibleChannels.map((channel) => {
         const isActive = activeChannel === channel.id;
-        const isWhatsApp = channel.id === "whatsapp";
+        const isChat = channel.id === "chat";
 
         return (
           <Tooltip key={channel.id} delayDuration={0}>
@@ -28,12 +28,12 @@ export function ChannelSwitcher() {
               <button
                 onClick={() => {
                   setActiveChannel(channel.id);
-                  navigate(channel.id === "whatsapp" ? "/wa/dashboard" : "/dashboard");
+                  navigate(channel.id === "chat" ? "/chat/dashboard" : "/dashboard");
                 }}
                 className={cn(
                   "relative flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium transition-all duration-200",
                   isActive
-                    ? isWhatsApp
+                    ? isChat
                       ? "bg-[hsl(142,71%,45%)]/15 text-[hsl(142,71%,45%)]"
                       : "bg-primary/15 text-primary"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"

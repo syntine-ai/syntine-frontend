@@ -8,9 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Bot } from "lucide-react";
 
-export function WhatsAppAgentConfigPanel() {
+export function ChatAgentConfigPanel() {
   const [config, setConfig] = useState({
-    botName: "WhatsApp Bot",
+    botName: "Chat Bot",
     tone: "friendly",
     language: "English",
     systemPrompt: "",

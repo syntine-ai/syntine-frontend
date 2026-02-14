@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { demoWATemplates } from "@/data/demoWhatsAppData";
+import { demoChatTemplates } from "@/data/demoChatData";
 import { FileText, Send } from "lucide-react";
 
 interface SendTemplateModalProps {
@@ -21,7 +21,7 @@ export function SendTemplateModal({ open, onClose, onSend }: SendTemplateModalPr
   const [selectedId, setSelectedId] = useState<string>("");
   const [variables, setVariables] = useState<Record<string, string>>({});
 
-  const approved = demoWATemplates.filter((t) => t.status === "approved");
+  const approved = demoChatTemplates.filter((t) => t.status === "approved");
   const template = approved.find((t) => t.id === selectedId);
 
   const preview = useMemo(() => {

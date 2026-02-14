@@ -1,14 +1,14 @@
 import { PageContainer } from "@/components/layout/PageContainer";
 import { StatCard } from "@/components/shared/StatCard";
-import { demoWAMetrics } from "@/data/demoWhatsAppData";
+import { demoChatMetrics } from "@/data/demoChatData";
 import { MessageCircle, CheckCircle, ShoppingCart, Clock, Send, Inbox, CreditCard, Zap } from "lucide-react";
 
-export default function WhatsAppDashboard() {
-  const m = demoWAMetrics;
+export default function ChatDashboard() {
+  const m = demoChatMetrics;
 
   return (
     <PageContainer
-      title="WhatsApp Dashboard"
+      title="Chat Dashboard"
       subtitle="Automation performance and messaging metrics"
     >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

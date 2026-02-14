@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import { motion, AnimatePresence } from "framer-motion";
-import type { ConversationStatus, MessageType, MessageSender } from "@/data/demoWhatsAppData";
+import type { ConversationStatus, MessageType, MessageSender } from "@/data/demoChatData";
 
 /* ─── Types ─── */
 
