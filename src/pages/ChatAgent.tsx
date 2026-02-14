@@ -7,8 +7,8 @@ import { Loader2 } from "lucide-react";
 export default function ChatAgent() {
   // Fetch first agent to config
   const { data: agents = [], isLoading } = useQuery({
-    queryKey: ["agents"],
-    queryFn: () => chatService.getAgents(), // Assuming this exists or similar
+    queryKey: ["chat-agents"],
+    queryFn: () => chatService.getAgents() as Promise<Array<{ id: string }>>,
   });
 
   // For MVP, we assume 1 agent per org or we pick the first "chat" type agent

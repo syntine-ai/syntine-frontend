@@ -36,6 +36,8 @@ const AgentCreate = () => {
     try {
       setIsSaving(true);
       const assembledPrompt = assemblePreview(promptConfig);
+
+      // Create agent record
       const { data: newAgent, error } = await supabase
         .from("agents")
         .insert({
@@ -43,17 +45,27 @@ const AgentCreate = () => {
           name: name.trim(),
           language: "en-US",
           tone: "professional",
-          prompt_config: promptConfig as any,
           system_prompt: assembledPrompt,
-          first_message: firstMessage || null,
-          first_speaker: firstSpeaker,
-          first_message_delay_ms: firstMessageDelayMs,
+          type: "voice",
           status: "draft",
         })
         .select()
         .single();
       if (error) throw error;
+
+      // Create voice config
       if (newAgent) {
+        const { error: vcError } = await supabase
+          .from("voice_agent_configs")
+          .insert({
+            agent_id: newAgent.id,
+            prompt_config: promptConfig as any,
+            first_message: firstMessage || null,
+            first_speaker: firstSpeaker,
+            first_message_delay_ms: firstMessageDelayMs,
+          });
+        if (vcError) throw vcError;
+
         toast.success("Agent created successfully");
         navigate(`/agents/${newAgent.id}`);
       }

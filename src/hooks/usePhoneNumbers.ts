@@ -148,14 +148,14 @@ export function usePhoneNumbers() {
 
       if (phoneError) throw phoneError;
 
-      // Update agents table
+      // Update voice_agent_configs table
       const { error: agentError } = await supabase
-        .from("agents")
+        .from("voice_agent_configs")
         .update({
           phone_number_id: numberId,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", agentId);
+        .eq("agent_id", agentId);
 
       if (agentError) throw agentError;
 
@@ -185,15 +185,15 @@ export function usePhoneNumbers() {
 
       if (phoneError) throw phoneError;
 
-      // Update agents table if there was an agent
+      // Update voice_agent_configs table if there was an agent
       if (agentId) {
         const { error: agentError } = await supabase
-          .from("agents")
+          .from("voice_agent_configs")
           .update({
             phone_number_id: null,
             updated_at: new Date().toISOString(),
           })
-          .eq("id", agentId);
+          .eq("agent_id", agentId);
 
         if (agentError) throw agentError;
       }

@@ -74,62 +74,44 @@ export type Database = {
         Row: {
           created_at: string | null
           deleted_at: string | null
-          first_message: string | null
-          first_message_delay_ms: number | null
-          first_speaker: string | null
           id: string
           language: string | null
           name: string
           organization_id: string
-          phone_number_id: string | null
-          prompt_config: Json | null
           sentiment_rules: Json | null
           status: Database["public"]["Enums"]["agent_status"] | null
           system_prompt: string | null
           tone: Database["public"]["Enums"]["agent_tone"] | null
           type: string
           updated_at: string | null
-          voice_settings: Json | null
         }
         Insert: {
           created_at?: string | null
           deleted_at?: string | null
-          first_message?: string | null
-          first_message_delay_ms?: number | null
-          first_speaker?: string | null
           id?: string
           language?: string | null
           name: string
           organization_id: string
-          phone_number_id?: string | null
-          prompt_config?: Json | null
           sentiment_rules?: Json | null
           status?: Database["public"]["Enums"]["agent_status"] | null
           system_prompt?: string | null
           tone?: Database["public"]["Enums"]["agent_tone"] | null
           type?: string
           updated_at?: string | null
-          voice_settings?: Json | null
         }
         Update: {
           created_at?: string | null
           deleted_at?: string | null
-          first_message?: string | null
-          first_message_delay_ms?: number | null
-          first_speaker?: string | null
           id?: string
           language?: string | null
           name?: string
           organization_id?: string
-          phone_number_id?: string | null
-          prompt_config?: Json | null
           sentiment_rules?: Json | null
           status?: Database["public"]["Enums"]["agent_status"] | null
           system_prompt?: string | null
           tone?: Database["public"]["Enums"]["agent_tone"] | null
           type?: string
           updated_at?: string | null
-          voice_settings?: Json | null
         }
         Relationships: [
           {
@@ -137,13 +119,6 @@ export type Database = {
             columns: ["organization_id"]
             isOneToOne: false
             referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "agents_phone_number_id_fkey"
-            columns: ["phone_number_id"]
-            isOneToOne: false
-            referencedRelation: "phone_numbers"
             referencedColumns: ["id"]
           },
         ]
@@ -1725,6 +1700,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      voice_agent_configs: {
+        Row: {
+          agent_id: string
+          created_at: string | null
+          first_message: string | null
+          first_message_delay_ms: number | null
+          first_speaker: string | null
+          id: string
+          phone_number_id: string | null
+          prompt_config: Json | null
+          updated_at: string | null
+          voice_settings: Json | null
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string | null
+          first_message?: string | null
+          first_message_delay_ms?: number | null
+          first_speaker?: string | null
+          id?: string
+          phone_number_id?: string | null
+          prompt_config?: Json | null
+          updated_at?: string | null
+          voice_settings?: Json | null
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string | null
+          first_message?: string | null
+          first_message_delay_ms?: number | null
+          first_speaker?: string | null
+          id?: string
+          phone_number_id?: string | null
+          prompt_config?: Json | null
+          updated_at?: string | null
+          voice_settings?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_agent_configs_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: true
+            referencedRelation: "agents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "voice_agent_configs_phone_number_id_fkey"
+            columns: ["phone_number_id"]
+            isOneToOne: false
+            referencedRelation: "phone_numbers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
