@@ -10,27 +10,9 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Bot, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { chatService } from "@/api/services/chat.service";
+import { chatService, type ChatAgentConfig } from "@/api/services/chat.service";
 
 // ─── Types ───
-
-interface ChatAgentConfig {
-  id: string;
-  agent_id: string;
-  organization_id: string;
-  agent_name: string;
-  agent_status: string;
-  system_prompt: string | null;
-  custom_system_prefix: string | null;
-  greeting_message: string | null;
-  fallback_message_web: string | null;
-  fallback_message_wa: string | null;
-  use_summary: boolean;
-  enabled_templates: boolean;
-  version: number;
-  created_at: string;
-  updated_at: string;
-}
 
 interface FormState {
   name: string;

@@ -25,6 +25,24 @@ export interface ChatMessage {
     status?: "sent" | "delivered" | "read"; // Frontend helper
 }
 
+export interface ChatAgentConfig {
+    id: string;
+    agent_id: string;
+    organization_id: string;
+    agent_name: string;
+    agent_status: string;
+    system_prompt: string | null;
+    custom_system_prefix: string | null;
+    greeting_message: string | null;
+    fallback_message_web: string | null;
+    fallback_message_wa: string | null;
+    use_summary: boolean;
+    enabled_templates: boolean;
+    version: number;
+    created_at: string;
+    updated_at: string;
+}
+
 export const chatService = {
     getSessions: async (filters?: { status?: string; agent_id?: string; limit?: number; offset?: number }) => {
         const params = new URLSearchParams();
@@ -64,7 +82,7 @@ export const chatService = {
     },
 
     getAgentConfig: async (agentId: string) => {
-        return restClient.get(`/chat/config/${agentId}`);
+        return restClient.get<ChatAgentConfig>(`/chat/config/${agentId}`);
     },
 
     updateAgentConfig: async (agentId: string, data: any) => {
