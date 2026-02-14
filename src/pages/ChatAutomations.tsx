@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { AutomationCard } from "@/components/whatsapp/AutomationCard";
-import { AutomationEditModal } from "@/components/whatsapp/AutomationEditModal";
+import { AutomationCard } from "@/components/chat/AutomationCard";
+import { AutomationEditModal } from "@/components/chat/AutomationEditModal";
 
 interface AutomationConfig {
   type: string;
@@ -19,7 +19,7 @@ const defaultAutomations: AutomationConfig[] = [
   {
     type: "cod_confirmation",
     label: "COD Confirmation",
-    description: "Auto-confirm cash on delivery orders via WhatsApp",
+    description: "Auto-confirm cash on delivery orders via chat",
     isEnabled: true,
     delay_minutes: 5,
     min_order_value: 500,
@@ -51,7 +51,7 @@ const defaultAutomations: AutomationConfig[] = [
   },
 ];
 
-export default function WhatsAppAutomations() {
+export default function ChatAutomations() {
   const [automations, setAutomations] = useState(defaultAutomations);
   const [editingAutomation, setEditingAutomation] = useState<AutomationConfig | null>(null);
 
@@ -71,7 +71,7 @@ export default function WhatsAppAutomations() {
   return (
     <PageContainer
       title="Automations"
-      subtitle="Configure automated WhatsApp workflows and triggers"
+      subtitle="Configure automated chat workflows and triggers"
     >
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {automations.map((automation) => (

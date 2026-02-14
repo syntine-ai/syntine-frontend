@@ -33,7 +33,7 @@ export function SendTemplateModal({ open, onClose, onSend }: SendTemplateModalPr
   const preview = useMemo(() => {
     if (!template) return "";
     let body = template.body;
-    template.variables.forEach((v, i) => {
+    template.variables.forEach((v: string, i: number) => {
       body = body.replace(`{{${i + 1}}}`, variables[v] || `{{${v}}}`);
     });
     return body;
@@ -75,7 +75,7 @@ export function SendTemplateModal({ open, onClose, onSend }: SendTemplateModalPr
             <>
               <div className="space-y-2">
                 <Label>Variables</Label>
-                {template.variables.map((v) => (
+                {template.variables.map((v: string) => (
                   <div key={v} className="flex items-center gap-2">
                     <span className="text-xs text-muted-foreground w-28 shrink-0 truncate">{v}</span>
                     <Input

@@ -37,12 +37,12 @@ const voiceNavItems: NavItem[] = [
   { icon: Link2, label: "Integrations", route: "/integrations" },
 ];
 
-const whatsappNavItems: NavItem[] = [
-  { icon: BarChart3, label: "Dashboard", route: "/wa/dashboard" },
-  { icon: Bot, label: "Agent Config", route: "/wa/agent" },
-  { icon: Zap, label: "Automations", route: "/wa/automations" },
-  { icon: MessageCircle, label: "Conversations", route: "/wa/conversations" },
-  { icon: FileText, label: "Templates", route: "/wa/templates" },
+const chatNavItems: NavItem[] = [
+  { icon: BarChart3, label: "Dashboard", route: "/chat/dashboard" },
+  { icon: Bot, label: "Agent Config", route: "/chat/agent" },
+  { icon: Zap, label: "Automations", route: "/chat/automations" },
+  { icon: MessageCircle, label: "Conversations", route: "/chat/conversations" },
+  { icon: FileText, label: "Templates", route: "/chat/templates" },
   { icon: Package, label: "Products", route: "/products" },
   { icon: ShoppingCart, label: "Orders", route: "/orders" },
   { icon: Link2, label: "Integrations", route: "/integrations" },
@@ -57,19 +57,19 @@ export function SidebarNavigation({ isCollapsed: propCollapsed }: SidebarNavigat
   const context = useSidebar();
   const { activeChannel } = useChannel();
   const isCollapsed = propCollapsed ?? context.isCollapsed;
-  const items = activeChannel === "whatsapp" ? whatsappNavItems : voiceNavItems;
-  const isWhatsApp = activeChannel === "whatsapp";
+  const items = activeChannel === "chat" ? chatNavItems : voiceNavItems;
+  const isChat = activeChannel === "chat";
 
   const isActiveRoute = (route: string) => {
     if (route === "/dashboard") {
       return location.pathname === "/" || location.pathname === "/dashboard";
     }
-    if (route === "/wa/dashboard") {
-      return location.pathname === "/wa/dashboard";
+    if (route === "/chat/dashboard") {
+      return location.pathname === "/chat/dashboard";
     }
     return (
       location.pathname === route ||
-      (!["/dashboard", "/wa/dashboard"].includes(route) && location.pathname.startsWith(route))
+      (!["/dashboard", "/chat/dashboard"].includes(route) && location.pathname.startsWith(route))
     );
   };
 
@@ -86,7 +86,7 @@ export function SidebarNavigation({ isCollapsed: propCollapsed }: SidebarNavigat
                 "group relative flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-200",
                 isCollapsed && "justify-center px-2",
                 isActive
-                  ? isWhatsApp
+                  ? isChat
                     ? "bg-[hsl(142,71%,45%)]/10 text-[hsl(142,71%,45%)]"
                     : "bg-primary/10 text-primary"
                   : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
@@ -96,7 +96,7 @@ export function SidebarNavigation({ isCollapsed: propCollapsed }: SidebarNavigat
                 <div
                   className={cn(
                     "absolute left-0 top-0 bottom-0 w-0.5 rounded-full",
-                    isWhatsApp ? "bg-[hsl(142,71%,45%)]" : "bg-primary"
+                    isChat ? "bg-[hsl(142,71%,45%)]" : "bg-primary"
                   )}
                 />
               )}
@@ -104,7 +104,7 @@ export function SidebarNavigation({ isCollapsed: propCollapsed }: SidebarNavigat
                 className={cn(
                   "h-5 w-5 shrink-0 transition-colors",
                   isActive
-                    ? isWhatsApp ? "text-[hsl(142,71%,45%)]" : "text-primary"
+                    ? isChat ? "text-[hsl(142,71%,45%)]" : "text-primary"
                     : "text-icon group-hover:text-sidebar-foreground"
                 )}
               />

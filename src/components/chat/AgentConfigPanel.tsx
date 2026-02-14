@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Bot, Save, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { restClient } from "@/api/client/rest.client";
+import { chatService } from "@/api/services/chat.service";
 
 // ─── Types ───
 
@@ -22,8 +23,8 @@ interface ChatAgentConfig {
   system_prompt: string | null;
   custom_system_prefix: string | null;
   greeting_message: string | null;
-  fallback_message_web: string;
-  fallback_message_wa: string;
+  fallback_message_web: string | null;
+  fallback_message_wa: string | null;
   use_summary: boolean;
   enabled_templates: boolean;
   version: number;
@@ -55,97 +56,80 @@ const DEFAULT_FORM: FormState = {
 
 // ─── Component ───
 
-export function WhatsAppAgentConfigPanel() {
-  const [activeConfig, setActiveConfig] = useState<ChatAgentConfig | null>(null);
+export function AgentConfigPanel({ agentId }: { agentId: string }) {
+  const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [isNew, setIsNew] = useState(false);
 
+  // 1. Fetch Config
+  const { data: activeConfig, isLoading } = useQuery({
+    queryKey: ["chat-agent-config", agentId],
+    queryFn: () => chatService.getAgentConfig(agentId),
+    enabled: !!agentId,
+  });
+
+  // 2. Sync Form
   useEffect(() => {
-    loadConfig();
-  }, []);
-
-  async function loadConfig() {
-    setLoading(true);
-    try {
-      const data = await restClient.get<ChatAgentConfig[]>("/chat/config");
-      if (data.length > 0) {
-        selectConfig(data[0]);
-      } else {
-        setIsNew(true);
-      }
-    } catch {
-      setIsNew(true);
-    } finally {
-      setLoading(false);
+    if (activeConfig) {
+      setForm({
+        name: activeConfig.agent_name || DEFAULT_FORM.name,
+        system_prompt: activeConfig.system_prompt || "",
+        custom_system_prefix: activeConfig.custom_system_prefix || "",
+        greeting_message: activeConfig.greeting_message || "",
+        fallback_message_web: activeConfig.fallback_message_web || DEFAULT_FORM.fallback_message_web,
+        fallback_message_wa: activeConfig.fallback_message_wa || DEFAULT_FORM.fallback_message_wa,
+        use_summary: activeConfig.use_summary ?? true,
+        enabled_templates: activeConfig.enabled_templates ?? false,
+      });
     }
-  }
+  }, [activeConfig]);
 
-  function selectConfig(config: ChatAgentConfig) {
-    setActiveConfig(config);
-    setIsNew(false);
-    setForm({
-      name: config.agent_name,
-      system_prompt: config.system_prompt || "",
-      custom_system_prefix: config.custom_system_prefix || "",
-      greeting_message: config.greeting_message || "",
-      fallback_message_web: config.fallback_message_web,
-      fallback_message_wa: config.fallback_message_wa,
-      use_summary: config.use_summary,
-      enabled_templates: config.enabled_templates,
-    });
-  }
+  const updateField = (key: keyof FormState, value: any) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
 
-  function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((f) => ({ ...f, [key]: value }));
-  }
-
-  async function handleSave() {
-    if (!form.name.trim()) {
-      toast.error("Agent name is required");
-      return;
-    }
-
-    setSaving(true);
-    try {
+  // 3. Save Mutation
+  const saveMutation = useMutation({
+    mutationFn: async (data: FormState) => {
+      // API expects slightly different keys or same?
+      // ChatAgentConfigUpdate schema in backend:
+      // agent_name, system_prompt, etc.
+      // We map form to payload
       const payload = {
-        name: form.name,
-        system_prompt: form.system_prompt || null,
-        custom_system_prefix: form.custom_system_prefix || null,
-        greeting_message: form.greeting_message || null,
-        fallback_message_web: form.fallback_message_web,
-        fallback_message_wa: form.fallback_message_wa,
-        use_summary: form.use_summary,
-        enabled_templates: form.enabled_templates,
+        agent_name: data.name,
+        system_prompt: data.system_prompt,
+        custom_system_prefix: data.custom_system_prefix,
+        greeting_message: data.greeting_message,
+        fallback_message_web: data.fallback_message_web,
+        fallback_message_wa: data.fallback_message_wa,
+        use_summary: data.use_summary,
+        enabled_templates: data.enabled_templates
+        // messaging_provider, model, temperature preserved by backend patch or we send current?
+        // Let's assume PUT merges or explicit PATCH
+        // The service uses post/put.
       };
 
-      if (isNew) {
-        const created = await restClient.post<ChatAgentConfig>("/chat/config", payload);
-        toast.success("Chat agent created!");
-        selectConfig(created);
-      } else if (activeConfig) {
-        const updated = await restClient.put<ChatAgentConfig>(
-          `/chat/config/${activeConfig.agent_id}`,
-          payload
-        );
-        toast.success("Configuration saved!");
-        selectConfig(updated);
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to save configuration");
-    } finally {
-      setSaving(false);
+      // If endpoint is POST /chat/config (create) or PUT /chat/config/{agent_id} (update)
+      return chatService.updateAgentConfig(agentId, payload);
+    },
+    onSuccess: (data) => {
+      toast.success("Agent configuration saved");
+      queryClient.invalidateQueries({ queryKey: ["chat-agent-config", agentId] });
+    },
+    onError: (err) => {
+      toast.error("Failed to save configuration");
+      console.error(err);
     }
-  }
+  });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        <span className="ml-2 text-muted-foreground">Loading config...</span>
-      </div>
-    );
+  const handleSave = () => {
+    saveMutation.mutate(form);
+  };
+
+  const isNew = !activeConfig;
+  const saving = saveMutation.isPending;
+
+  if (isLoading) {
+    return <div className="p-10 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-muted-foreground" /></div>;
   }
 
   return (

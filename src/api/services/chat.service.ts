@@ -57,6 +57,21 @@ export const chatService = {
             template_name: templateName,
             variables
         });
+    },
+
+    getAgents: async () => {
+        return restClient.get("/chat/config/agents");
+    },
+
+    getAgentConfig: async (agentId: string) => {
+        return restClient.get(`/chat/config/${agentId}`);
+    },
+
+    updateAgentConfig: async (agentId: string, data: any) => {
+        if (!agentId) {
+            return restClient.post("/chat/config", data);
+        }
+        return restClient.put(`/chat/config/${agentId}`, data);
     }
 };
 

@@ -1,20 +1,20 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { ConversationList } from "@/components/whatsapp/ConversationList";
-import { ConversationThread } from "@/components/whatsapp/ConversationThread";
-import { InternalNotesPanel } from "@/components/whatsapp/InternalNotesPanel";
-import { SendTemplateModal } from "@/components/whatsapp/SendTemplateModal";
-import { SendMediaModal } from "@/components/whatsapp/SendMediaModal";
+import { ConversationList } from "@/components/chat/ConversationList";
+import { ConversationThread } from "@/components/chat/ConversationThread";
+import { InternalNotesPanel } from "@/components/chat/InternalNotesPanel";
+import { SendTemplateModal } from "@/components/chat/SendTemplateModal";
+import { SendMediaModal } from "@/components/chat/SendMediaModal";
 import { chatService } from "@/api/services/chat.service";
-import {
-  demoWAInternalNotes,
-  type ConversationStatus, type MessageSender,
-} from "@/data/demoWhatsAppData";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  demoChatInternalNotes,
+  type ConversationStatus, type MessageSender,
+} from "@/data/demoChatData";
 
-export default function WhatsAppConversations() {
+export default function ChatConversations() {
   const queryClient = useQueryClient();
 
   /* ─── API Queries ─── */
@@ -116,9 +116,7 @@ export default function WhatsAppConversations() {
   })) : [];
 
   const selected = conversations.find((c: any) => c.id === selectedId) || null;
-  const currentNotes = selectedId ? demoWAInternalNotes[selectedId] || [] : []; // Notes still dummy for now
-
-  /* ─── Handlers ─── */
+  const currentNotes = selectedId ? demoChatInternalNotes[selectedId] || [] : [];
 
   /* ─── Handlers ─── */
 
@@ -165,7 +163,7 @@ export default function WhatsAppConversations() {
     console.log("Send media", mediaType);
   };
 
-  // Status Updates (Mocked for now as backend endpoint missing for status change)
+  // Status Updates
   const statusMutation = useMutation({
     mutationFn: async ({ status, assignedTo }: { status: "active" | "closed" | "human_handover", assignedTo?: string | null }) => {
       if (!selectedId) return;
@@ -191,7 +189,7 @@ export default function WhatsAppConversations() {
   const handleClose = () => updateConvStatus("closed", null);
 
   return (
-    <PageContainer title="Conversations" subtitle="WhatsApp message threads">
+    <PageContainer title="Conversations" subtitle="Chat message threads">
       <div className="flex gap-3 h-[calc(100vh-220px)] min-h-[500px]">
         <ConversationList
           conversations={conversations}
