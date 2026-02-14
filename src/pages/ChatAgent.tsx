@@ -16,7 +16,7 @@ export default function ChatAgent() {
   // HOWEVER, AgentConfigPanel's save logic assumes update.
   // Let's assume we pick the first available agent.
 
-  const selectedAgentId = agents.length > 0 ? agents[0].id : "";
+  const selectedAgentId = agents.length > 0 ? agents[0].agent_id : "";
 
   if (isLoading) {
     return <div className="p-10 flex justify-center"><Loader2 className="w-8 h-8 animate-spin" /></div>;

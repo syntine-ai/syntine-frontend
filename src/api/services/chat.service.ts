@@ -78,7 +78,7 @@ export const chatService = {
     },
 
     getAgents: async () => {
-        return restClient.get("/chat/config/agents");
+        return restClient.get<ChatAgentConfig[]>("/chat/config");
     },
 
     getAgentConfig: async (agentId: string) => {
