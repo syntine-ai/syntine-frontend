@@ -1,4 +1,4 @@
-export const demoWAMetrics = {
+export const demoChatMetrics = {
   codConfirmationRate: 78,
   cartRecoveryRate: 32,
   messagesSent: 1247,
@@ -11,7 +11,7 @@ export const demoWAMetrics = {
 
 export type ConversationStatus = "active_ai" | "needs_human" | "human_active" | "closed";
 
-export const demoWAConversations = [
+export const demoChatConversations = [
   {
     id: "conv-1",
     customer_phone: "+91 98765 43210",
@@ -82,7 +82,7 @@ export const demoWAConversations = [
 export type MessageType = "text" | "template" | "media";
 export type MessageSender = "ai" | "human" | "customer";
 
-export const demoWAMessages: Record<string, Array<{
+export const demoChatMessages: Record<string, Array<{
   id: string;
   direction: "inbound" | "outbound";
   content: string;
@@ -109,7 +109,7 @@ export const demoWAMessages: Record<string, Array<{
   ],
 };
 
-export const demoWAInternalNotes: Record<string, Array<{
+export const demoChatInternalNotes: Record<string, Array<{
   id: string;
   author: string;
   content: string;
@@ -123,7 +123,7 @@ export const demoWAInternalNotes: Record<string, Array<{
   ],
 };
 
-export const demoWATemplates = [
+export const demoChatTemplates = [
   { id: "t1", name: "cod_confirm_v1", category: "utility", language: "en", body: "Hi {{1}}! Your COD order {{2}} worth {{3}} is ready. Reply YES to confirm.", status: "approved", variables: ["customer_name", "order_number", "amount"] },
   { id: "t2", name: "cart_recovery_v1", category: "marketing", language: "en", body: "Hi {{1}}! You left items in your cart. Complete your purchase and get {{2}}% off!", status: "approved", variables: ["customer_name", "discount"] },
   { id: "t3", name: "order_status_v1", category: "utility", language: "en", body: "Hi {{1}}! Your order {{2}} is {{3}}. Track: {{4}}", status: "approved", variables: ["customer_name", "order_number", "status", "tracking_url"] },

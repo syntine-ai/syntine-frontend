@@ -2,7 +2,7 @@ import { useState } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { demoWATemplates } from "@/data/demoWhatsAppData";
+import { demoChatTemplates } from "@/data/demoChatData";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
@@ -13,11 +13,11 @@ const statusColors: Record<string, string> = {
   rejected: "badge-error",
 };
 
-export default function WhatsAppTemplates() {
+export default function ChatTemplates() {
   return (
     <PageContainer
       title="Templates"
-      subtitle="Manage WhatsApp message templates"
+      subtitle="Manage chat message templates"
       actions={
         <Button size="sm" className="gap-2">
           <Plus className="h-4 w-4" />
@@ -37,7 +37,7 @@ export default function WhatsAppTemplates() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {demoWATemplates.map((tpl) => (
+            {demoChatTemplates.map((tpl) => (
               <TableRow key={tpl.id} className="table-row-hover cursor-pointer">
                 <TableCell className="font-medium text-foreground">{tpl.name}</TableCell>
                 <TableCell className="capitalize text-muted-foreground">{tpl.category}</TableCell>
